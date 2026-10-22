@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <style name="Theme.ReMember" parent="android:Theme.Material.Light.NoActionBar" />
+    <!-- DayNight, чтобы при запуске в тёмной теме не мелькал белый фон -->
+    <style name="Theme.ReMember" parent="android:Theme.DeviceDefault.DayNight">
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowNoTitle">true</item>
+    </style>
 </resources>

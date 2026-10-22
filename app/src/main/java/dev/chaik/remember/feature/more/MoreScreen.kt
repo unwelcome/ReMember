@@ -1,0 +1,123 @@
+package dev.chaik.remember.feature.more
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.navigation3.runtime.NavKey
+import dev.chaik.remember.R
+import dev.chaik.remember.core.ui.components.ScreenScaffold
+import kotlinx.serialization.Serializable
+
+@Serializable
+data object MoreRoute : NavKey
+
+/** Полноэкранное «боковое меню»: плитки со ссылками на остальные разделы. */
+@Composable
+fun MoreScreen(
+    onOpen: (NavKey) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    ScreenScaffold(title = stringResource(R.string.tab_more), modifier = modifier) { padding ->
+        val layoutDirection = LocalLayoutDirection.current
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(
+                start = padding.calculateStartPadding(layoutDirection) + 16.dp,
+                end = padding.calculateEndPadding(layoutDirection) + 16.dp,
+                top = padding.calculateTopPadding() + 8.dp,
+                bottom = padding.calculateBottomPadding() + 16.dp,
+            ),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            items(
+                items = MoreSection.entries,
+                key = { it.name },
+                // Настройки — последней плиткой на всю ширину
+                span = { GridItemSpan(if (it == MoreSection.Settings) maxLineSpan else 1) },
+            ) { section ->
+                MoreTile(
+                    section = section,
+                    accent = MaterialTheme.colorScheme.accentFor(section.ordinal),
+                    onClick = { onOpen(section.route) },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun MoreTile(
+    section: MoreSection,
+    accent: Pair<Color, Color>,
+    onClick: () -> Unit,
+) {
+    val (container, content) = accent
+    Card(
+        onClick = onClick,
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+    ) {
+        Column(Modifier.padding(16.dp)) {
+            Surface(
+                shape = RoundedCornerShape(14.dp),
+                color = container,
+                modifier = Modifier.size(44.dp),
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(section.icon, contentDescription = null, tint = content)
+                }
+            }
+            Spacer(Modifier.height(14.dp))
+            Text(
+                text = stringResource(section.title),
+                style = MaterialTheme.typography.titleMedium,
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = stringResource(section.hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 2,
+                minLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
+/** Чередуем акцентные цвета темы, чтобы плитки различались, но оставались в палитре. */
+private fun ColorScheme.accentFor(index: Int): Pair<Color, Color> = when (index % 3) {
+    0 -> primaryContainer to onPrimaryContainer
+    1 -> secondaryContainer to onSecondaryContainer
+    else -> tertiaryContainer to onTertiaryContainer
+}

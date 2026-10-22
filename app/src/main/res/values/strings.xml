@@ -1,3 +1,36 @@
 <resources>
     <string name="app_name">ReMember</string>
+
+    <!-- Общие действия -->
+    <string name="action_back">Назад</string>
+
+    <!-- Вкладки островка -->
+    <string name="tab_today">Сегодня</string>
+    <string name="tab_notes">Заметки</string>
+    <string name="tab_tasks">Задачи</string>
+    <string name="tab_calendar">Календарь</string>
+    <string name="tab_more">Ещё</string>
+
+    <!-- Разделы из «Ещё» -->
+    <string name="section_feed">Лента</string>
+    <string name="section_feed_hint">Все записи дней и «В этот день»</string>
+    <string name="section_search">Поиск</string>
+    <string name="section_search_hint">По всем записям, заметкам и тратам</string>
+    <string name="section_stats">Статистика</string>
+    <string name="section_stats_hint">Heatmap-ы по категориям</string>
+    <string name="section_finance">Финансы</string>
+    <string name="section_finance_hint">Доходы и расходы за месяц и год</string>
+    <string name="section_health">Здоровье</string>
+    <string name="section_health_hint">Шаги и активность</string>
+    <string name="section_gym">Зал</string>
+    <string name="section_gym_hint">Тренировки и прогресс</string>
+    <string name="section_settings">Настройки</string>
+    <string name="section_settings_hint">Темы, шрифты, блокировка, уведомления</string>
+
+    <!-- Заглушки -->
+    <string name="placeholder_title">Раздел в разработке</string>
+    <string name="placeholder_today">Запись о том, как прошёл день: текст, фото, сон и траты</string>
+    <string name="placeholder_notes">Заметки с папками, тегами и закреплением</string>
+    <string name="placeholder_tasks">Список дел со сроками и приоритетами</string>
+    <string name="placeholder_calendar">Календарь событий: дни рождения, подписки и другое</string>
 </resources>
