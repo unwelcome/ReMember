@@ -1,4 +1,4 @@
-package dev.chaik.remember.ui.theme
+package dev.chaik.remember.core.ui.theme
 
 import android.app.Activity
 import android.os.Build

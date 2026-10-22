@@ -1,4 +1,4 @@
-package dev.chaik.remember.ui.theme
+package dev.chaik.remember.core.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
