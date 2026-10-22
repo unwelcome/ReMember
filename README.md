@@ -7,7 +7,7 @@
 ## Стек
 
 - Kotlin, Jetpack Compose (Material 3)
-- Room + SQLCipher, DataStore
+- Room + SQLCipher (ключ в Android Keystore)
 - minSdk 33 (Android 13), targetSdk 37
 
 ## Сборка и запуск
@@ -18,4 +18,11 @@
 
 ```bash
 ./gradlew installDebug
+```
+
+Тесты на телефоне (приложение и его данные не удаляются, в отличие от `connectedAndroidTest`):
+
+```bash
+./gradlew installDebug installDebugAndroidTest
+adb shell am instrument -w dev.chaik.remember.test/androidx.test.runner.AndroidJUnitRunner
 ```

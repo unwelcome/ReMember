@@ -1,0 +1,88 @@
+package dev.chaik.remember.core.database.dao
+
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import androidx.room.Transaction
+import dev.chaik.remember.core.database.entity.DayEntryTagEntity
+import dev.chaik.remember.core.database.entity.NoteTagEntity
+import dev.chaik.remember.core.database.entity.TagEntity
+import dev.chaik.remember.core.database.entity.tagKey
+import kotlinx.coroutines.flow.Flow
+import java.time.LocalDate
+
+@Dao
+interface TagDao {
+    @Query("SELECT * FROM tag ORDER BY `key`")
+    fun observeAll(): Flow<List<TagEntity>>
+
+    @Query("SELECT * FROM tag WHERE `key` = :key")
+    suspend fun findByKey(key: String): TagEntity?
+
+    @Insert
+    suspend fun insert(tag: TagEntity): Long
+
+    /** Тег по имени без учёта регистра; если такого нет — создаётся. */
+    @Transaction
+    suspend fun getOrCreate(name: String): TagEntity =
+        findByKey(tagKey(name)) ?: TagEntity(name = name).let { it.copy(id = insert(it)) }
+
+    /** Удалить теги, которые больше нигде не используются. */
+    @Query(
+        """
+        DELETE FROM tag
+        WHERE id NOT IN (SELECT tag_id FROM day_entry_tag)
+          AND id NOT IN (SELECT tag_id FROM note_tag)
+        """,
+    )
+    suspend fun deleteUnused()
+
+    // Теги записи дня
+
+    @Query(
+        """
+        SELECT tag.* FROM tag
+        JOIN day_entry_tag ON tag.id = day_entry_tag.tag_id
+        WHERE day_entry_tag.date = :date
+        ORDER BY tag.`key`
+        """,
+    )
+    fun observeForDay(date: LocalDate): Flow<List<TagEntity>>
+
+    @Query("DELETE FROM day_entry_tag WHERE date = :date")
+    suspend fun clearDayTags(date: LocalDate)
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertDayTags(tags: List<DayEntryTagEntity>)
+
+    @Transaction
+    suspend fun setDayTags(date: LocalDate, tagIds: Collection<Long>) {
+        clearDayTags(date)
+        insertDayTags(tagIds.map { DayEntryTagEntity(date, it) })
+    }
+
+    // Теги заметки
+
+    @Query(
+        """
+        SELECT tag.* FROM tag
+        JOIN note_tag ON tag.id = note_tag.tag_id
+        WHERE note_tag.note_id = :noteId
+        ORDER BY tag.`key`
+        """,
+    )
+    fun observeForNote(noteId: Long): Flow<List<TagEntity>>
+
+    @Query("DELETE FROM note_tag WHERE note_id = :noteId")
+    suspend fun clearNoteTags(noteId: Long)
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertNoteTags(tags: List<NoteTagEntity>)
+
+    @Transaction
+    suspend fun setNoteTags(noteId: Long, tagIds: Collection<Long>) {
+        clearNoteTags(noteId)
+        insertNoteTags(tagIds.map { NoteTagEntity(noteId, it) })
+    }
+}
