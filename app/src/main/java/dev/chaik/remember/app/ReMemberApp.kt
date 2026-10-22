@@ -2,6 +2,8 @@ package dev.chaik.remember.app
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -15,27 +17,36 @@ import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.saveable.rememberSaveableStateHolder
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import dev.chaik.remember.app.navigation.TopLevelTab
 import dev.chaik.remember.app.navigation.appEntryProvider
+import dev.chaik.remember.app.navigation.popTransition
+import dev.chaik.remember.app.navigation.pushTransition
 import dev.chaik.remember.app.ui.FloatingIsland
 import dev.chaik.remember.app.ui.IslandHeight
 import dev.chaik.remember.core.ui.LocalIslandPadding
+import dev.chaik.remember.core.ui.components.SwipeBackHost
 import dev.chaik.remember.core.ui.theme.ReMemberTheme
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.launch
 
 private val IslandBottomMargin = 12.dp
 
@@ -49,23 +60,41 @@ fun ReMemberApp() {
 }
 
 /**
- * Вкладки островка + их стеки экранов.
+ * Вкладки островка, листаются свайпом влево/вправо.
  *
- * У каждой вкладки свой стек: например, «Ещё → Настройки» остаётся открытым,
- * пока вы переключаетесь на другие вкладки. Состояние экранов (прокрутка и т. п.)
- * сохраняется через [rememberSaveableStateHolder].
+ * У каждой вкладки свой стек экранов: например, «Ещё → Настройки» остаётся открытым,
+ * пока вы на других вкладках. Пока во вкладке открыта вложенная страница,
+ * свайп вправо работает как «назад», а не как переход на соседнюю вкладку.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun MainScaffold() {
-    var currentTab by rememberSaveable { mutableStateOf(TopLevelTab.Today) }
-    val backStacks = TopLevelTab.entries.associateWith { rememberNavBackStack(it.root) }
-    val backStack = backStacks.getValue(currentTab)
-    val stateHolder = rememberSaveableStateHolder()
+    val tabs = TopLevelTab.entries
+    val pagerState = rememberPagerState { tabs.size }
+    val backStacks = tabs.associateWith { rememberNavBackStack(it.root) }
+    val currentStack = backStacks.getValue(tabs[pagerState.currentPage])
+    val scope = rememberCoroutineScope()
+    val haptics = LocalHapticFeedback.current
+
+    fun goTo(tab: TopLevelTab) {
+        scope.launch {
+            pagerState.animateScrollToPage(
+                page = tab.ordinal,
+                animationSpec = spring(dampingRatio = 0.85f, stiffness = Spring.StiffnessMediumLow),
+            )
+        }
+    }
+
+    // Лёгкая вибрация при смене вкладки — и по тапу, и по свайпу
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.currentPage }.drop(1).collect {
+            haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
+        }
+    }
 
     // «Назад» на корне любой вкладки, кроме «Сегодня», возвращает на «Сегодня»
-    BackHandler(enabled = currentTab != TopLevelTab.Today && backStack.size == 1) {
-        currentTab = TopLevelTab.Today
+    BackHandler(enabled = pagerState.currentPage != TopLevelTab.Today.ordinal && currentStack.size == 1) {
+        goTo(TopLevelTab.Today)
     }
 
     val navBarPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
@@ -73,14 +102,14 @@ private fun MainScaffold() {
 
     Box(Modifier.fillMaxSize()) {
         CompositionLocalProvider(LocalIslandPadding provides islandPadding) {
-            key(currentTab) {
-                stateHolder.SaveableStateProvider(currentTab.name) {
-                    NavDisplay(
-                        backStack = backStack,
-                        onBack = { backStack.removeLastOrNull() },
-                        entryProvider = appEntryProvider(backStack),
-                    )
-                }
+            HorizontalPager(
+                state = pagerState,
+                // Во вложенной странице горизонтальный свайп отдан жесту «назад»
+                userScrollEnabled = currentStack.size == 1,
+                key = { tabs[it].name },
+                modifier = Modifier.fillMaxSize(),
+            ) { page ->
+                TabContent(backStacks.getValue(tabs[page]))
             }
         }
 
@@ -95,17 +124,37 @@ private fun MainScaffold() {
             exit = slideOutVertically { it } + fadeOut(),
         ) {
             FloatingIsland(
-                tabs = TopLevelTab.entries,
-                selected = currentTab,
+                tabs = tabs,
+                selected = tabs[pagerState.currentPage],
+                indicatorPosition = { pagerState.position },
                 onSelect = { tab ->
-                    if (tab == currentTab) {
+                    if (tab.ordinal == pagerState.currentPage) {
                         // Повторный тап по вкладке — вернуться к её корню
-                        while (backStack.size > 1) backStack.removeLastOrNull()
+                        while (currentStack.size > 1) currentStack.removeLastOrNull()
                     } else {
-                        currentTab = tab
+                        goTo(tab)
                     }
                 },
             )
         }
     }
 }
+
+/** Стек экранов одной вкладки. */
+@Composable
+private fun TabContent(backStack: NavBackStack<NavKey>) {
+    SwipeBackHost(enabled = backStack.size > 1) {
+        NavDisplay(
+            backStack = backStack,
+            onBack = { backStack.removeLastOrNull() },
+            transitionSpec = { pushTransition() },
+            popTransitionSpec = { popTransition() },
+            predictivePopTransitionSpec = { popTransition() },
+            entryProvider = appEntryProvider(backStack),
+        )
+    }
+}
+
+/** Дробная позиция пейджера: 1.5 = на полпути между второй и третьей вкладкой. */
+private val PagerState.position: Float
+    get() = currentPage + currentPageOffsetFraction

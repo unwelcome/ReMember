@@ -2,7 +2,6 @@ package dev.chaik.remember.app.ui
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
@@ -23,12 +22,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import dev.chaik.remember.app.navigation.TopLevelTab
+import kotlin.math.roundToInt
 
 private val ItemWidth = 60.dp
 private val ItemHeight = 48.dp
@@ -38,24 +37,21 @@ private val IslandPadding = 6.dp
 val IslandHeight = ItemHeight + IslandPadding * 2
 
 /**
- * Плавающая панель вкладок: только иконки, подсветка выбранной вкладки
- * «переезжает» с пружинной анимацией.
+ * Плавающая панель вкладок: только иконки. Подсветка выбранной вкладки
+ * движется вместе со свайпом между страницами.
+ *
+ * [indicatorPosition] — дробный индекс вкладки (1.5 = между второй и третьей);
+ * читается только при отрисовке, поэтому свайп не вызывает перекомпозицию.
  */
 @Composable
 fun FloatingIsland(
     tabs: List<TopLevelTab>,
     selected: TopLevelTab,
+    indicatorPosition: () -> Float,
     onSelect: (TopLevelTab) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val haptics = LocalHapticFeedback.current
     val colors = MaterialTheme.colorScheme
-
-    val indicatorOffset by animateDpAsState(
-        targetValue = ItemWidth * tabs.indexOf(selected),
-        animationSpec = spring(dampingRatio = 0.7f, stiffness = Spring.StiffnessMediumLow),
-        label = "indicatorOffset",
-    )
 
     Surface(
         modifier = modifier,
@@ -67,7 +63,7 @@ fun FloatingIsland(
         Box(Modifier.padding(IslandPadding)) {
             Box(
                 Modifier
-                    .offset(x = indicatorOffset)
+                    .offset { IntOffset((ItemWidth.toPx() * indicatorPosition()).roundToInt(), 0) }
                     .size(ItemWidth, ItemHeight)
                     .clip(CircleShape)
                     .background(colors.secondaryContainer),
@@ -77,10 +73,7 @@ fun FloatingIsland(
                     IslandItem(
                         tab = tab,
                         selected = tab == selected,
-                        onClick = {
-                            if (tab != selected) haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
-                            onSelect(tab)
-                        },
+                        onClick = { onSelect(tab) },
                     )
                 }
             }
