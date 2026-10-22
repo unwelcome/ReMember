@@ -1,0 +1,37 @@
+# Gradle / Kotlin
+.gradle/
+.kotlin/
+build/
+/captures
+.externalNativeBuild
+.cxx
+
+# Локальные пути к SDK
+local.properties
+
+# Android Studio / IntelliJ — личные настройки IDE, кроме стиля кода
+*.iml
+/.idea/*
+!/.idea/codeStyles/
+
+# Собранные приложения и ключи подписи
+*.apk
+*.aab
+*.jks
+*.keystore
+
+# Логи и дампы памяти
+*.log
+*.hprof
+
+# Claude Code — локальные настройки
+.claude/settings.local.json
+
+# Системный мусор
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Личное
+SPEC.md
+PLAN.md
