@@ -25,16 +25,22 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
-import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
@@ -44,6 +50,7 @@ import dev.chaik.remember.app.navigation.popTransition
 import dev.chaik.remember.app.navigation.pushTransition
 import dev.chaik.remember.app.ui.FloatingIsland
 import dev.chaik.remember.app.ui.IslandHeight
+import dev.chaik.remember.core.security.AppLock
 import dev.chaik.remember.core.ui.LocalIslandPadding
 import dev.chaik.remember.core.ui.components.SwipeBackHost
 import dev.chaik.remember.core.ui.theme.ReMemberTheme
@@ -53,10 +60,19 @@ import kotlinx.coroutines.launch
 private val IslandBottomMargin = 12.dp
 
 @Composable
-fun ReMemberApp() {
+fun ReMemberApp(lock: AppLock) {
+    val locked by lock.locked.collectAsStateWithLifecycle()
+    // Интерфейс строится сразу, под замком (окно блокировки — поверх), чтобы данные успели
+    // загрузиться, пока вводится PIN. До первой разблокировки он невидим — на случай, если
+    // окно замка появится на долю секунды позже.
+    var unlockedOnce by remember { mutableStateOf(!locked) }
+    LaunchedEffect(locked) { if (!locked) unlockedOnce = true }
+
     ReMemberTheme {
         Surface(color = MaterialTheme.colorScheme.surface) {
-            MainScaffold()
+            Box(Modifier.graphicsLayer { alpha = if (unlockedOnce) 1f else 0f }) {
+                MainScaffold()
+            }
         }
     }
 }

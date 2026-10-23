@@ -3,6 +3,9 @@ package dev.chaik.remember
 import android.app.Application
 import android.content.Context
 import android.util.Log
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ProcessLifecycleOwner
 import dev.chaik.remember.app.AppContainer
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -12,6 +15,18 @@ class ReMemberApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        // Всё приложение ушло в фон (а не просто открылся выбор фото внутри него) — запоминаем когда
+        ProcessLifecycleOwner.get().lifecycle.addObserver(
+            object : DefaultLifecycleObserver {
+                override fun onStop(owner: LifecycleOwner) = container.appLock.onBackground()
+            },
+        )
+        container.appScope.launch {
+            // Открыть зашифрованную базу заранее, пока на экране замок: SQLCipher при открытии
+            // специально долго вычисляет ключ (~1–2 с), и после PIN запись дня появлялась с задержкой
+            runCatching { container.database.openHelper.writableDatabase }
+                .onFailure { Log.w(TAG, "Не удалось открыть базу", it) }
+        }
         container.appScope.launch {
             // Стандартные категории трат: создать при первом запуске, обновить при смене набора
             val prefs = getSharedPreferences(PREFS, MODE_PRIVATE)

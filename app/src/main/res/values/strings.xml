@@ -121,6 +121,20 @@
     <string name="notes_title_hint">Заголовок</string>
     <string name="notes_text_hint">Текст заметки…</string>
 
+    <!-- Блокировка -->
+    <string name="lock_enter_pin">Введите PIN</string>
+    <string name="lock_wait">Слишком много попыток. Подождите %1$d с</string>
+    <string name="lock_fingerprint">Войти по отпечатку</string>
+    <string name="lock_backspace">Стереть</string>
+    <string name="lock_biometric_title">Вход в ReMember</string>
+    <string name="lock_biometric_use_pin">Ввести PIN</string>
+    <plurals name="lock_wrong">
+        <item quantity="one">Неверный PIN. Осталась %1$d попытка</item>
+        <item quantity="few">Неверный PIN. Осталось %1$d попытки</item>
+        <item quantity="many">Неверный PIN. Осталось %1$d попыток</item>
+        <item quantity="other">Неверный PIN. Осталось %1$d попытки</item>
+    </plurals>
+
     <!-- Заглушки -->
     <string name="placeholder_title">Раздел в разработке</string>
     <string name="placeholder_today">Запись о том, как прошёл день: текст, фото, сон и траты</string>

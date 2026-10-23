@@ -9,7 +9,9 @@ import dev.chaik.remember.core.data.TagRepository
 import dev.chaik.remember.core.database.DatabaseFactory
 import dev.chaik.remember.core.database.ReMemberDatabase
 import dev.chaik.remember.core.photos.PhotoStorage
+import dev.chaik.remember.core.security.AppLock
 import dev.chaik.remember.core.security.DatabaseKeyManager
+import dev.chaik.remember.core.security.PrefsLockStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -32,6 +34,8 @@ class AppContainer(context: Context) {
     }
 
     val photoStorage by lazy { PhotoStorage(appContext, database.photoDao()) }
+
+    val appLock by lazy { AppLock(PrefsLockStore(appContext)) }
 
     val dayRepository by lazy { DayRepository(database) }
     val sleepRepository by lazy { SleepRepository(database) }
