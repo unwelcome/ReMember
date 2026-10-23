@@ -1,0 +1,129 @@
+package dev.chaik.remember.feature.today.sleep
+
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.text.input.TextFieldValue
+import dev.chaik.remember.core.data.SleepRepository
+import dev.chaik.remember.core.model.SleepEntry
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import java.time.Duration
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.ZoneId
+
+/**
+ * Режим «Сон»: когда лёг, когда встал, качество и что приснилось.
+ * Запись привязана к дню пробуждения: «лёг в 23:30» — это вечер предыдущего дня.
+ */
+class SleepController(
+    private val scope: CoroutineScope,
+    private val repository: SleepRepository,
+) {
+    var bedTime by mutableStateOf<LocalTime?>(null)
+    var wakeTime by mutableStateOf<LocalTime?>(null)
+
+    /** В половинках звезды из 5. */
+    var quality by mutableStateOf<Int?>(null)
+    var dream by mutableStateOf(TextFieldValue(""))
+
+    var isLoaded by mutableStateOf(false)
+        private set
+
+    /** Сколько спал; null — не указано время. */
+    val duration: Duration?
+        get() {
+            val date = date ?: return null
+            val bed = bedInstant(date, bedTime, wakeTime) ?: return null
+            val wake = wakeInstant(date, wakeTime) ?: return null
+            return Duration.between(bed, wake).takeIf { !it.isNegative }
+        }
+
+    private var date: LocalDate? = null
+    private var exists = false
+    private var saved: SleepEntry? = null
+    private var autosaveJob: Job? = null
+    private val lock = Mutex()
+    private val zone get() = ZoneId.systemDefault()
+
+    suspend fun load(date: LocalDate) {
+        autosaveJob?.cancel()
+        flushNow()
+        lock.withLock {
+            isLoaded = false
+            val entry = repository.observe(date).first()
+            this.date = date
+            exists = entry != null
+            bedTime = entry?.bedTime?.atZone(zone)?.toLocalTime()
+            wakeTime = entry?.wakeTime?.atZone(zone)?.toLocalTime()
+            quality = entry?.quality
+            dream = TextFieldValue(entry?.dream.orEmpty())
+            saved = snapshot(date)
+            isLoaded = true
+        }
+        autosaveJob = scope.launch { autosave() }
+    }
+
+    @OptIn(FlowPreview::class)
+    private suspend fun autosave() {
+        snapshotFlow { date?.let(::snapshot) }
+            .debounce(AUTOSAVE_DELAY_MS)
+            .collect { it?.let { save(it) } }
+    }
+
+    suspend fun flushNow() {
+        val date = date ?: return
+        if (isLoaded) save(snapshot(date))
+    }
+
+    private fun snapshot(date: LocalDate) = SleepEntry(
+        date = date,
+        bedTime = bedInstant(date, bedTime, wakeTime),
+        wakeTime = wakeInstant(date, wakeTime),
+        quality = quality,
+        dream = dream.text,
+    )
+
+    private suspend fun save(entry: SleepEntry) = lock.withLock {
+        if (!isLoaded || entry == saved || entry.date != date) return@withLock
+        val empty = entry.bedTime == null && entry.wakeTime == null && entry.quality == null && entry.dream.isBlank()
+        when {
+            !empty -> {
+                repository.save(entry)
+                exists = true
+            }
+            exists -> {
+                repository.delete(entry.date)
+                exists = false
+            }
+        }
+        saved = entry
+    }
+
+    private fun wakeInstant(date: LocalDate, wake: LocalTime?): Instant? =
+        wake?.let { date.atTime(it).atZone(zone).toInstant() }
+
+    /**
+     * Время отхода ко сну. Если оно «позже» подъёма (лёг 23:30, встал 7:30) или
+     * подъём не указан, а лёг после полудня — это вечер предыдущего дня.
+     */
+    private fun bedInstant(date: LocalDate, bed: LocalTime?, wake: LocalTime?): Instant? {
+        bed ?: return null
+        val previousEvening = if (wake != null) bed > wake else bed >= LocalTime.NOON
+        val day = if (previousEvening) date.minusDays(1) else date
+        return day.atTime(bed).atZone(zone).toInstant()
+    }
+
+    private companion object {
+        const val AUTOSAVE_DELAY_MS = 700L
+    }
+}

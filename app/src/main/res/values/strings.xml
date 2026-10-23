@@ -50,6 +50,53 @@
 
     <!-- Сегодня -->
     <string name="today_placeholder">Как прошёл день?</string>
+    <string name="today_mode_day">День</string>
+    <string name="today_mode_sleep">Сон</string>
+    <string name="today_mode_money">Траты</string>
+    <string name="today_switch_mode">Режим: %1$s. Нажмите, чтобы переключить</string>
+    <string name="today_pick_date">Выбрать день</string>
+    <string name="today_go_today">К сегодняшнему дню</string>
+    <string name="action_ok">Готово</string>
+    <string name="action_cancel">Отмена</string>
+    <string name="action_clear">Очистить</string>
+
+    <!-- День: оценка и теги -->
+    <string name="day_rating">Оценка дня</string>
+    <string name="day_rating_value">%1$s / 10</string>
+    <string name="day_rating_secret">11 / 10 ✨</string>
+    <string name="day_rating_empty">не выставлена</string>
+    <string name="tags_add">Тег</string>
+    <string name="tags_dialog_title">Теги</string>
+    <string name="tags_new_hint">Новый тег</string>
+    <string name="tags_create">Добавить</string>
+    <string name="tags_remove">Убрать тег %1$s</string>
+
+    <!-- Сон -->
+    <string name="sleep_bed">Лёг</string>
+    <string name="sleep_wake">Встал</string>
+    <string name="sleep_not_set">—:—</string>
+    <string name="sleep_duration">Спал %1$d ч %2$02d мин</string>
+    <string name="sleep_quality">Качество сна</string>
+    <string name="sleep_dream">Что приснилось</string>
+    <string name="sleep_dream_hint">Запишите сон, пока помните…</string>
+    <string name="sleep_clear_time">Сбросить время</string>
+
+    <!-- Траты -->
+    <string name="money_expense">Расход</string>
+    <string name="money_income">Доход</string>
+    <string name="money_amount">Сумма, ₽</string>
+    <string name="money_amount_error">Введите сумму больше нуля</string>
+    <string name="money_comment">Комментарий</string>
+    <string name="money_add">Добавить</string>
+    <string name="money_save">Сохранить</string>
+    <string name="money_day_expense">Потрачено</string>
+    <string name="money_day_income">Получено</string>
+    <string name="money_empty">За этот день операций нет</string>
+    <string name="money_deleted">Операция удалена</string>
+    <string name="money_undo">Вернуть</string>
+    <string name="money_delete">Удалить операцию</string>
+    <string name="money_no_category">Без категории</string>
+    <string name="money_editing">Изменение операции</string>
 
     <!-- Заглушки -->
     <string name="placeholder_title">Раздел в разработке</string>

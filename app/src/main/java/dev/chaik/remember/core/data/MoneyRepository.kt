@@ -15,6 +15,14 @@ import java.time.LocalDate
 class MoneyRepository(db: ReMemberDatabase) {
     private val dao = db.moneyDao()
 
+    /** При первом запуске — создать стандартные категории. Повторный вызов ничего не делает. */
+    suspend fun ensureDefaultCategories() {
+        if (dao.categoryCount() > 0) return
+        DefaultCategories.forEachIndexed { index, category ->
+            dao.insertCategory(category.copy(sortOrder = index).toEntity())
+        }
+    }
+
     fun observeCategories(type: MoneyType): Flow<List<MoneyCategory>> =
         dao.observeCategories(type).map { list -> list.map { it.toModel() } }
 
@@ -47,3 +55,18 @@ class MoneyRepository(db: ReMemberDatabase) {
 
     suspend fun delete(id: Long) = dao.delete(id)
 }
+
+/** Категории при первом запуске; «Другое» — последней. */
+private val DefaultCategories = listOf(
+    MoneyCategory(name = "Еда", type = MoneyType.EXPENSE, icon = "🍔"),
+    MoneyCategory(name = "Одежда", type = MoneyType.EXPENSE, icon = "👕"),
+    MoneyCategory(name = "Игры", type = MoneyType.EXPENSE, icon = "🎮"),
+    MoneyCategory(name = "Транспорт", type = MoneyType.EXPENSE, icon = "🚌"),
+    MoneyCategory(name = "Кино", type = MoneyType.EXPENSE, icon = "🎬"),
+    MoneyCategory(name = "Другое", type = MoneyType.EXPENSE, icon = "📦"),
+    MoneyCategory(name = "Зарплата", type = MoneyType.INCOME, icon = "💼"),
+    MoneyCategory(name = "Стипендия", type = MoneyType.INCOME, icon = "🎓"),
+    MoneyCategory(name = "Перевод", type = MoneyType.INCOME, icon = "💸"),
+    MoneyCategory(name = "Кешбэк", type = MoneyType.INCOME, icon = "🪙"),
+    MoneyCategory(name = "Другое", type = MoneyType.INCOME, icon = "📦"),
+)

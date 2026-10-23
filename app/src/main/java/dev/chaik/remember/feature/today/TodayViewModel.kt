@@ -1,21 +1,15 @@
 package dev.chaik.remember.feature.today
 
-import android.net.Uri
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.chaik.remember.core.data.DayRepository
-import dev.chaik.remember.core.editor.EditorState
-import dev.chaik.remember.core.model.DayEntry
-import dev.chaik.remember.core.photos.PhotoStorage
-import kotlinx.coroutines.FlowPreview
+import dev.chaik.remember.app.AppContainer
+import dev.chaik.remember.feature.today.day.DayController
+import dev.chaik.remember.feature.today.money.MoneyController
+import dev.chaik.remember.feature.today.sleep.SleepController
 import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -23,90 +17,57 @@ import kotlinx.coroutines.withContext
 import java.time.LocalDate
 
 /**
- * Запись дня: загрузка, автосохранение, добавление фото.
- *
- * Сохраняется сама — через [AUTOSAVE_DELAY_MS] после последнего изменения
- * и сразу, когда приложение уходит в фон ([flush]).
+ * Страница «Сегодня»: выбранный день и режим (день / сон / траты).
+ * Каждый режим — свой контроллер со своим сохранением.
  */
-class TodayViewModel(
-    private val days: DayRepository,
-    private val photos: PhotoStorage,
-    val date: LocalDate = LocalDate.now(),
-) : ViewModel() {
+class TodayViewModel(container: AppContainer) : ViewModel() {
 
-    val editor = EditorState()
-
-    var isLoaded by mutableStateOf(false)
+    var date by mutableStateOf(LocalDate.now())
         private set
 
-    var isImporting by mutableStateOf(false)
+    var mode by mutableStateOf(TodayMode.Day)
         private set
 
-    /** Сколько фото не удалось добавить в последний раз (для сообщения). */
-    var failedImports by mutableStateOf(0)
-        private set
+    val day = DayController(viewModelScope, container.dayRepository, container.tagRepository, container.photoStorage)
+    val sleep = SleepController(viewModelScope, container.sleepRepository)
+    val money = MoneyController(viewModelScope, container.moneyRepository)
 
-    private var entry: DayEntry? = null
-    private var savedMarkdown = ""
-    private val saveLock = Mutex()
+    val isToday: Boolean get() = date == LocalDate.now()
+
+    // Смена дня: сначала сохранить старый, потом загрузить новый — строго по очереди
+    private val switchLock = Mutex()
 
     init {
-        viewModelScope.launch {
-            entry = days.observe(date).first()
-            savedMarkdown = entry?.text.orEmpty()
-            editor.load(savedMarkdown)
-            editor.applyPhotoSizes(photos.photos(editor.photoIds))
-            isLoaded = true
-            autosave()
-        }
+        load(date)
     }
 
-    @OptIn(FlowPreview::class)
-    private suspend fun autosave() {
-        snapshotFlow { editor.markdown }
-            .debounce(AUTOSAVE_DELAY_MS)
-            .collect { save(it) }
+    fun selectDate(date: LocalDate) {
+        if (date == this.date) return
+        this.date = date
+        load(date)
     }
 
-    /** Сохранить сейчас, не дожидаясь паузы в наборе. */
+    fun nextMode() {
+        mode = mode.next()
+    }
+
+    /** Сохранить всё сейчас (приложение уходит в фон). */
     fun flush() {
         viewModelScope.launch {
-            // Даже если экран закрывается прямо сейчас — дописать до конца
-            withContext(NonCancellable) { save(editor.markdown) }
-        }
-    }
-
-    fun addPhotos(uris: List<Uri>) {
-        if (uris.isEmpty()) return
-        viewModelScope.launch {
-            isImporting = true
-            val imported = uris.mapNotNull { uri ->
-                runCatching { photos.import(uri) }
-                    .onFailure { Log.w(TAG, "Не удалось добавить фото $uri", it) }
-                    .getOrNull()
+            withContext(NonCancellable) {
+                day.flushNow()
+                sleep.flushNow()
             }
-            failedImports = uris.size - imported.size
-            editor.insertPhotos(imported)
-            isImporting = false
         }
     }
 
-    fun consumeImportError() {
-        failedImports = 0
-    }
-
-    private suspend fun save(markdown: String): Unit = saveLock.withLock {
-        if (!isLoaded || markdown == savedMarkdown) return
-        // Пустую запись не создаём: открыть «Сегодня» и ничего не написать — не запись
-        val base = entry ?: if (markdown.isBlank()) return else DayEntry(date = date)
-        val updated = base.copy(text = markdown)
-        days.save(updated)
-        entry = updated
-        savedMarkdown = markdown
-    }
-
-    private companion object {
-        const val TAG = "TodayViewModel"
-        const val AUTOSAVE_DELAY_MS = 700L
+    private fun load(date: LocalDate) {
+        money.setDate(date)
+        viewModelScope.launch {
+            switchLock.withLock {
+                day.load(date)
+                sleep.load(date)
+            }
+        }
     }
 }

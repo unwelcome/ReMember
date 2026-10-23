@@ -5,6 +5,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts.PickMultipleVisualMedia
 import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -12,10 +13,13 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -29,10 +33,19 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AddPhotoAlternate
+import androidx.compose.material.icons.outlined.Today
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.SelectableDates
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -41,11 +54,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
@@ -59,7 +75,16 @@ import dev.chaik.remember.core.editor.EditorToolbarHeight
 import dev.chaik.remember.core.editor.PhotoViewer
 import dev.chaik.remember.core.editor.RichEditor
 import dev.chaik.remember.core.ui.components.ScreenScaffold
+import dev.chaik.remember.feature.today.day.DayController
+import dev.chaik.remember.feature.today.day.DayRating
+import dev.chaik.remember.feature.today.day.DayTags
+import dev.chaik.remember.feature.today.money.MoneyContent
+import dev.chaik.remember.feature.today.sleep.SleepContent
 import kotlinx.serialization.Serializable
+import java.io.File
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
 @Serializable
@@ -68,88 +93,110 @@ data object TodayRoute : NavKey
 /** Сколько фото можно выбрать за раз. */
 private const val MAX_PHOTOS_PER_PICK = 10
 
+/** Место под кнопками внизу, чтобы последняя строка не пряталась за ними. */
+private val FabSpace = 96.dp
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun TodayScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val container = context.appContainer
-    val viewModel = viewModel { TodayViewModel(container.dayRepository, container.photoStorage) }
-    val editor = viewModel.editor
+    val viewModel = viewModel { TodayViewModel(container) }
+    val day = viewModel.day
+    val haptics = LocalHapticFeedback.current
 
     // Уходим в фон — сохраняем сразу, не дожидаясь паузы в наборе
     LifecycleEventEffect(Lifecycle.Event.ON_STOP) { viewModel.flush() }
 
     val pickPhotos = rememberLauncherForActivityResult(PickMultipleVisualMedia(MAX_PHOTOS_PER_PICK)) { uris ->
-        viewModel.addPhotos(uris)
+        day.addPhotos(uris)
     }
     val launchPicker = { pickPhotos.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly)) }
 
     val failedImport = stringResource(R.string.editor_photo_import_failed)
-    LaunchedEffect(viewModel.failedImports) {
-        if (viewModel.failedImports > 0) {
+    LaunchedEffect(day.failedImports) {
+        if (day.failedImports > 0) {
             Toast.makeText(context, failedImport, Toast.LENGTH_SHORT).show()
-            viewModel.consumeImportError()
+            day.consumeImportError()
         }
     }
 
     var openedPhotos by remember { mutableStateOf<OpenedPhotos?>(null) }
+    var pickingDate by remember { mutableStateOf(false) }
     val keyboardVisible = WindowInsets.isImeVisible
     val keyboard = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
+    val mode = viewModel.mode
 
     // «Пятница, 23 октября» — на языке телефона
     val title = remember(viewModel.date) {
         viewModel.date.format(DateTimeFormatter.ofPattern("EEEE, d MMMM")).replaceFirstChar { it.titlecase() }
     }
 
-    ScreenScaffold(title = title, modifier = modifier) { padding ->
-        Box(Modifier.fillMaxSize()) {
-            Column(
-                Modifier
-                    .fillMaxSize()
-                    .imePadding()
-                    .verticalScroll(rememberScrollState())
-                    .padding(top = padding.calculateTopPadding())
-                    .padding(horizontal = 20.dp),
-            ) {
-                if (viewModel.isLoaded) {
-                    RichEditor(
-                        state = editor,
-                        photoFile = container.photoStorage::file,
-                        onOpenPhotos = { ids, index -> openedPhotos = OpenedPhotos(ids, index) },
-                        placeholder = stringResource(R.string.today_placeholder),
-                        modifier = Modifier.fillMaxWidth(),
-                    )
+    ScreenScaffold(
+        title = title,
+        modifier = modifier,
+        onTitleClick = { pickingDate = true },
+        actions = {
+            if (!viewModel.isToday) {
+                IconButton(onClick = { viewModel.selectDate(LocalDate.now()) }) {
+                    Icon(Icons.Outlined.Today, stringResource(R.string.today_go_today))
                 }
-                // Пустое место под текстом: тап ставит курсор в конец записи
-                Spacer(
-                    Modifier
-                        .fillMaxWidth()
-                        .height(if (keyboardVisible) EditorToolbarHeight + 24.dp else padding.calculateBottomPadding() + 96.dp)
-                        .clickable(interactionSource = null, indication = null) { editor.focusEnd() },
-                )
             }
+        },
+    ) { padding ->
+        val bottomSpace = if (keyboardVisible) EditorToolbarHeight + 24.dp else padding.calculateBottomPadding() + FabSpace
 
-            // Кнопка фото — справа снизу, над островком; с клавиатурой фото добавляется с панели
-            AnimatedVisibility(
-                visible = !keyboardVisible,
-                enter = scaleIn() + fadeIn(),
-                exit = scaleOut() + fadeOut(),
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(end = 20.dp, bottom = padding.calculateBottomPadding()),
-            ) {
-                FloatingActionButton(onClick = { if (!viewModel.isImporting) launchPicker() }) {
-                    if (viewModel.isImporting) {
-                        CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
-                    } else {
-                        Icon(Icons.Outlined.AddPhotoAlternate, stringResource(R.string.editor_add_photo))
+        Box(Modifier.fillMaxSize()) {
+            AnimatedContent(
+                targetState = mode,
+                transitionSpec = { fadeIn() togetherWith fadeOut() },
+                label = "todayMode",
+            ) { shown ->
+                Column(
+                    Modifier
+                        .fillMaxSize()
+                        .imePadding()
+                        .verticalScroll(rememberScrollState())
+                        .padding(top = padding.calculateTopPadding())
+                        .padding(horizontal = 20.dp),
+                ) {
+                    when (shown) {
+                        TodayMode.Day -> DayModeContent(
+                            day = day,
+                            photoFile = container.photoStorage::file,
+                            onOpenPhotos = { ids, index -> openedPhotos = OpenedPhotos(ids, index) },
+                            bottomSpace = bottomSpace,
+                        )
+                        TodayMode.Sleep -> {
+                            if (viewModel.sleep.isLoaded) SleepContent(viewModel.sleep, Modifier.padding(top = 8.dp))
+                            Spacer(Modifier.height(bottomSpace))
+                        }
+                        TodayMode.Money -> {
+                            MoneyContent(viewModel.money, Modifier.padding(top = 8.dp))
+                            Spacer(Modifier.height(bottomSpace))
+                        }
                     }
                 }
             }
 
+            BottomButtons(
+                visible = !keyboardVisible,
+                mode = mode,
+                showPhoto = mode == TodayMode.Day,
+                isImporting = day.isImporting,
+                onMode = {
+                    haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
+                    focusManager.clearFocus()
+                    viewModel.nextMode()
+                },
+                onPhoto = { if (!day.isImporting) launchPicker() },
+                padding = PaddingValues(start = 20.dp, end = 20.dp, bottom = padding.calculateBottomPadding()),
+            )
+
+            // Панель форматирования — только когда печатаем в записи дня
             AnimatedVisibility(
-                visible = keyboardVisible,
+                visible = keyboardVisible && mode == TodayMode.Day && day.editor.hasFocus,
                 enter = slideInVertically { it } + fadeIn(),
                 exit = slideOutVertically { it } + fadeOut(),
                 modifier = Modifier
@@ -157,7 +204,7 @@ fun TodayScreen(modifier: Modifier = Modifier) {
                     .imePadding(),
             ) {
                 EditorToolbar(
-                    state = editor,
+                    state = day.editor,
                     onAddPhoto = launchPicker,
                     onHideKeyboard = {
                         keyboard?.hide()
@@ -168,12 +215,131 @@ fun TodayScreen(modifier: Modifier = Modifier) {
         }
     }
 
+    if (pickingDate) {
+        DayPickerDialog(
+            selected = viewModel.date,
+            onPick = {
+                viewModel.selectDate(it)
+                pickingDate = false
+            },
+            onDismiss = { pickingDate = false },
+        )
+    }
+
     openedPhotos?.let { opened ->
         PhotoViewer(
             files = opened.ids.map(container.photoStorage::file),
             initialIndex = opened.index,
             onDismiss = { openedPhotos = null },
         )
+    }
+}
+
+/** Режим «День»: оценка, теги и запись с фото. */
+@Composable
+private fun DayModeContent(
+    day: DayController,
+    photoFile: (String) -> File,
+    onOpenPhotos: (List<String>, Int) -> Unit,
+    bottomSpace: Dp,
+) {
+    if (!day.isLoaded) return
+    DayRating(day, Modifier.padding(top = 4.dp))
+    DayTags(day, Modifier.padding(top = 8.dp, bottom = 12.dp))
+    RichEditor(
+        state = day.editor,
+        photoFile = photoFile,
+        onOpenPhotos = onOpenPhotos,
+        placeholder = stringResource(R.string.today_placeholder),
+        modifier = Modifier.fillMaxWidth(),
+    )
+    // Пустое место под текстом: тап ставит курсор в конец записи
+    Spacer(
+        Modifier
+            .fillMaxWidth()
+            .height(bottomSpace)
+            .clickable(interactionSource = null, indication = null) { day.editor.focusEnd() },
+    )
+}
+
+/** Слева — переключатель режимов, справа — добавить фото (только в режиме «День»). */
+@Composable
+private fun BoxScope.BottomButtons(
+    visible: Boolean,
+    mode: TodayMode,
+    showPhoto: Boolean,
+    isImporting: Boolean,
+    onMode: () -> Unit,
+    onPhoto: () -> Unit,
+    padding: PaddingValues,
+) {
+    AnimatedVisibility(
+        visible = visible,
+        enter = scaleIn() + fadeIn(),
+        exit = scaleOut() + fadeOut(),
+        modifier = Modifier
+            .align(Alignment.BottomStart)
+            .padding(padding),
+    ) {
+        val label = stringResource(mode.label)
+        ExtendedFloatingActionButton(
+            onClick = onMode,
+            icon = { Icon(mode.icon, stringResource(R.string.today_switch_mode, label)) },
+            text = {
+                AnimatedContent(targetState = label, label = "modeLabel") { Text(it) }
+            },
+        )
+    }
+    AnimatedVisibility(
+        visible = visible && showPhoto,
+        enter = scaleIn() + fadeIn(),
+        exit = scaleOut() + fadeOut(),
+        modifier = Modifier
+            .align(Alignment.BottomEnd)
+            .padding(padding),
+    ) {
+        FloatingActionButton(onClick = onPhoto) {
+            if (isImporting) {
+                CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
+            } else {
+                Icon(Icons.Outlined.AddPhotoAlternate, stringResource(R.string.editor_add_photo))
+            }
+        }
+    }
+}
+
+/** Календарь для выбора дня; будущие дни недоступны. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DayPickerDialog(
+    selected: LocalDate,
+    onPick: (LocalDate) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    // DatePicker работает с полночью по UTC
+    val todayMillis = LocalDate.now().atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli()
+    val state = rememberDatePickerState(
+        initialSelectedDateMillis = selected.atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli(),
+        selectableDates = object : SelectableDates {
+            override fun isSelectableDate(utcTimeMillis: Long) = utcTimeMillis <= todayMillis
+            override fun isSelectableYear(year: Int) = year <= LocalDate.now().year
+        },
+    )
+    DatePickerDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    state.selectedDateMillis?.let { onPick(Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate()) }
+                        ?: onDismiss()
+                },
+            ) { Text(stringResource(R.string.action_ok)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
+        },
+    ) {
+        DatePicker(state = state, title = null)
     }
 }
 

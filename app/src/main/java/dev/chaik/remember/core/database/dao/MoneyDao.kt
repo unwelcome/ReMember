@@ -20,6 +20,9 @@ interface MoneyDao {
     @Insert
     suspend fun insertCategory(category: MoneyCategoryEntity): Long
 
+    @Query("SELECT COUNT(*) FROM money_category")
+    suspend fun categoryCount(): Int
+
     @Update
     suspend fun updateCategory(category: MoneyCategoryEntity)
 

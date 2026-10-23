@@ -10,7 +10,7 @@ import java.time.LocalDate
 @Entity(tableName = "day_entry")
 data class DayEntryEntity(
     @PrimaryKey val date: LocalDate,
-    /** Настроение, null — не указано. Шкалу выберем на этапе 4. */
+    /** Оценка дня в половинках звезды (см. Rating): 19 = 9.5 из 10; null — не указана. */
     val mood: Int?,
     /** Markdown со ссылками на фото вида `photo:<id>`. */
     val text: String,
@@ -24,6 +24,7 @@ data class SleepEntryEntity(
     @PrimaryKey val date: LocalDate,
     @ColumnInfo(name = "bed_time") val bedTime: Instant?,
     @ColumnInfo(name = "wake_time") val wakeTime: Instant?,
+    /** Качество сна в половинках звезды из 5 (см. Rating): 7 = 3.5 из 5; null — не указано. */
     val quality: Int?,
     /** Что приснилось. */
     val dream: String,

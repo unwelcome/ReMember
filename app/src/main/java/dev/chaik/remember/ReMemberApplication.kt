@@ -19,6 +19,10 @@ class ReMemberApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         appScope.launch {
+            runCatching { container.moneyRepository.ensureDefaultCategories() }
+                .onFailure { Log.w(TAG, "Не удалось создать категории", it) }
+        }
+        appScope.launch {
             // Не мешаем запуску: уборка — через пару секунд после старта
             delay(3_000)
             runCatching { container.photoStorage.cleanupUnreferenced() }
