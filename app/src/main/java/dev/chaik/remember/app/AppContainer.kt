@@ -11,12 +11,17 @@ import dev.chaik.remember.core.data.TaskRepository
 import dev.chaik.remember.core.database.DatabaseFactory
 import dev.chaik.remember.core.database.ReMemberDatabase
 import dev.chaik.remember.core.photos.PhotoStorage
+import dev.chaik.remember.core.reminders.Notifier
+import dev.chaik.remember.core.reminders.OpenTarget
+import dev.chaik.remember.core.reminders.ReminderScheduler
+import dev.chaik.remember.core.reminders.ReminderSettingsStore
 import dev.chaik.remember.core.security.AppLock
 import dev.chaik.remember.core.security.DatabaseKeyManager
 import dev.chaik.remember.core.security.PrefsLockStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
 
 /**
  * Все общие объекты приложения в одном месте (ручной DI).
@@ -46,4 +51,13 @@ class AppContainer(context: Context) {
     val tagRepository by lazy { TagRepository(database) }
     val taskRepository by lazy { TaskRepository(database) }
     val eventRepository by lazy { EventRepository(database) }
+
+    val reminderSettings by lazy { ReminderSettingsStore(appContext) }
+    val notifier by lazy { Notifier(appContext) }
+    val reminderScheduler by lazy {
+        ReminderScheduler(appContext, reminderSettings, notifier, dayRepository, sleepRepository, eventRepository, taskRepository)
+    }
+
+    /** Куда перейти по тапу на уведомление; экран, который это выполнил, обнуляет запрос. */
+    val openRequests = MutableStateFlow<OpenTarget?>(null)
 }

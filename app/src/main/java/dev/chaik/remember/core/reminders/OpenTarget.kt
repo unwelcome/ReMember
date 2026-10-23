@@ -1,0 +1,38 @@
+package dev.chaik.remember.core.reminders
+
+import android.content.Intent
+import java.time.LocalDate
+
+/** Куда открыть приложение по тапу на уведомление. */
+sealed interface OpenTarget {
+    data object Day : OpenTarget
+    data object Sleep : OpenTarget
+    data class Calendar(val date: LocalDate) : OpenTarget
+    data class Task(val taskId: Long) : OpenTarget
+
+    companion object {
+        private const val EXTRA = "dev.chaik.remember.OPEN"
+
+        fun put(intent: Intent, target: OpenTarget): Intent = intent.putExtra(
+            EXTRA,
+            when (target) {
+                Day -> "day"
+                Sleep -> "sleep"
+                is Calendar -> "calendar:${target.date.toEpochDay()}"
+                is Task -> "task:${target.taskId}"
+            },
+        )
+
+        fun from(intent: Intent?): OpenTarget? {
+            val value = intent?.getStringExtra(EXTRA) ?: return null
+            val arg = value.substringAfter(':', "").toLongOrNull()
+            return when {
+                value == "day" -> Day
+                value == "sleep" -> Sleep
+                value.startsWith("calendar:") && arg != null -> Calendar(LocalDate.ofEpochDay(arg))
+                value.startsWith("task:") && arg != null -> Task(arg)
+                else -> null
+            }
+        }
+    }
+}

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Маленький значок уведомлений: та же призма, что в иконке, но без полей адаптивной иконки
+  и с линиями потолще — в строке состояния он размером 24dp. Android красит его сам.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="66"
+    android:viewportHeight="66">
+
+    <group
+        android:translateX="-16"
+        android:translateY="-17.5">
+        <path
+            android:pathData="M45,29 L27,71 L63,76 Z M45,29 L57,25 L75,68 L63,76"
+            android:strokeWidth="4"
+            android:strokeColor="#FFFFFF"
+            android:strokeLineJoin="round" />
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M18,61 L33.2,55.7 L33.2,57.8 L18,63.2 Z M52.66,49 L80,42.5 L80,67.6 L54.96,55 Z" />
+    </group>
+</vector>

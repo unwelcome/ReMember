@@ -2,4 +2,6 @@
 <resources>
     <!-- Фон иконки приложения — тёмно-синий из исходной картинки -->
     <color name="ic_launcher_background">#FF16202C</color>
+    <!-- Цвет значка и кнопок в уведомлениях -->
+    <color name="notification_accent">#FF7C8CFF</color>
 </resources>

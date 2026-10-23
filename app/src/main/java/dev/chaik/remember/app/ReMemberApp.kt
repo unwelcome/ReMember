@@ -38,6 +38,10 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.platform.LocalContext
+import dev.chaik.remember.appContainer
+import dev.chaik.remember.core.reminders.OpenTarget
+import dev.chaik.remember.feature.tasks.editor.TaskEditorRoute
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
@@ -107,6 +111,26 @@ private fun MainScaffold() {
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.currentPage }.drop(1).collect {
             haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
+        }
+    }
+
+    // Тап по уведомлению: нужная вкладка с её корня. День и сон «Сегодня» и дату календаря
+    // выставят сами экраны (и обнулят запрос); задачу открываем здесь
+    val container = LocalContext.current.appContainer
+    val openRequest by container.openRequests.collectAsStateWithLifecycle()
+    LaunchedEffect(openRequest) {
+        val target = openRequest ?: return@LaunchedEffect
+        val tab = when (target) {
+            OpenTarget.Day, OpenTarget.Sleep -> TopLevelTab.Today
+            is OpenTarget.Calendar -> TopLevelTab.Calendar
+            is OpenTarget.Task -> TopLevelTab.Tasks
+        }
+        val stack = backStacks.getValue(tab)
+        while (stack.size > 1) stack.removeLastOrNull()
+        pagerState.scrollToPage(tab.ordinal)
+        if (target is OpenTarget.Task) {
+            stack.add(TaskEditorRoute(target.taskId))
+            container.openRequests.value = null
         }
     }
 

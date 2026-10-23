@@ -50,6 +50,7 @@ import dev.chaik.remember.R
 import dev.chaik.remember.appContainer
 import dev.chaik.remember.core.model.Event
 import dev.chaik.remember.core.model.Repeat
+import dev.chaik.remember.core.reminders.OpenTarget
 import dev.chaik.remember.core.ui.components.ScreenScaffold
 import dev.chaik.remember.core.ui.components.label
 import kotlinx.coroutines.launch
@@ -109,6 +110,14 @@ fun CalendarScreen(
         // Тап по дню соседнего месяца — переезжаем на его месяц
         val page = pageOf(YearMonth.from(date))
         if (page != pager.currentPage) scope.launch { pager.animateScrollToPage(page) }
+    }
+
+    // Открыли из уведомления о событии или из сводки — показываем его день
+    val openRequest by container.openRequests.collectAsStateWithLifecycle()
+    LaunchedEffect(openRequest) {
+        val target = openRequest as? OpenTarget.Calendar ?: return@LaunchedEffect
+        select(target.date)
+        container.openRequests.value = null
     }
 
     val dayEvents = remember(events, selected) { events?.let { eventsOn(it, selected) } }

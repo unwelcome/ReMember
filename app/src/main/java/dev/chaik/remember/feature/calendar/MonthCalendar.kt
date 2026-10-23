@@ -2,7 +2,6 @@ package dev.chaik.remember.feature.calendar
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -241,9 +240,7 @@ private fun DayCell(
                         Modifier
                             .size(6.dp)
                             .clip(CircleShape)
-                            .background(event.color.color().copy(alpha = if (inMonth) 1f else 0.5f))
-                            // На выделенном дне точка того же цвета, что фон, пропала бы — обводим
-                            .then(if (isSelected) Modifier.border(1.dp, colors.onPrimary, CircleShape) else Modifier),
+                            .background(event.color.color().copy(alpha = if (inMonth) 1f else 0.5f)),
                     )
                 }
             }

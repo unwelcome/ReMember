@@ -238,4 +238,71 @@
         <item quantity="many">За %1$d дней</item>
         <item quantity="other">За %1$d дня</item>
     </plurals>
+
+    <!-- Уведомления -->
+    <string name="channel_day">Записи дня и сна</string>
+    <string name="channel_events">События</string>
+    <string name="channel_tasks">Задачи</string>
+    <string name="channel_summary">Утренняя сводка</string>
+    <string name="channel_quiet">Тихие часы</string>
+    <string name="notify_test_title">Проверка уведомлений</string>
+    <string name="notify_test_text">Так будут выглядеть напоминания Re:Member</string>
+    <string name="notify_day_title">Как прошёл день?</string>
+    <string name="notify_day_text">Запишите пару строк о сегодняшнем дне</string>
+    <string name="notify_sleep_title">Как спалось?</string>
+    <string name="notify_sleep_text">Запишите, во сколько легли и проснулись</string>
+    <string name="notify_birthday">День рождения: %1$s</string>
+    <string name="notify_turns">исполняется %1$s</string>
+    <string name="notify_task_text">Срок — %1$s</string>
+    <string name="notify_summary_title">План на сегодня</string>
+    <string name="notify_today_at">сегодня в %1$s</string>
+    <string name="notify_tomorrow_at">завтра в %1$s</string>
+    <string name="notify_date_at">%1$s в %2$s</string>
+    <plurals name="notify_events">
+        <item quantity="one">%1$d событие</item>
+        <item quantity="few">%1$d события</item>
+        <item quantity="many">%1$d событий</item>
+        <item quantity="other">%1$d события</item>
+    </plurals>
+    <plurals name="notify_tasks">
+        <item quantity="one">%1$d задача</item>
+        <item quantity="few">%1$d задачи</item>
+        <item quantity="many">%1$d задач</item>
+        <item quantity="other">%1$d задачи</item>
+    </plurals>
+
+    <!-- Настройки → Напоминания -->
+    <string name="settings_reminders">Напоминания</string>
+    <string name="settings_reminders_hint">Отчёт за день, сон, события, тихие часы и звук</string>
+    <string name="reminders_blocked_title">Уведомления запрещены</string>
+    <string name="reminders_blocked_text">Без разрешения напоминания не придут.</string>
+    <string name="reminders_allow">Разрешить</string>
+    <string name="reminders_all">Присылать напоминания</string>
+    <string name="reminders_group_records">Записи</string>
+    <string name="reminders_day">Отчёт за день</string>
+    <string name="reminders_day_hint">Не придёт, если день уже записан</string>
+    <string name="reminders_sleep">Запись сна</string>
+    <string name="reminders_sleep_hint">Не придёт, если сон уже записан</string>
+    <string name="reminders_group_plans">Календарь и задачи</string>
+    <string name="reminders_events">События</string>
+    <string name="reminders_events_hint">За сколько предупредить — в каждом событии</string>
+    <string name="reminders_tasks">Задачи</string>
+    <string name="reminders_tasks_hint">В срок, если у задачи указано время</string>
+    <string name="reminders_summary">Утренняя сводка</string>
+    <string name="reminders_summary_hint">События и задачи на сегодня</string>
+    <string name="reminders_group_quiet">Не беспокоить</string>
+    <string name="reminders_quiet">Тихие часы</string>
+    <string name="reminders_quiet_from">С %1$s</string>
+    <string name="reminders_quiet_to">До %1$s</string>
+    <string name="reminders_quiet_postpone">Перенести на конец тихих часов</string>
+    <string name="reminders_quiet_silent">Прислать беззвучно</string>
+    <string name="reminders_quiet_skip">Не присылать</string>
+    <string name="reminders_group_sound">Звук</string>
+    <string name="reminders_sound_both">Звук и вибрация</string>
+    <string name="reminders_sound_only">Только звук</string>
+    <string name="reminders_vibration_only">Только вибрация</string>
+    <string name="reminders_silent">Без звука</string>
+    <string name="reminders_sound_hint">Если телефон в беззвучном режиме или в режиме вибрации, он главнее этих настроек.</string>
+    <string name="reminders_system">Настройки уведомлений Android</string>
+    <string name="reminders_test">Прислать пробное уведомление</string>
 </resources>

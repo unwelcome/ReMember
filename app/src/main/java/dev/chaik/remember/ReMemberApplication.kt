@@ -7,12 +7,16 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import dev.chaik.remember.app.AppContainer
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 
 class ReMemberApplication : Application() {
     val container by lazy { AppContainer(this) }
 
+    @OptIn(FlowPreview::class)
     override fun onCreate() {
         super.onCreate()
         // Всё приложение ушло в фон (а не просто открылся выбор фото внутри него) — запоминаем когда
@@ -37,6 +41,20 @@ class ReMemberApplication : Application() {
             }.onFailure { Log.w(TAG, "Не удалось обновить категории", it) }
         }
         container.appScope.launch {
+            // Расписание напоминаний пересчитывается при любом изменении событий, задач и настроек
+            // (и сразу при запуске). Пока приложение не запущено, его ведут будильник и ReminderReceiver
+            combine(
+                container.eventRepository.observeAll(),
+                container.taskRepository.observeAll(),
+                container.reminderSettings.settings,
+            ) { _, _, _ -> }
+                .debounce(RESCHEDULE_DEBOUNCE_MS)
+                .collect {
+                    runCatching { container.reminderScheduler.check() }
+                        .onFailure { Log.w(TAG, "Не удалось пересчитать напоминания", it) }
+                }
+        }
+        container.appScope.launch {
             // Не мешаем запуску: уборка — через пару секунд после старта
             delay(3_000)
             runCatching { container.photoStorage.cleanupUnreferenced() }
@@ -49,6 +67,7 @@ class ReMemberApplication : Application() {
         const val TAG = "ReMember"
         const val PREFS = "app_state"
         const val KEY_CATEGORY_DEFAULTS = "category_defaults_version"
+        const val RESCHEDULE_DEBOUNCE_MS = 1_000L
     }
 }
 

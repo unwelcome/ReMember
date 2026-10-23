@@ -63,6 +63,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.NavKey
 import dev.chaik.remember.R
 import dev.chaik.remember.appContainer
+import dev.chaik.remember.core.reminders.OpenTarget
 import dev.chaik.remember.core.editor.EditorToolbar
 import dev.chaik.remember.core.editor.EditorToolbarHeight
 import dev.chaik.remember.core.editor.PhotoViewer
@@ -98,6 +99,19 @@ fun TodayScreen(modifier: Modifier = Modifier) {
     val viewModel = viewModel { TodayViewModel(container) }
     val day = viewModel.day
     val haptics = LocalHapticFeedback.current
+
+    // Открыли из уведомления «Как прошёл день?» / «Как спалось?» — сегодняшний день в нужном режиме
+    val openRequest by container.openRequests.collectAsStateWithLifecycle()
+    LaunchedEffect(openRequest) {
+        val mode = when (openRequest) {
+            OpenTarget.Day -> TodayMode.Day
+            OpenTarget.Sleep -> TodayMode.Sleep
+            else -> return@LaunchedEffect
+        }
+        viewModel.selectDate(LocalDate.now())
+        viewModel.selectMode(mode)
+        container.openRequests.value = null
+    }
 
     // Уходим в фон — сохраняем сразу, не дожидаясь паузы в наборе
     LifecycleEventEffect(Lifecycle.Event.ON_STOP) { viewModel.flush() }
