@@ -18,6 +18,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.FormatAlignLeft
 import androidx.compose.material.icons.automirrored.outlined.FormatAlignRight
@@ -68,6 +75,9 @@ private val WidthPresets = listOf(50, 75, 100)
 private val GridSpacing = 4.dp
 private val PhotoShape = RoundedCornerShape(16.dp)
 private val CellShape = RoundedCornerShape(8.dp)
+
+/** Сколько места держать под строкой с курсором: панель форматирования и немного воздуха. */
+private val CursorClearance = EditorToolbarHeight + 24.dp
 
 /**
  * Редактор «текст + фото». Сам не прокручивается — кладётся в прокручиваемый контейнер экрана.
@@ -137,16 +147,37 @@ private fun TextBlockField(
     highlighter: MarkdownHighlighter,
     placeholder: String?,
 ) {
+    // Строка с курсором должна оставаться над клавиатурой и панелью форматирования.
+    // Поле само в прокручиваемый экран не подкручивает (оно не знает про панель) — делаем это сами
+    // при каждом наборе, перемещении курсора и появлении клавиатуры.
+    val bringIntoView = remember { BringIntoViewRequester() }
+    var layout by remember { mutableStateOf<TextLayoutResult?>(null) }
+    var focused by remember { mutableStateOf(false) }
+    val density = LocalDensity.current
+    val imeBottom = WindowInsets.ime.getBottom(density)
+    LaunchedEffect(focused, block.value.text, block.value.selection, layout, imeBottom) {
+        val result = layout ?: return@LaunchedEffect
+        if (!focused) return@LaunchedEffect
+        val cursor = result.getCursorRect(block.value.selection.end.coerceIn(0, result.layoutInput.text.length))
+        val below = with(density) { CursorClearance.toPx() }
+        bringIntoView.bringIntoView(cursor.copy(top = cursor.top - below / 4, bottom = cursor.bottom + below))
+    }
+
     BasicTextField(
         value = block.value,
         onValueChange = { state.onTextChange(block, it) },
         textStyle = style,
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
         visualTransformation = highlighter,
+        onTextLayout = { layout = it },
         modifier = Modifier
             .fillMaxWidth()
+            .bringIntoViewRequester(bringIntoView)
             .focusRequester(block.focusRequester)
-            .onFocusChanged { state.onTextFocusChanged(block, it.isFocused) },
+            .onFocusChanged {
+                focused = it.isFocused
+                state.onTextFocusChanged(block, it.isFocused)
+            },
         decorationBox = { inner ->
             Box {
                 if (placeholder != null && block.value.text.isEmpty()) {
