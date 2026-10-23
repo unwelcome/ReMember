@@ -37,10 +37,13 @@ import androidx.navigation3.runtime.NavKey
 import dev.chaik.remember.R
 import dev.chaik.remember.core.settings.LocalAppSettings
 import dev.chaik.remember.core.ui.components.ScreenScaffold
+import dev.chaik.remember.feature.settings.about.AboutRoute
 import dev.chaik.remember.feature.settings.appearance.PersonalizationRoute
+import dev.chaik.remember.feature.settings.data.DataRoute
 import dev.chaik.remember.feature.settings.pages.PagesRoute
 import dev.chaik.remember.feature.settings.profile.ProfileRoute
 import dev.chaik.remember.feature.settings.reminders.RemindersRoute
+import dev.chaik.remember.feature.settings.security.SecurityRoute
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -53,10 +56,10 @@ private val Sections = listOf(
     Section(Icons.Outlined.Person, R.string.settings_profile, R.string.settings_profile_hint, ProfileRoute),
     Section(Icons.Outlined.Palette, R.string.settings_personalization, R.string.settings_personalization_hint, PersonalizationRoute),
     Section(Icons.Outlined.Dashboard, R.string.settings_pages, R.string.settings_pages_hint, PagesRoute),
-    Section(Icons.Outlined.Lock, R.string.settings_security, R.string.settings_security_hint, null),
-    Section(Icons.Outlined.Backup, R.string.settings_data, R.string.settings_data_hint, null),
+    Section(Icons.Outlined.Lock, R.string.settings_security, R.string.settings_security_hint, SecurityRoute),
+    Section(Icons.Outlined.Backup, R.string.settings_data, R.string.settings_data_hint, DataRoute),
     Section(Icons.Outlined.Notifications, R.string.settings_reminders, R.string.settings_reminders_hint, RemindersRoute),
-    Section(Icons.Outlined.Info, R.string.settings_about, R.string.settings_about_hint, null),
+    Section(Icons.Outlined.Info, R.string.settings_about, R.string.settings_about_hint, AboutRoute),
 )
 
 @Composable

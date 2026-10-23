@@ -56,7 +56,13 @@ fun SwipeBackHost(
     }
     val isEnabled by rememberUpdatedState(enabled)
     // Направление жеста: −1 — справа налево (палец идёт влево), +1 — слева направо
-    val direction by rememberUpdatedState(if (LocalAppSettings.current.backSwipe == BackSwipe.LEFT_TO_RIGHT) 1f else -1f)
+    val mode by rememberUpdatedState(LocalAppSettings.current.backSwipe)
+    // −1 — справа налево (палец идёт влево), +1 — слева направо
+    fun allowed(sign: Float) = when (mode) {
+        BackSwipe.RIGHT_TO_LEFT -> sign < 0
+        BackSwipe.LEFT_TO_RIGHT -> sign > 0
+        BackSwipe.BOTH -> true
+    }
 
     Box(
         modifier = modifier.pointerInput(input) {
@@ -84,14 +90,15 @@ fun SwipeBackHost(
                     dx += delta.x
                     dy += delta.y
                     if (abs(dx) > slop || abs(dy) > slop) {
-                        if (dx * direction <= slop || abs(dx) <= abs(dy) * 1.5f) return@awaitEachGesture
+                        if (abs(dx) <= slop || !allowed(if (dx < 0) -1f else 1f) || abs(dx) <= abs(dy) * 1.5f) return@awaitEachGesture
                         change.consume()
                         start = change
                     }
                 }
 
                 val width = size.width.toFloat()
-                val sign = direction
+                // Направление жеста — куда пошёл палец (при «оба» — любое)
+                val sign = if (dx < 0) -1f else 1f
                 var travel = dx * sign // пройденное в сторону «назад» расстояние, включая этап распознавания
                 val edge = if (sign < 0) NavigationEvent.EDGE_RIGHT else NavigationEvent.EDGE_LEFT
                 input.backStarted(backEvent(start.position.x, start.position.y, progress(travel, width), edge))

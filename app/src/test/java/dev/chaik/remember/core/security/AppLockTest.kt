@@ -4,20 +4,28 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class AppLockTest {
-    private class MemoryStore : LockStore {
-        override var pinHash: String? = null
+    private class MemoryStore(
+        override var enabled: Boolean = false,
+        override var pinHash: String? = null,
+        override var pinLength: Int = 4,
+        override var biometric: Boolean = true,
+        override var timeoutMillis: Long = AppLock.DEFAULT_TIMEOUT_MILLIS,
+    ) : LockStore {
         override var failedAttempts = 0
         override var lockoutUntil = 0L
         override var backgroundSince = 0L
     }
 
     private var now = 1_000_000L
-    private val store = MemoryStore()
-    private val lock = AppLock(store, clock = { now }, enabled = true)
+
+    /** Блокировка с PIN 1111 — как после «Установить PIN» в настройках. */
+    private val store = MemoryStore(enabled = true, pinHash = PinHasher.hash(PIN))
+    private val lock = AppLock(store, clock = { now })
 
     @Test
     fun `хэш PIN проверяется и не совпадает с другим PIN`() {
@@ -31,18 +39,18 @@ class AppLockTest {
 
     @Test
     fun `старый хэш пересчитывается после верного PIN`() = runTest {
-        store.pinHash = PinHasher.hash(AppLock.DEFAULT_PIN, iterations = 1_000)
+        store.pinHash = PinHasher.hash(PIN, iterations = 1_000)
         assertTrue(PinHasher.needsRehash(store.pinHash!!))
 
-        assertEquals(PinResult.Unlocked, lock.unlockWithPin(AppLock.DEFAULT_PIN))
+        assertEquals(PinResult.Unlocked, lock.unlockWithPin(PIN))
 
         assertFalse(PinHasher.needsRehash(store.pinHash!!))
-        assertTrue(PinHasher.verify(AppLock.DEFAULT_PIN, store.pinHash!!))
+        assertTrue(PinHasher.verify(PIN, store.pinHash!!))
     }
 
     @Test
-    fun `выключенная блокировка не запирает ни при запуске, ни после фона`() {
-        val off = AppLock(MemoryStore(), clock = { now }, enabled = false)
+    fun `без PIN блокировки нет — даже если остался старый хэш`() {
+        val off = AppLock(MemoryStore(enabled = false, pinHash = PinHasher.hash("1111")), clock = { now })
         assertFalse(off.locked.value)
         off.onBackground()
         now += AppLock.DEFAULT_TIMEOUT_MILLIS * 2
@@ -51,9 +59,9 @@ class AppLockTest {
     }
 
     @Test
-    fun `при запуске заблокировано, PIN по умолчанию открывает`() = runTest {
+    fun `при запуске заблокировано, PIN открывает`() = runTest {
         assertTrue(lock.locked.value)
-        assertEquals(PinResult.Unlocked, lock.unlockWithPin(AppLock.DEFAULT_PIN))
+        assertEquals(PinResult.Unlocked, lock.unlockWithPin(PIN))
         assertFalse(lock.locked.value)
     }
 
@@ -65,10 +73,10 @@ class AppLockTest {
         val lockedOut = lock.unlockWithPin("0000")
         assertTrue(lockedOut is PinResult.LockedOut)
         // Во время паузы не открывает даже верный PIN
-        assertTrue(lock.unlockWithPin(AppLock.DEFAULT_PIN) is PinResult.LockedOut)
+        assertTrue(lock.unlockWithPin(PIN) is PinResult.LockedOut)
 
         now += AppLock.LOCKOUT_MILLIS
-        assertEquals(PinResult.Unlocked, lock.unlockWithPin(AppLock.DEFAULT_PIN))
+        assertEquals(PinResult.Unlocked, lock.unlockWithPin(PIN))
     }
 
     @Test
@@ -84,5 +92,61 @@ class AppLockTest {
         now += AppLock.DEFAULT_TIMEOUT_MILLIS
         lock.onForeground()
         assertTrue(lock.locked.value)
+    }
+
+    @Test
+    fun `новый PIN другой длины, свой таймаут, выключение`() = runTest {
+        val fresh = MemoryStore()
+        val app = AppLock(fresh, clock = { now })
+        assertFalse(app.settings.value.enabled)
+
+        // Задали PIN — блокировка включена, но сейчас приложение открыто
+        app.setPin("123456")
+        assertTrue(app.settings.value.enabled)
+        assertEquals(6, app.pinLength)
+        assertFalse(app.locked.value)
+
+        app.setTimeout(30_000)
+        app.onBackground()
+        now += 30_000
+        app.onForeground()
+        assertTrue(app.locked.value)
+        assertTrue(app.unlockWithPin("1111") is PinResult.Wrong)
+        assertEquals(PinResult.Unlocked, app.unlockWithPin("123456"))
+
+        app.disable()
+        assertFalse(app.settings.value.enabled)
+        assertNull(fresh.pinHash)
+    }
+
+    @Test
+    fun `«сразу» запирает, но выбор фото — нет, если он недолгий`() = runTest {
+        lock.unlockWithBiometric()
+        lock.setTimeout(0)
+
+        // Просто ушли из приложения — замок сразу
+        lock.onBackground()
+        now += 1_000
+        lock.onForeground()
+        assertTrue(lock.locked.value)
+        lock.unlockWithBiometric()
+
+        // Выбирали фото пять минут — без замка
+        lock.allowExternal()
+        lock.onBackground()
+        now += 5 * 60_000
+        lock.onForeground()
+        assertFalse(lock.locked.value)
+
+        // Открыли выбор фото и пропали на полчаса — замок
+        lock.allowExternal()
+        lock.onBackground()
+        now += AppLock.EXTERNAL_GRACE_MILLIS
+        lock.onForeground()
+        assertTrue(lock.locked.value)
+    }
+
+    private companion object {
+        const val PIN = "1111"
     }
 }

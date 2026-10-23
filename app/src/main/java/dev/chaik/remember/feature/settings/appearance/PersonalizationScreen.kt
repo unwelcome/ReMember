@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -16,11 +18,17 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.Colorize
 import androidx.compose.material.icons.outlined.Wallpaper
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,11 +41,13 @@ import androidx.navigation3.runtime.NavKey
 import dev.chaik.remember.R
 import dev.chaik.remember.appContainer
 import dev.chaik.remember.core.settings.AccentColor
+import dev.chaik.remember.core.settings.AppFont
 import dev.chaik.remember.core.settings.BackSwipe
 import dev.chaik.remember.core.settings.LocalAppSettings
 import dev.chaik.remember.core.settings.ThemeMode
 import dev.chaik.remember.core.settings.TimePickerStyle
 import dev.chaik.remember.core.ui.components.ScreenScaffold
+import dev.chaik.remember.core.ui.theme.fontFamilyOf
 import dev.chaik.remember.core.ui.theme.preview
 import dev.chaik.remember.feature.settings.SettingsCard
 import dev.chaik.remember.feature.settings.SettingsGroupTitle
@@ -54,6 +64,7 @@ data object PersonalizationRoute : NavKey
 fun PersonalizationScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     val store = LocalContext.current.appContainer.settings
     val settings = LocalAppSettings.current
+    var pickingColor by remember { mutableStateOf(false) }
 
     ScreenScaffold(title = stringResource(R.string.settings_personalization), modifier = modifier, onBack = onBack) { padding ->
         Column(
@@ -74,7 +85,6 @@ fun PersonalizationScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 ).forEach { (mode, label) ->
                     SettingsRadioRow(
                         label = stringResource(label),
-                        hint = if (mode == ThemeMode.AMOLED) stringResource(R.string.appearance_theme_amoled_hint) else null,
                         selected = settings.theme == mode,
                         onClick = { store.update { it.copy(theme = mode) } },
                     )
@@ -83,17 +93,47 @@ fun PersonalizationScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
 
             SettingsGroupTitle(stringResource(R.string.appearance_accent))
             FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                AccentColor.entries.forEach { accent ->
+                AccentColor.entries.filter { it != AccentColor.CUSTOM }.forEach { accent ->
                     AccentSwatch(accent, selected = settings.accent == accent) { store.update { it.copy(accent = accent) } }
                 }
+                // Свой цвет: кружок этого цвета с пипеткой, тап — палитра
+                CustomSwatch(Color(settings.customAccent), selected = settings.accent == AccentColor.CUSTOM) { pickingColor = true }
             }
             if (settings.accent == AccentColor.WALLPAPER) {
                 Text(
-                    text = stringResource(R.string.appearance_accent_wallpaper),
+                    text = stringResource(R.string.appearance_accent_wallpaper_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(start = 4.dp),
                 )
+            }
+
+            SettingsGroupTitle(stringResource(R.string.appearance_font))
+            SettingsCard {
+                listOf(
+                    AppFont.SYSTEM to R.string.appearance_font_system,
+                    AppFont.INTER to R.string.appearance_font_inter,
+                    AppFont.NUNITO to R.string.appearance_font_nunito,
+                ).forEach { (font, label) ->
+                    // Название каждого шрифта — им же, чтобы сразу было видно, как он выглядит
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { store.update { it.copy(font = font) } }
+                            .padding(horizontal = 4.dp),
+                    ) {
+                        RadioButton(selected = settings.font == font, onClick = { store.update { it.copy(font = font) } })
+                        Column(Modifier.padding(vertical = 6.dp)) {
+                            Text(stringResource(label), style = MaterialTheme.typography.bodyLarge.copy(fontFamily = fontFamilyOf(font)))
+                            Text(
+                                text = stringResource(R.string.appearance_font_sample),
+                                style = MaterialTheme.typography.bodySmall.copy(fontFamily = fontFamilyOf(font)),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                }
             }
 
             SettingsGroupTitle(stringResource(R.string.appearance_hands))
@@ -111,6 +151,7 @@ fun PersonalizationScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 listOf(
                     BackSwipe.RIGHT_TO_LEFT to R.string.appearance_back_rtl,
                     BackSwipe.LEFT_TO_RIGHT to R.string.appearance_back_ltr,
+                    BackSwipe.BOTH to R.string.appearance_back_both,
                 ).forEach { (direction, label) ->
                     SettingsRadioRow(
                         label = stringResource(label),
@@ -134,6 +175,33 @@ fun PersonalizationScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 }
             }
         }
+    }
+
+    if (pickingColor) {
+        ColorPickerDialog(
+            initial = settings.customAccent,
+            onPick = { argb ->
+                store.update { it.copy(accent = AccentColor.CUSTOM, customAccent = argb) }
+                pickingColor = false
+            },
+            onDismiss = { pickingColor = false },
+        )
+    }
+
+}
+
+@Composable
+private fun CustomSwatch(color: Color, selected: Boolean, onClick: () -> Unit) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .size(44.dp)
+            .clip(CircleShape)
+            .background(color)
+            .then(if (selected) Modifier.border(3.dp, MaterialTheme.colorScheme.onSurface, CircleShape) else Modifier)
+            .clickable(onClick = onClick),
+    ) {
+        Icon(Icons.Outlined.Colorize, stringResource(R.string.appearance_custom_color), tint = Color.White, modifier = Modifier.size(20.dp))
     }
 }
 

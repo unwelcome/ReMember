@@ -89,6 +89,7 @@ fun RemindersScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     var canPost by remember { mutableStateOf(container.notifier.canPost) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { canPost = container.notifier.canPost }
     val openSystemSettings = {
+        container.appLock.allowExternal()
         context.startActivity(
             Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName),
         )

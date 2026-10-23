@@ -30,11 +30,17 @@ import dev.chaik.remember.feature.settings.SettingsRoute
 import dev.chaik.remember.feature.settings.SettingsScreen
 import dev.chaik.remember.feature.settings.appearance.PersonalizationRoute
 import dev.chaik.remember.feature.settings.appearance.PersonalizationScreen
+import dev.chaik.remember.feature.settings.about.AboutRoute
+import dev.chaik.remember.feature.settings.about.AboutScreen
+import dev.chaik.remember.feature.settings.data.DataRoute
+import dev.chaik.remember.feature.settings.data.DataScreen
 import dev.chaik.remember.feature.settings.pages.PagesRoute
 import dev.chaik.remember.feature.settings.pages.PagesScreen
 import dev.chaik.remember.feature.settings.profile.ProfileRoute
 import dev.chaik.remember.feature.settings.profile.ProfileScreen
 import dev.chaik.remember.feature.settings.reminders.RemindersRoute
+import dev.chaik.remember.feature.settings.security.SecurityRoute
+import dev.chaik.remember.feature.settings.security.SecurityScreen
 import dev.chaik.remember.feature.settings.reminders.RemindersScreen
 import dev.chaik.remember.feature.stats.StatsRoute
 import dev.chaik.remember.feature.stats.StatsScreen
@@ -89,6 +95,9 @@ fun appEntryProvider(backStack: NavBackStack<NavKey>): (NavKey) -> NavEntry<NavK
         entry<RemindersRoute> { RemindersScreen(onBack = back) }
         entry<ProfileRoute> { ProfileScreen(onBack = back) }
         entry<PagesRoute> { PagesScreen(onBack = back) }
+        entry<SecurityRoute> { SecurityScreen(onBack = back) }
+        entry<DataRoute> { DataScreen(onBack = back) }
+        entry<AboutRoute> { AboutScreen(onBack = back) }
         entry<PersonalizationRoute> { PersonalizationScreen(onBack = back) }
     }
 }

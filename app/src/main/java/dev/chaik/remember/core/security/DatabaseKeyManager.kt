@@ -50,6 +50,22 @@ class DatabaseKeyManager(
         return passphrase
     }
 
+    /**
+     * Заменить пароль базы — при восстановлении из копии. Пароль перешифровывается
+     * ключом чипа этого телефона.
+     */
+    @Synchronized
+    fun replace(passphrase: ByteArray) {
+        val stream = file.startWrite()
+        try {
+            stream.write(encrypt(passphrase))
+            file.finishWrite(stream)
+        } catch (e: Exception) {
+            file.failWrite(stream)
+            throw e
+        }
+    }
+
     private fun encrypt(plain: ByteArray): ByteArray {
         val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(Cipher.ENCRYPT_MODE, keystoreKey())

@@ -165,6 +165,7 @@ fun GymScreen(
                         onClick = {
                             menu = false
                             // Samsung показывает .json как «любой файл» — разрешаем всё, проверим при чтении
+                            container.appLock.allowExternal()
                             pickFile.launch(arrayOf("application/json", "text/*", "*/*"))
                         },
                     )
@@ -340,7 +341,7 @@ private fun WorkoutCard(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = "№${summary.number}",
+                text = stringResource(R.string.gym_number_short, summary.number),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = if (summary.active) colors.onPrimaryContainer else colors.primary,

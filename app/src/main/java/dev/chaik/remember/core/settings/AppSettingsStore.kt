@@ -30,9 +30,11 @@ class AppSettingsStore(context: Context) {
             firstDayOfWeek = prefs.getInt("first_day", 0).takeIf { it in 1..7 }?.let(DayOfWeek::of) ?: d.firstDayOfWeek,
             theme = enumOr(prefs.getString("theme", null), d.theme),
             accent = enumOr(prefs.getString("accent", null), d.accent),
+            customAccent = prefs.getLong("custom_accent", d.customAccent),
             leftHanded = prefs.getBoolean("left_handed", d.leftHanded),
             backSwipe = enumOr(prefs.getString("back_swipe", null), d.backSwipe),
             timePicker = enumOr(prefs.getString("time_picker", null), d.timePicker),
+            font = enumOr(prefs.getString("font", null), d.font),
             islandTabs = list("island_tabs"),
             moreOrder = list("more_order"),
         )
@@ -45,9 +47,11 @@ class AppSettingsStore(context: Context) {
         putInt("first_day", s.firstDayOfWeek.value)
         putString("theme", s.theme.name)
         putString("accent", s.accent.name)
+        putLong("custom_accent", s.customAccent)
         putBoolean("left_handed", s.leftHanded)
         putString("back_swipe", s.backSwipe.name)
         putString("time_picker", s.timePicker.name)
+        putString("font", s.font.name)
         putString("island_tabs", s.islandTabs.joinToString(","))
         putString("more_order", s.moreOrder.joinToString(","))
     }

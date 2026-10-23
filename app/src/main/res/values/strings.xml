@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Re:Member</string>
+    <string name="app_name" translatable="false">Re:Member</string>
 
     <!-- Общие действия -->
     <string name="action_back">Назад</string>
@@ -374,6 +374,7 @@
         <item quantity="other">Удалить %1$d тренировки?</item>
     </plurals>
     <string name="gym_number">Тренировка №%1$d</string>
+    <string name="gym_number_short">№%1$d</string>
     <string name="gym_running">Идёт · %1$s</string>
     <string name="gym_in_progress">Идёт сейчас</string>
     <string name="gym_no_exercises">Упражнений нет</string>
@@ -474,8 +475,8 @@
     <string name="profile_gender_female">Женский</string>
     <string name="profile_language">Язык</string>
     <string name="profile_language_system">Как в системе</string>
-    <string name="profile_language_ru">Русский</string>
-    <string name="profile_language_en">English</string>
+    <string name="profile_language_ru" translatable="false">Русский</string>
+    <string name="profile_language_en" translatable="false">English</string>
     <string name="profile_language_soon">Перевод готовится</string>
     <string name="profile_currency">Валюта</string>
     <string name="profile_currency_hint">Меняется знак у всех сумм; суммы по курсу не пересчитываются</string>
@@ -493,21 +494,111 @@
     <string name="pages_remove">Убрать из островка</string>
     <string name="pages_fixed">Место не меняется</string>
 
+    <!-- О приложении -->
+    <string name="about_version">Версия %1$s</string>
+    <string name="about_tagline">Личный дневник: как прошёл день, что задумано, что сделано и как ты себя чувствуешь — в одном месте и только на твоём телефоне.</string>
+    <string name="about_features">Что умеет</string>
+    <string name="about_today">Запись дня с фото и тегами, оценка дня, сон и траты; выбор любого прошлого дня</string>
+    <string name="about_notes">Заметки с папками, тегами и закреплением, текст с форматированием и фото</string>
+    <string name="about_tasks">Список дел по срокам: приоритеты, повторы, подзадачи, быстрое добавление</string>
+    <string name="about_calendar">События с цветами и повторами, дни рождения с возрастом</string>
+    <string name="about_gym">Тренировки с таймером в шторке, упражнения и подходы, импорт старых записей</string>
+    <string name="about_health">Шаги, активное время и калории из Health Connect, цели на день</string>
+    <string name="about_reminders">Отчёт за день, сон, события, задачи, утренняя сводка, тихие часы</string>
+    <string name="about_privacy_title">Приватность</string>
+    <string name="about_privacy">Все данные хранятся только на телефоне, база зашифрована. PIN-код и отпечаток, резервная копия под вашим паролем</string>
+
+    <!-- Данные и резервные копии -->
+    <string name="data_storage">Место на телефоне</string>
+    <string name="data_database">База данных</string>
+    <string name="data_photos_title">Фото</string>
+    <plurals name="data_photos">
+        <item quantity="one">%1$d фото</item>
+        <item quantity="few">%1$d фото</item>
+        <item quantity="many">%1$d фото</item>
+        <item quantity="other">%1$d фото</item>
+    </plurals>
+    <string name="data_total">Всего</string>
+    <string name="data_backup">Резервная копия</string>
+    <string name="data_backup_text">Все записи, заметки, задачи, события, тренировки и фото — одним файлом, зашифрованным вашим паролем. Из него данные можно вернуть на этот или другой телефон.</string>
+    <string name="data_backup_hint">Храните копию не на этом телефоне: на компьютере, NAS или в облаке. Настройки приложения в копию не входят.</string>
+    <string name="data_export">Экспорт</string>
+    <string name="data_import">Импорт</string>
+    <string name="data_export_title">Пароль копии</string>
+    <string name="data_import_title">Пароль от копии</string>
+    <string name="data_password">Пароль</string>
+    <string name="data_show_password">Показать пароль</string>
+    <string name="data_password_length">Не короче %1$d символов</string>
+    <string name="data_password_warning">Без этого пароля копию не открыть никак — запишите его.</string>
+    <string name="data_check">Проверить</string>
+    <string name="data_wait">Подождите</string>
+    <string name="data_exporting">Шифрую и сохраняю копию…</string>
+    <string name="data_checking">Расшифровываю и проверяю копию…</string>
+    <string name="data_exported_title">Копия сохранена</string>
+    <string name="data_exported_text">Файл копии — %1$s.</string>
+    <string name="data_failed_title">Не получилось</string>
+    <string name="data_export_failed">Не удалось сохранить копию. Попробуйте другое место.</string>
+    <string name="data_wrong_password">Неверный пароль.</string>
+    <string name="data_not_backup">Это не файл резервной копии Re:Member.</string>
+    <string name="data_newer_backup">Копия сделана более новой версией приложения. Обновите Re:Member и попробуйте снова.</string>
+    <string name="data_broken_backup">Файл копии повреждён или обрезан.</string>
+    <string name="data_restore_title">Заменить данные?</string>
+    <string name="data_restore_text">Все данные на этом телефоне заменятся данными из копии от %1$s. Приложение перезапустится.</string>
+    <string name="data_restore_confirm">Заменить</string>
+
+    <!-- Безопасность -->
+    <string name="security_off_text">Блокировка выключена. Задайте PIN-код — тогда при запуске и после паузы Re:Member попросит его или отпечаток.</string>
+    <string name="security_set_pin">Установить PIN-код</string>
+    <string name="security_change_pin">Сменить PIN-код</string>
+    <string name="security_lock">Блокировка</string>
+    <string name="security_lock_hint">Выключить можно, введя текущий PIN</string>
+    <string name="security_biometric">Вход по отпечатку</string>
+    <string name="security_biometric_hint">PIN всегда остаётся запасным способом</string>
+    <string name="security_timeout">Блокировать после ухода в фон</string>
+    <string name="security_now">Сразу</string>
+    <string name="security_disable_title">Выключить блокировку</string>
+    <string name="security_disable">Выключить</string>
+    <string name="security_current_pin">Текущий PIN</string>
+    <string name="security_new_pin">Новый PIN</string>
+    <string name="security_repeat_pin">Ещё раз</string>
+    <string name="security_pin_hint">От %1$d до %2$d цифр</string>
+    <string name="security_pin_length">PIN — от %1$d до %2$d цифр</string>
+    <string name="security_pin_mismatch">PIN-коды не совпадают</string>
+    <plurals name="security_after_seconds">
+        <item quantity="one">Через %1$d секунду</item>
+        <item quantity="few">Через %1$d секунды</item>
+        <item quantity="many">Через %1$d секунд</item>
+        <item quantity="other">Через %1$d секунды</item>
+    </plurals>
+    <plurals name="security_after_minutes">
+        <item quantity="one">Через %1$d минуту</item>
+        <item quantity="few">Через %1$d минуты</item>
+        <item quantity="many">Через %1$d минут</item>
+        <item quantity="other">Через %1$d минуты</item>
+    </plurals>
+
     <!-- Персонализация -->
     <string name="appearance_theme">Тема</string>
     <string name="appearance_theme_system">Как в системе</string>
     <string name="appearance_theme_light">Светлая</string>
     <string name="appearance_theme_dark">Тёмная</string>
     <string name="appearance_theme_amoled">AMOLED</string>
-    <string name="appearance_theme_amoled_hint">Чисто чёрный фон — экран тратит меньше энергии</string>
     <string name="appearance_accent">Акцентный цвет</string>
-    <string name="appearance_accent_wallpaper">Из обоев</string>
+    <string name="appearance_accent_wallpaper_hint">Из обоев — Android сам подбирает цвета по обоям телефона (Material You) и меняет их вместе с обоями. Палитру можно выбрать в настройках обоев Samsung: «Палитра цветов».</string>
+    <string name="appearance_custom_color">Свой цвет</string>
+    <string name="appearance_color_code">Код цвета</string>
+    <string name="appearance_font">Шрифт</string>
+    <string name="appearance_font_system">Системный</string>
+    <string name="appearance_font_inter" translatable="false">Inter</string>
+    <string name="appearance_font_nunito" translatable="false">Nunito</string>
+    <string name="appearance_font_sample">Как прошёл день? 0123456789</string>
     <string name="appearance_hands">Удобство</string>
     <string name="appearance_left_handed">Режим левши</string>
     <string name="appearance_left_handed_hint">Кнопки в нижних углах — слева, меню мастеркнопки раскрывается вправо</string>
     <string name="appearance_back_swipe">Свайп «назад»</string>
     <string name="appearance_back_rtl">Справа налево</string>
     <string name="appearance_back_ltr">Слева направо</string>
+    <string name="appearance_back_both">В обе стороны</string>
     <string name="appearance_time_picker">Выбор времени</string>
     <string name="appearance_time_dial">Циферблат</string>
     <string name="appearance_time_input">Ввод цифрами</string>

@@ -1,6 +1,7 @@
 package dev.chaik.remember.app
 
 import android.content.Context
+import dev.chaik.remember.core.backup.BackupManager
 import dev.chaik.remember.core.data.DayRepository
 import dev.chaik.remember.core.data.EventRepository
 import dev.chaik.remember.core.data.MoneyRepository
@@ -40,8 +41,13 @@ class AppContainer(context: Context) {
      */
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
+    val databaseKeyManager by lazy { DatabaseKeyManager(appContext) }
+
+    /** Экспорт и восстановление резервной копии. */
+    val backupManager by lazy { BackupManager(appContext, { database }, databaseKeyManager) }
+
     val database: ReMemberDatabase by lazy {
-        DatabaseFactory.create(appContext, DatabaseKeyManager(appContext))
+        DatabaseFactory.create(appContext, databaseKeyManager)
     }
 
     val photoStorage by lazy { PhotoStorage(appContext, database.photoDao()) }

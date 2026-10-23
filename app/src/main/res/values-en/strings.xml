@@ -1,0 +1,571 @@
+<resources>
+    <!-- English. Same keys as res/values/strings.xml (Russian, default). -->
+
+    <!-- Common actions -->
+    <string name="action_back">Back</string>
+
+    <!-- Island tabs -->
+    <string name="tab_today">Today</string>
+    <string name="tab_notes">Notes</string>
+    <string name="tab_tasks">Tasks</string>
+    <string name="tab_calendar">Calendar</string>
+    <string name="tab_more">More</string>
+
+    <!-- Sections -->
+    <string name="section_feed">Feed</string>
+    <string name="section_today_hint">Day entry, sleep and spending</string>
+    <string name="section_notes_hint">Notes with folders and tags</string>
+    <string name="section_tasks_hint">To-dos with due dates</string>
+    <string name="section_calendar_hint">Events and birthdays</string>
+    <string name="section_feed_hint">All day entries and “On this day”</string>
+    <string name="section_search">Search</string>
+    <string name="section_search_hint">Across entries, notes and spending</string>
+    <string name="section_stats">Statistics</string>
+    <string name="section_stats_hint">Heatmaps by category</string>
+    <string name="section_finance">Finance</string>
+    <string name="section_finance_hint">Income and spending by month and year</string>
+    <string name="section_health">Health</string>
+    <string name="section_health_hint">Steps and activity</string>
+    <string name="section_gym">Gym</string>
+    <string name="section_gym_hint">Workouts and progress</string>
+    <string name="section_settings">Settings</string>
+    <string name="section_settings_hint">Themes, fonts, lock, notifications</string>
+
+    <!-- Editor -->
+    <string name="editor_add_photo">Add photo</string>
+    <string name="editor_bold">Bold</string>
+    <string name="editor_italic">Italic</string>
+    <string name="editor_strike">Strikethrough</string>
+    <string name="editor_heading">Heading</string>
+    <string name="editor_bullets">Bulleted list</string>
+    <string name="editor_numbers">Numbered list</string>
+    <string name="editor_checklist">Checklist</string>
+    <string name="editor_hide_keyboard">Hide keyboard</string>
+    <string name="editor_photo_up">Move photo up</string>
+    <string name="editor_photo_down">Move photo down</string>
+    <string name="editor_photo_open">Full screen</string>
+    <string name="editor_photo_delete">Delete photo</string>
+    <string name="editor_close">Close</string>
+    <string name="editor_align_left">Left</string>
+    <string name="editor_align_center">Center</string>
+    <string name="editor_align_right">Right</string>
+    <string name="editor_photo_counter">%1$d of %2$d</string>
+    <string name="editor_photo_import_failed">Couldn’t add the photo</string>
+
+    <!-- Today -->
+    <string name="today_placeholder">How was your day?</string>
+    <string name="today_mode_day">Day</string>
+    <string name="today_mode_sleep">Sleep</string>
+    <string name="today_mode_money">Spending</string>
+    <string name="today_switch_mode">Mode: %1$s. Tap to switch</string>
+    <string name="today_pick_date">Pick a day</string>
+    <string name="today_go_today">Go to today</string>
+    <string name="action_ok">Done</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_remove">Remove</string>
+
+    <!-- Day: rating and tags -->
+    <string name="day_rating_value">%1$s/10</string>
+    <string name="day_rating_secret">11/10 ✨</string>
+    <string name="day_rating_none">0/10</string>
+    <string name="tags_add">Tag</string>
+    <string name="tags_dialog_title">Tags</string>
+    <string name="tags_new_hint">New tag</string>
+    <string name="tags_dialog_hint">Checked tags belong to this day. Tap to add or remove.</string>
+    <string name="tags_create">Add</string>
+    <string name="tags_remove">Remove tag %1$s</string>
+
+    <!-- Sleep -->
+    <string name="sleep_bed">Bedtime</string>
+    <string name="sleep_wake">Woke up</string>
+    <string name="sleep_not_set">—:—</string>
+    <string name="sleep_duration">Slept %1$d h %2$02d min</string>
+    <string name="sleep_quality">Sleep quality</string>
+    <string name="sleep_quality_value">%1$s / 5</string>
+    <string name="sleep_dream">Dreams</string>
+    <string name="sleep_dream_hint">Write it down while you still remember…</string>
+    <string name="sleep_clear_time">Clear time</string>
+
+    <!-- Spending -->
+    <string name="money_expense">Expense</string>
+    <string name="money_income">Income</string>
+    <string name="money_amount">Amount, %1$s</string>
+    <string name="money_amount_error">Enter an amount above zero</string>
+    <string name="money_comment">Comment</string>
+    <string name="money_add">Add</string>
+    <string name="money_save">Save</string>
+    <string name="money_day_expense">Spent</string>
+    <string name="money_day_income">Received</string>
+    <string name="money_empty">No transactions on this day</string>
+    <string name="money_deleted">Transaction deleted</string>
+    <string name="money_undo">Undo</string>
+    <string name="money_delete">Delete transaction</string>
+    <string name="money_no_category">No category</string>
+    <string name="money_category">Category</string>
+    <string name="money_editing">Editing transaction</string>
+
+    <!-- Notes -->
+    <string name="notes_all">All</string>
+    <string name="notes_no_folder">No folder</string>
+    <string name="notes_new_folder">Folder</string>
+    <string name="notes_rename_folder">Rename</string>
+    <string name="notes_delete_folder">Delete folder</string>
+    <string name="notes_delete_folder_title">Delete folder “%1$s”?</string>
+    <string name="notes_delete_folder_text">Its notes stay — just without a folder.</string>
+    <string name="notes_new">New note</string>
+    <string name="notes_pinned">Pinned</string>
+    <string name="notes_others">Others</string>
+    <string name="notes_empty">No notes yet — tap “+” to create one</string>
+    <string name="notes_untitled">Untitled</string>
+    <string name="notes_pin">Pin</string>
+    <string name="notes_unpin">Unpin</string>
+    <string name="notes_move_to_folder">Move to folder</string>
+    <string name="notes_delete">Delete</string>
+    <string name="notes_delete_title">Delete note?</string>
+    <string name="notes_delete_text">This can’t be undone.</string>
+    <string name="notes_title_hint">Title</string>
+    <string name="notes_text_hint">Note text…</string>
+
+    <!-- Lock -->
+    <string name="lock_enter_pin">Enter PIN</string>
+    <string name="lock_wait">Too many attempts. Wait %1$d s</string>
+    <string name="lock_fingerprint">Unlock with fingerprint</string>
+    <string name="lock_backspace">Delete</string>
+    <string name="lock_biometric_title">Unlock Re:Member</string>
+    <string name="lock_biometric_use_pin">Use PIN</string>
+    <plurals name="lock_wrong">
+        <item quantity="one">Wrong PIN. %1$d attempt left</item>
+        <item quantity="other">Wrong PIN. %1$d attempts left</item>
+    </plurals>
+
+    <!-- Tasks -->
+    <string name="tasks_overdue">Overdue</string>
+    <string name="tasks_today">Today</string>
+    <string name="tasks_tomorrow">Tomorrow</string>
+    <string name="tasks_later">Later</string>
+    <string name="tasks_no_date">No due date</string>
+    <string name="tasks_done">Done (%1$d)</string>
+    <string name="tasks_clear_done">Clear</string>
+    <string name="tasks_clear_done_title">Delete completed tasks?</string>
+    <string name="tasks_clear_done_text">This can’t be undone.</string>
+    <string name="tasks_empty">No tasks yet — tap “+” to add one</string>
+    <string name="tasks_new">New task</string>
+    <string name="tasks_quick_hint">What needs doing?</string>
+    <string name="tasks_add">Add</string>
+    <string name="tasks_pick_date">Date</string>
+    <string name="tasks_priority">Priority</string>
+    <string name="tasks_mark_done">Mark as done</string>
+    <string name="tasks_mark_undone">Mark as not done</string>
+    <string name="tasks_yesterday">Yesterday</string>
+    <string name="tasks_title_hint">Task name</string>
+    <string name="tasks_due">Due</string>
+    <string name="tasks_no_due">No due date</string>
+    <string name="tasks_no_time">Time</string>
+    <string name="repeat_title">Repeat</string>
+    <string name="tasks_subtasks">Subtasks</string>
+    <string name="tasks_add_subtask">Subtask</string>
+    <string name="tasks_subtask_hint">Step</string>
+    <string name="tasks_remove_subtask">Remove subtask</string>
+    <string name="tasks_notes">Task notes</string>
+    <string name="tasks_delete_title">Delete task?</string>
+    <string name="tasks_priority_none">None</string>
+    <string name="tasks_priority_low">Low</string>
+    <string name="tasks_priority_medium">Medium</string>
+    <string name="tasks_priority_high">High</string>
+    <string name="repeat_none">Don’t repeat</string>
+    <string name="repeat_daily">Every day</string>
+    <string name="repeat_weekly">Every week</string>
+    <string name="repeat_monthly">Every month</string>
+    <string name="repeat_yearly">Every year</string>
+    <string name="repeat_weekdays">On weekdays</string>
+
+    <!-- Placeholders -->
+    <string name="placeholder_title">Coming soon</string>
+    <string name="placeholder_today">How your day went: text, photos, sleep and spending</string>
+    <string name="placeholder_notes">Notes with folders, tags and pinning</string>
+    <string name="placeholder_tasks">To-dos with due dates and priorities</string>
+
+    <!-- Calendar and events -->
+    <string name="calendar_today">Today</string>
+    <string name="calendar_today_day">Today, %1$s</string>
+    <string name="calendar_prev_month">Previous month</string>
+    <string name="calendar_next_month">Next month</string>
+    <string name="calendar_no_events">No events on this day</string>
+    <string name="calendar_add_event">Add event</string>
+    <string name="event_title">Event</string>
+    <string name="event_new">New event</string>
+    <string name="event_title_hint">Event name</string>
+    <string name="event_untitled">Untitled</string>
+    <string name="event_birthday">Birthday</string>
+    <string name="event_person_hint">Full name</string>
+    <string name="event_birth_year">Year of birth</string>
+    <string name="event_turns_on_day">Turns %1$s</string>
+    <string name="event_turns_next">Turns %2$s on %1$s</string>
+    <string name="event_when">When</string>
+    <string name="event_color">Color</string>
+    <string name="event_remind">Remind</string>
+    <string name="event_remind_none">Don’t remind</string>
+    <string name="event_remind_at_time">At the time of the event</string>
+    <string name="event_remind_custom">Custom…</string>
+    <string name="event_remind_custom_title">Remind before</string>
+    <string name="event_remind_amount">How long</string>
+    <string name="event_unit_minutes">Minutes</string>
+    <string name="event_unit_hours">Hours</string>
+    <string name="event_unit_days">Days</string>
+    <string name="event_description">Description</string>
+    <string name="event_delete_title">Delete event?</string>
+    <string name="event_delete_text">This can’t be undone.</string>
+    <string name="event_delete_repeating_text">The event will be deleted on all its repeat days.</string>
+    <plurals name="years">
+        <item quantity="one">%1$d</item>
+        <item quantity="other">%1$d</item>
+    </plurals>
+    <plurals name="remind_minutes">
+        <item quantity="one">%1$d minute before</item>
+        <item quantity="other">%1$d minutes before</item>
+    </plurals>
+    <plurals name="remind_hours">
+        <item quantity="one">%1$d hour before</item>
+        <item quantity="other">%1$d hours before</item>
+    </plurals>
+    <plurals name="remind_days">
+        <item quantity="one">%1$d day before</item>
+        <item quantity="other">%1$d days before</item>
+    </plurals>
+
+    <!-- Notifications -->
+    <string name="channel_day">Day and sleep entries</string>
+    <string name="channel_events">Events</string>
+    <string name="channel_tasks">Tasks</string>
+    <string name="channel_summary">Morning summary</string>
+    <string name="channel_quiet">Quiet hours</string>
+    <string name="notify_test_title">Test notification</string>
+    <string name="notify_test_text">This is how Re:Member reminders will look</string>
+    <string name="notify_day_title">How was your day?</string>
+    <string name="notify_day_text">Write a couple of lines about today</string>
+    <string name="notify_sleep_title">How did you sleep?</string>
+    <string name="notify_sleep_text">Note when you went to bed and woke up</string>
+    <string name="notify_birthday">Birthday: %1$s</string>
+    <string name="notify_turns">turns %1$s</string>
+    <string name="notify_task_text">Due %1$s</string>
+    <string name="notify_summary_title">Today’s plan</string>
+    <string name="notify_today_at">today at %1$s</string>
+    <string name="notify_tomorrow_at">tomorrow at %1$s</string>
+    <string name="notify_date_at">%1$s at %2$s</string>
+    <plurals name="notify_events">
+        <item quantity="one">%1$d event</item>
+        <item quantity="other">%1$d events</item>
+    </plurals>
+    <plurals name="notify_tasks">
+        <item quantity="one">%1$d task</item>
+        <item quantity="other">%1$d tasks</item>
+    </plurals>
+
+    <!-- Settings → Reminders -->
+    <string name="settings_reminders">Reminders</string>
+    <string name="settings_reminders_hint">Daily entry, sleep, events, quiet hours and sound</string>
+    <string name="reminders_blocked_title">Notifications are blocked</string>
+    <string name="reminders_blocked_text">Reminders won’t arrive without permission.</string>
+    <string name="reminders_allow">Allow</string>
+    <string name="reminders_all">Send reminders</string>
+    <string name="reminders_group_records">Entries</string>
+    <string name="reminders_day">Daily entry</string>
+    <string name="reminders_day_hint">Skipped if the day is already written</string>
+    <string name="reminders_sleep">Sleep entry</string>
+    <string name="reminders_sleep_hint">Skipped if sleep is already logged</string>
+    <string name="reminders_group_plans">Calendar and tasks</string>
+    <string name="reminders_events">Events</string>
+    <string name="reminders_events_hint">How early to remind is set in each event</string>
+    <string name="reminders_tasks">Tasks</string>
+    <string name="reminders_tasks_hint">When due, if the task has a time</string>
+    <string name="reminders_summary">Morning summary</string>
+    <string name="reminders_summary_hint">Today’s events and tasks</string>
+    <string name="reminders_group_quiet">Do not disturb</string>
+    <string name="reminders_quiet">Quiet hours</string>
+    <string name="reminders_quiet_from">From %1$s</string>
+    <string name="reminders_quiet_to">To %1$s</string>
+    <string name="reminders_quiet_postpone">Postpone until quiet hours end</string>
+    <string name="reminders_quiet_silent">Deliver silently</string>
+    <string name="reminders_quiet_skip">Don’t deliver</string>
+    <string name="reminders_group_sound">Sound</string>
+    <string name="reminders_sound_both">Sound and vibration</string>
+    <string name="reminders_sound_only">Sound only</string>
+    <string name="reminders_vibration_only">Vibration only</string>
+    <string name="reminders_silent">Silent</string>
+    <string name="reminders_sound_hint">If the phone is on silent or vibrate, that takes priority over these settings.</string>
+    <string name="reminders_system">Android notification settings</string>
+    <string name="reminders_test">Send a test notification</string>
+
+    <!-- Gym -->
+    <string name="gym_start">Start workout</string>
+    <string name="gym_continue">Continue workout</string>
+    <string name="gym_empty">No workouts yet. Tap “Start workout” when you get to the gym</string>
+    <string name="gym_add_past">Add a past workout</string>
+    <string name="gym_more">More</string>
+    <string name="gym_import">Import from file (JSON)</string>
+    <string name="gym_import_title">Import workouts</string>
+    <string name="gym_import_reading">Reading the file…</string>
+    <string name="gym_import_not_file">This isn’t a workouts file</string>
+    <string name="gym_import_bad_version">Unknown file version: %1$d</string>
+    <string name="gym_import_bad_date">date “%1$s” — expected YYYY-MM-DD</string>
+    <string name="gym_import_bad_start">start time “%1$s” — expected HH:MM</string>
+    <string name="gym_import_bad_end">end time “%1$s” — expected HH:MM</string>
+    <string name="gym_import_no_name">exercise without a name</string>
+    <string name="gym_import_bad_duration">“%1$s”: time “%2$s” — expected m:ss</string>
+    <string name="gym_import_bad_kind">“%1$s”: kind “%2$s” — must be weight_reps, reps, time or speed_time</string>
+    <string name="gym_import_in_workout">Workout %1$d (%2$s): %3$s</string>
+    <string name="gym_import_more_errors">…and %1$d more</string>
+    <string name="gym_weight_change">%1$s → %2$s kg</string>
+    <string name="gym_weight_after_only">→ %1$s kg</string>
+    <string name="unit_kg_value">%1$s kg</string>
+    <string name="unit_kmh">km/h</string>
+    <string name="date_today_lower">today</string>
+    <string name="date_yesterday_lower">yesterday</string>
+    <string name="date_time_pair">%1$s, %2$s</string>
+    <string name="gym_import_failed">Couldn’t read the file.\n\n%1$s</string>
+    <string name="gym_import_nothing">No new workouts in this file.</string>
+    <string name="gym_import_confirm">Import</string>
+    <plurals name="gym_import_found">
+        <item quantity="one">Found %1$d workout</item>
+        <item quantity="other">Found %1$d workouts</item>
+    </plurals>
+    <plurals name="gym_import_new_exercises">
+        <item quantity="one">New exercise for the list: %1$d</item>
+        <item quantity="other">New exercises for the list: %1$d</item>
+    </plurals>
+    <plurals name="gym_import_duplicates">
+        <item quantity="one">Already in the app, will skip: %1$d</item>
+        <item quantity="other">Already in the app, will skip: %1$d</item>
+    </plurals>
+    <plurals name="gym_import_done">
+        <item quantity="one">Imported %1$d workout. Numbers were recounted by date.</item>
+        <item quantity="other">Imported %1$d workouts. Numbers were recounted by date.</item>
+    </plurals>
+    <string name="gym_selected">Selected: %1$d</string>
+    <string name="gym_select_all">Select all</string>
+    <string name="gym_select_none">Select none</string>
+    <string name="gym_select_cancel">Cancel selection</string>
+    <plurals name="gym_delete_many">
+        <item quantity="one">Delete %1$d workout?</item>
+        <item quantity="other">Delete %1$d workouts?</item>
+    </plurals>
+    <string name="gym_number">Workout #%1$d</string>
+    <string name="gym_number_short">#%1$d</string>
+    <string name="gym_running">In progress · %1$s</string>
+    <string name="gym_in_progress">In progress</string>
+    <string name="gym_no_exercises">No exercises</string>
+    <string name="gym_minutes">%1$d min</string>
+    <string name="gym_hours_minutes">%1$d h %2$d min</string>
+    <string name="gym_weight_before">Weight before workout</string>
+    <string name="gym_weight_after">Weight after workout</string>
+    <string name="gym_weight_label">Weight, kg</string>
+    <string name="gym_skip">Skip</string>
+    <string name="gym_save">Save</string>
+    <string name="gym_weight_empty">Weight</string>
+    <string name="gym_start_time">Start</string>
+    <string name="gym_end_time">End</string>
+    <string name="gym_finish">Finish workout</string>
+    <string name="gym_add_exercise">Exercise</string>
+    <string name="gym_add_set">Set</string>
+    <string name="gym_new_exercise">New exercise</string>
+    <string name="gym_exercise_name">Name</string>
+    <string name="gym_exercise_kind">How to log sets</string>
+    <string name="gym_kind_weight_reps">Weight × reps</string>
+    <string name="gym_kind_reps">Reps</string>
+    <string name="gym_kind_time">Time</string>
+    <string name="gym_kind_speed_time">Speed × time</string>
+    <string name="gym_add">Add</string>
+    <string name="gym_set_weight">Weight, kg</string>
+    <string name="gym_set_reps">Reps</string>
+    <string name="gym_set_speed">Speed, km/h</string>
+    <string name="gym_set_minutes">Minutes</string>
+    <string name="gym_set_seconds">Seconds</string>
+    <string name="gym_edit_set">Set</string>
+    <string name="gym_delete_set">Delete set</string>
+    <string name="gym_exercise_menu">Exercise actions</string>
+    <string name="gym_change_kind">Set type</string>
+    <string name="gym_remove_exercise">Remove from workout</string>
+    <string name="gym_note">Workout note</string>
+    <string name="gym_imported">Imported from file</string>
+    <string name="gym_delete_title">Delete workout?</string>
+    <string name="gym_delete_text">Its exercises and sets will be deleted too.</string>
+    <string name="gym_past_title">Past workout</string>
+    <string name="gym_date">Date</string>
+    <string name="gym_no_time">—</string>
+    <string name="gym_running_mark">…</string>
+    <string name="gym_time">Time</string>
+    <string name="gym_time_range">Time: %1$s – %2$s</string>
+    <string name="gym_weight_range">Weight: %1$s – %2$s</string>
+    <string name="channel_workout">Gym workout</string>
+    <string name="channel_workout_live">Workout in progress</string>
+    <string name="notify_workout_running">Workout #%1$d</string>
+    <string name="notify_workout_running_text">Tap to log exercises</string>
+    <string name="notify_workout_finish">Finish</string>
+    <string name="notify_workout_long_title">Workout still running</string>
+    <string name="notify_workout_long_text">It’s been two hours. Finish and log your weight?</string>
+
+    <!-- Health -->
+    <string name="health_rationale_title">Health data</string>
+    <string name="health_rationale_text">Re:Member reads steps, active calories and workouts from Health Connect to show your activity for the day and the week. The data is only read, stays on this phone and is never sent anywhere.</string>
+    <string name="health_goals">Goals</string>
+    <string name="health_goals_title">Daily goals</string>
+    <string name="health_steps">Steps</string>
+    <string name="health_minutes">Activity</string>
+    <string name="health_calories">Calories</string>
+    <string name="health_goal_steps">Steps</string>
+    <string name="health_goal_minutes">Active minutes</string>
+    <string name="health_goal_calories">Active calories</string>
+    <string name="health_of_steps">of %1$s</string>
+    <string name="health_of_minutes">of %1$s min</string>
+    <string name="health_of_calories">of %1$s kcal</string>
+    <string name="health_unit_minutes">min</string>
+    <string name="health_unit_calories">kcal</string>
+    <string name="health_connect_title">Connect Health Connect</string>
+    <string name="health_connect_text">Steps, calories and workouts come from Samsung Health through Health Connect. Allow reading — the data stays on your phone.</string>
+    <string name="health_connect_button">Allow reading</string>
+    <string name="health_unavailable">Health Connect isn’t available on this phone.</string>
+    <string name="health_update">Health Connect needs an update.</string>
+    <string name="health_update_button">Update</string>
+    <string name="health_error">Couldn’t read the data: %1$s</string>
+
+    <!-- Settings: sections -->
+    <string name="settings_profile">Profile</string>
+    <string name="settings_profile_hint">Name, gender, language, currency, start of week</string>
+    <string name="settings_personalization">Personalization</string>
+    <string name="settings_personalization_hint">Theme, color, left-handed mode, gestures, time picker</string>
+    <string name="settings_pages">Pages</string>
+    <string name="settings_pages_hint">Island tabs and “More” tiles</string>
+    <string name="settings_security">Security</string>
+    <string name="settings_security_hint">PIN, fingerprint, auto-lock</string>
+    <string name="settings_data">Data and backups</string>
+    <string name="settings_data_hint">Export, import, storage</string>
+    <string name="settings_about">About</string>
+    <string name="settings_about_hint">What Re:Member can do</string>
+    <string name="settings_soon">Soon</string>
+
+    <!-- Profile -->
+    <string name="profile_nickname">Nickname</string>
+    <string name="profile_gender">Gender</string>
+    <string name="profile_gender_unset">Not set</string>
+    <string name="profile_gender_male">Male</string>
+    <string name="profile_gender_female">Female</string>
+    <string name="profile_language">Language</string>
+    <string name="profile_language_system">System default</string>
+    <string name="profile_language_soon">Translation in progress</string>
+    <string name="profile_currency">Currency</string>
+    <string name="profile_currency_hint">Changes the symbol on all amounts; amounts aren’t converted</string>
+    <string name="profile_first_day">First day of the week</string>
+
+    <!-- Pages -->
+    <string name="pages_island">Island tabs</string>
+    <string name="pages_island_hint">2 to 4 sections plus “More”. Removed sections show up as tiles in “More”.</string>
+    <string name="pages_add_tab">Add tab</string>
+    <string name="pages_add_title">Which section to add?</string>
+    <string name="pages_more_tiles">“More” tiles</string>
+    <string name="pages_reset">Restore defaults</string>
+    <string name="pages_move_up">Move up</string>
+    <string name="pages_move_down">Move down</string>
+    <string name="pages_remove">Remove from island</string>
+    <string name="pages_fixed">Fixed position</string>
+
+    <!-- About -->
+    <string name="about_version">Version %1$s</string>
+    <string name="about_tagline">A personal diary: how your day went, what’s planned, what’s done and how you feel — in one place and only on your phone.</string>
+    <string name="about_features">What it can do</string>
+    <string name="about_today">Day entry with photos and tags, day rating, sleep and spending; any past day</string>
+    <string name="about_notes">Notes with folders, tags and pinning, formatted text and photos</string>
+    <string name="about_tasks">To-dos by due date: priorities, repeats, subtasks, quick add</string>
+    <string name="about_calendar">Events with colors and repeats, birthdays with age</string>
+    <string name="about_gym">Workouts with a timer in the notification shade, exercises and sets, import of old logs</string>
+    <string name="about_health">Steps, active time and calories from Health Connect, daily goals</string>
+    <string name="about_reminders">Daily entry, sleep, events, tasks, morning summary, quiet hours</string>
+    <string name="about_privacy_title">Privacy</string>
+    <string name="about_privacy">All data stays on the phone, the database is encrypted. PIN and fingerprint, password-protected backups</string>
+
+    <!-- Data and backups -->
+    <string name="data_storage">Storage</string>
+    <string name="data_database">Database</string>
+    <string name="data_photos_title">Photos</string>
+    <plurals name="data_photos">
+        <item quantity="one">%1$d photo</item>
+        <item quantity="other">%1$d photos</item>
+    </plurals>
+    <string name="data_total">Total</string>
+    <string name="data_backup">Backup</string>
+    <string name="data_backup_text">All entries, notes, tasks, events, workouts and photos — in one file encrypted with your password. You can restore it on this or another phone.</string>
+    <string name="data_backup_hint">Keep the backup off this phone: on a computer, NAS or in the cloud. App settings aren’t included.</string>
+    <string name="data_export">Export</string>
+    <string name="data_import">Import</string>
+    <string name="data_export_title">Backup password</string>
+    <string name="data_import_title">Password for the backup</string>
+    <string name="data_password">Password</string>
+    <string name="data_show_password">Show password</string>
+    <string name="data_password_length">At least %1$d characters</string>
+    <string name="data_password_warning">Without this password the backup can’t be opened at all — write it down.</string>
+    <string name="data_check">Check</string>
+    <string name="data_wait">Please wait</string>
+    <string name="data_exporting">Encrypting and saving the backup…</string>
+    <string name="data_checking">Decrypting and checking the backup…</string>
+    <string name="data_exported_title">Backup saved</string>
+    <string name="data_exported_text">Backup file size: %1$s.</string>
+    <string name="data_failed_title">Something went wrong</string>
+    <string name="data_export_failed">Couldn’t save the backup. Try another location.</string>
+    <string name="data_wrong_password">Wrong password.</string>
+    <string name="data_not_backup">This isn’t a Re:Member backup file.</string>
+    <string name="data_newer_backup">The backup was made by a newer version of the app. Update Re:Member and try again.</string>
+    <string name="data_broken_backup">The backup file is damaged or incomplete.</string>
+    <string name="data_restore_title">Replace data?</string>
+    <string name="data_restore_text">All data on this phone will be replaced with the backup from %1$s. The app will restart.</string>
+    <string name="data_restore_confirm">Replace</string>
+
+    <!-- Security -->
+    <string name="security_off_text">The lock is off. Set a PIN and Re:Member will ask for it or your fingerprint at launch and after a pause.</string>
+    <string name="security_set_pin">Set PIN</string>
+    <string name="security_change_pin">Change PIN</string>
+    <string name="security_lock">Lock</string>
+    <string name="security_lock_hint">Turning it off requires the current PIN</string>
+    <string name="security_biometric">Fingerprint unlock</string>
+    <string name="security_biometric_hint">The PIN always works as a fallback</string>
+    <string name="security_timeout">Lock after leaving the app</string>
+    <string name="security_now">Immediately</string>
+    <string name="security_disable_title">Turn off lock</string>
+    <string name="security_disable">Turn off</string>
+    <string name="security_current_pin">Current PIN</string>
+    <string name="security_new_pin">New PIN</string>
+    <string name="security_repeat_pin">Repeat</string>
+    <string name="security_pin_hint">%1$d to %2$d digits</string>
+    <string name="security_pin_length">PIN must be %1$d to %2$d digits</string>
+    <string name="security_pin_mismatch">PINs don’t match</string>
+    <plurals name="security_after_seconds">
+        <item quantity="one">After %1$d second</item>
+        <item quantity="other">After %1$d seconds</item>
+    </plurals>
+    <plurals name="security_after_minutes">
+        <item quantity="one">After %1$d minute</item>
+        <item quantity="other">After %1$d minutes</item>
+    </plurals>
+
+    <!-- Personalization -->
+    <string name="appearance_theme">Theme</string>
+    <string name="appearance_theme_system">System default</string>
+    <string name="appearance_theme_light">Light</string>
+    <string name="appearance_theme_dark">Dark</string>
+    <string name="appearance_theme_amoled">AMOLED</string>
+    <string name="appearance_accent">Accent color</string>
+    <string name="appearance_accent_wallpaper_hint">From wallpaper — Android picks colors from your wallpaper (Material You) and changes them with it. On Samsung you can choose the palette in wallpaper settings: “Color palette”.</string>
+    <string name="appearance_custom_color">Custom color</string>
+    <string name="appearance_color_code">Color code</string>
+    <string name="appearance_font">Font</string>
+    <string name="appearance_font_system">System</string>
+    <string name="appearance_font_sample">How was your day? 0123456789</string>
+    <string name="appearance_hands">Comfort</string>
+    <string name="appearance_left_handed">Left-handed mode</string>
+    <string name="appearance_left_handed_hint">Bottom corner buttons move to the left, the master button menu opens to the right</string>
+    <string name="appearance_back_swipe">“Back” swipe</string>
+    <string name="appearance_back_rtl">Right to left</string>
+    <string name="appearance_back_ltr">Left to right</string>
+    <string name="appearance_back_both">Both directions</string>
+    <string name="appearance_time_picker">Time picker</string>
+    <string name="appearance_time_dial">Clock dial</string>
+    <string name="appearance_time_input">Type digits</string>
+</resources>

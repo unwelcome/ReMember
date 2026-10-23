@@ -136,13 +136,17 @@ fun HealthScreen(onBack: (() -> Unit)?, modifier: Modifier = Modifier) {
                     title = stringResource(R.string.health_connect_title),
                     text = stringResource(R.string.health_connect_text),
                     button = stringResource(R.string.health_connect_button),
-                    onClick = { askPermission.launch(container.health.permissions) },
+                    onClick = {
+                        container.appLock.allowExternal()
+                        askPermission.launch(container.health.permissions)
+                    },
                 )
                 is HealthState.Unavailable -> Message(
                     title = stringResource(if (state.needsUpdate) R.string.health_update else R.string.health_unavailable),
                     text = "",
                     button = if (state.needsUpdate) stringResource(R.string.health_update_button) else null,
                     onClick = {
+                        container.appLock.allowExternal()
                         context.startActivity(
                             Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.google.android.apps.healthdata")),
                         )

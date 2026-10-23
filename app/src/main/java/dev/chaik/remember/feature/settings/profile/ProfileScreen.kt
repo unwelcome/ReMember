@@ -11,6 +11,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -35,6 +40,7 @@ import dev.chaik.remember.R
 import dev.chaik.remember.appContainer
 import dev.chaik.remember.core.settings.AppLanguage
 import dev.chaik.remember.core.settings.Currencies
+import dev.chaik.remember.core.settings.currencySymbol
 import dev.chaik.remember.core.settings.Gender
 import dev.chaik.remember.core.settings.LocalAppSettings
 import dev.chaik.remember.core.ui.components.ScreenScaffold
@@ -54,7 +60,7 @@ import java.util.Locale
 data object ProfileRoute : NavKey
 
 /** Языки, которые уже переведены; остальные в списке видны, но недоступны. */
-private val TranslatedLanguages = setOf("", "ru")
+private val TranslatedLanguages = setOf("", "ru", "en")
 
 /** Профиль: никнейм, пол, язык, валюта, первый день недели. Всё сохраняется сразу. */
 @OptIn(ExperimentalLayoutApi::class, FlowPreview::class)
@@ -134,19 +140,11 @@ fun ProfileScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             }
 
             SettingsGroupTitle(stringResource(R.string.profile_currency))
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Currencies.forEach { (code, symbol) ->
-                    FilterChip(
-                        selected = settings.currency == code,
-                        onClick = {
-                            if (settings.currency != code) {
-                                store.update { it.copy(currency = code) }
-                                // Траты ведутся в одной валюте — у всех записей меняется знак
-                                container.appScope.launch { container.moneyRepository.changeCurrency(code) }
-                            }
-                        },
-                        label = { Text("$symbol  ${currencyName(code)}") },
-                    )
+            CurrencyMenu(selected = settings.currency) { code ->
+                if (settings.currency != code) {
+                    store.update { it.copy(currency = code) }
+                    // Траты ведутся в одной валюте — у всех записей меняется знак
+                    container.appScope.launch { container.moneyRepository.changeCurrency(code) }
                 }
             }
             Text(
@@ -165,6 +163,36 @@ fun ProfileScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                         label = { Text(day.getDisplayName(TextStyle.SHORT, Locale.getDefault()).replaceFirstChar { it.titlecase() }) },
                     )
                 }
+            }
+        }
+    }
+}
+
+/** Выпадающий список валют: «₽  Российский рубль». */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CurrencyMenu(selected: String, onSelect: (String) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
+        OutlinedTextField(
+            value = "${currencySymbol(selected)}  ${currencyName(selected)}",
+            onValueChange = {},
+            readOnly = true,
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            shape = RoundedCornerShape(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+        )
+        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            Currencies.forEach { (code, symbol) ->
+                DropdownMenuItem(
+                    text = { Text("$symbol  ${currencyName(code)}") },
+                    onClick = {
+                        expanded = false
+                        onSelect(code)
+                    },
+                )
             }
         }
     }

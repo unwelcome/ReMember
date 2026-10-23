@@ -102,7 +102,11 @@ fun NoteEditorScreen(
     val pickPhotos = rememberLauncherForActivityResult(PickMultipleVisualMedia(MAX_PHOTOS_PER_PICK)) {
         viewModel.addPhotos(it)
     }
-    val launchPicker = { pickPhotos.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly)) }
+    val launchPicker = {
+        // Выбор фото — системное окно: блокировка по возвращении не нужна
+        container.appLock.allowExternal()
+        pickPhotos.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly))
+    }
     val failedImport = stringResource(R.string.editor_photo_import_failed)
     LaunchedEffect(viewModel.failedImports) {
         if (viewModel.failedImports > 0) {

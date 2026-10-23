@@ -35,9 +35,11 @@ fun ReMemberTheme(content: @Composable () -> Unit) {
     val settings by context.appContainer.settings.settings.collectAsStateWithLifecycle()
     val dark = isDarkTheme(settings.theme)
 
-    val base = when (val argb = settings.accent.argb) {
-        null -> if (dark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        else -> accentScheme(Color(argb), dark)
+    val preset = settings.accent.argb
+    val base = when {
+        settings.accent == AccentColor.CUSTOM -> accentScheme(Color(settings.customAccent), dark)
+        preset == null -> if (dark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+        else -> accentScheme(Color(preset), dark)
     }
     val colorScheme = if (settings.theme == ThemeMode.AMOLED) base.amoled() else base
 
@@ -51,7 +53,7 @@ fun ReMemberTheme(content: @Composable () -> Unit) {
     }
 
     CompositionLocalProvider(LocalAppSettings provides settings) {
-        MaterialTheme(colorScheme = colorScheme, typography = Typography, content = content)
+        MaterialTheme(colorScheme = colorScheme, typography = typography(settings.font), content = content)
     }
 }
 

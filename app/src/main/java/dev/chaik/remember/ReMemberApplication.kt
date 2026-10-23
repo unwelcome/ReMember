@@ -19,6 +19,9 @@ class ReMemberApplication : Application() {
     @OptIn(FlowPreview::class)
     override fun onCreate() {
         super.onCreate()
+        // Подтверждённое восстановление из копии — до того, как кто-нибудь откроет базу
+        runCatching { container.backupManager.applyPendingRestore() }
+            .onFailure { Log.e(TAG, "Не удалось восстановить данные из копии", it) }
         // Всё приложение ушло в фон (а не просто открылся выбор фото внутри него) — запоминаем когда
         ProcessLifecycleOwner.get().lifecycle.addObserver(
             object : DefaultLifecycleObserver {

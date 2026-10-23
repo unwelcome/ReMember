@@ -43,6 +43,7 @@ import dev.chaik.remember.appContainer
 import androidx.compose.runtime.key
 import dev.chaik.remember.app.navigation.islandTabs
 import dev.chaik.remember.app.navigation.Destination
+import androidx.navigationevent.NavigationEvent
 import dev.chaik.remember.core.settings.BackSwipe
 import dev.chaik.remember.core.settings.LocalAppSettings
 import dev.chaik.remember.core.reminders.OpenTarget
@@ -223,7 +224,8 @@ private fun TabContent(backStack: NavBackStack<NavKey>) {
             ),
             transitionSpec = { pushTransition() },
             popTransitionSpec = { popTransition(leftToRight) },
-            predictivePopTransitionSpec = { popTransition(leftToRight) },
+            // Свайпом — страница уезжает туда, куда ведёт палец (важно, когда разрешены оба направления)
+            predictivePopTransitionSpec = { edge -> popTransition(leftToRight = edge == NavigationEvent.EDGE_LEFT) },
             entryProvider = appEntryProvider(backStack),
         )
     }

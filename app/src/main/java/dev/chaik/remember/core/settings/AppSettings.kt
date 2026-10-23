@@ -12,10 +12,13 @@ data class AppSettings(
     val firstDayOfWeek: DayOfWeek = DayOfWeek.MONDAY,
     val theme: ThemeMode = ThemeMode.SYSTEM,
     val accent: AccentColor = AccentColor.WALLPAPER,
+    /** Свой акцентный цвет (ARGB), когда выбран [AccentColor.CUSTOM]. */
+    val customAccent: Long = 0xFF5B6CF0,
     /** Кнопки в нижних углах — слева, веер мастеркнопки раскрывается вправо. */
     val leftHanded: Boolean = false,
     val backSwipe: BackSwipe = BackSwipe.RIGHT_TO_LEFT,
     val timePicker: TimePickerStyle = TimePickerStyle.DIAL,
+    val font: AppFont = AppFont.SYSTEM,
     /** Вкладки островка (имена разделов, без «Ещё»); пусто — по умолчанию. */
     val islandTabs: List<String> = emptyList(),
     /** Порядок плиток «Ещё» (имена разделов); пусто — по умолчанию. */
@@ -38,10 +41,16 @@ enum class AccentColor(val argb: Long?) {
     RED(0xFFE5484D),
     PINK(0xFFE0569B),
     PURPLE(0xFF9A5CE6),
+
+    /** Свой цвет из палитры — см. [AppSettings.customAccent]. */
+    CUSTOM(null),
 }
 
 /** Каким свайпом закрывается вложенная страница. */
-enum class BackSwipe { RIGHT_TO_LEFT, LEFT_TO_RIGHT }
+enum class BackSwipe { RIGHT_TO_LEFT, LEFT_TO_RIGHT, BOTH }
+
+/** Шрифт приложения: системный или один из встроенных (res/font, лицензия OFL). */
+enum class AppFont { SYSTEM, INTER, NUNITO }
 
 /** Выбор времени: циферблат или ввод цифрами. */
 enum class TimePickerStyle { DIAL, INPUT }
