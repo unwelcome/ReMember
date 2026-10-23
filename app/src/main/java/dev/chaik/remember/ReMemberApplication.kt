@@ -25,7 +25,13 @@ class ReMemberApplication : Application() {
         // Всё приложение ушло в фон (а не просто открылся выбор фото внутри него) — запоминаем когда
         ProcessLifecycleOwner.get().lifecycle.addObserver(
             object : DefaultLifecycleObserver {
-                override fun onStop(owner: LifecycleOwner) = container.appLock.onBackground()
+                override fun onStop(owner: LifecycleOwner) {
+                    container.appLock.onBackground()
+                    container.todaySession.onBackground()
+                }
+
+                // Вернулись после долгой паузы — «Сегодня» снова в режиме по времени суток
+                override fun onStart(owner: LifecycleOwner) = container.todaySession.onForeground()
             },
         )
         container.appScope.launch {

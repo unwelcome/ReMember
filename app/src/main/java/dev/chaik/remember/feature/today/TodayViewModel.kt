@@ -27,13 +27,13 @@ import java.time.YearMonth
  * Страница «Сегодня»: выбранный день и режим (день / сон / траты).
  * Каждый режим — свой контроллер со своим сохранением.
  */
-class TodayViewModel(container: AppContainer) : ViewModel() {
+class TodayViewModel(private val container: AppContainer) : ViewModel() {
 
     var date by mutableStateOf(LocalDate.now())
         private set
 
-    var mode by mutableStateOf(TodayMode.Day)
-        private set
+    /** Режим хранится в приложении ([TodaySession]) — переживает пересоздание вкладки. */
+    val mode: TodayMode get() = container.todaySession.mode
 
     val day = DayController(viewModelScope, container.dayRepository, container.tagRepository, container.photoStorage)
     val sleep = SleepController(viewModelScope, container.sleepRepository)
@@ -71,7 +71,7 @@ class TodayViewModel(container: AppContainer) : ViewModel() {
     }
 
     fun selectMode(mode: TodayMode) {
-        this.mode = mode
+        container.todaySession.mode = mode
     }
 
     /** Сохранить всё сейчас (приложение уходит в фон). */

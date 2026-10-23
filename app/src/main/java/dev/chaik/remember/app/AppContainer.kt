@@ -21,6 +21,7 @@ import dev.chaik.remember.core.reminders.ReminderScheduler
 import dev.chaik.remember.core.reminders.ReminderSettingsStore
 import dev.chaik.remember.core.security.AppLock
 import dev.chaik.remember.core.settings.AppSettingsStore
+import dev.chaik.remember.feature.today.TodaySession
 import dev.chaik.remember.core.security.DatabaseKeyManager
 import dev.chaik.remember.core.security.PrefsLockStore
 import kotlinx.coroutines.CoroutineScope
@@ -56,6 +57,9 @@ class AppContainer(context: Context) {
 
     /** Приветствие уже показано в этом запуске — при пересоздании экрана (смена темы) не повторять. */
     var welcomeShown = false
+
+    /** Режим страницы «Сегодня» — общий на весь запуск. */
+    val todaySession = TodaySession()
 
     /** Профиль и персонализация. */
     val settings by lazy { AppSettingsStore(appContext) }
