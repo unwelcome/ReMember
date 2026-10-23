@@ -71,7 +71,7 @@ import dev.chaik.remember.core.editor.EditorToolbarHeight
 import dev.chaik.remember.core.editor.PhotoViewer
 import dev.chaik.remember.core.editor.RichEditor
 import dev.chaik.remember.core.ui.components.ScreenScaffold
-import dev.chaik.remember.feature.today.calendar.DayPickerSheet
+import dev.chaik.remember.feature.today.calendar.DayPickerPage
 import dev.chaik.remember.feature.today.day.DayController
 import dev.chaik.remember.feature.today.day.DayRating
 import dev.chaik.remember.feature.today.day.DayTags
@@ -212,7 +212,7 @@ fun TodayScreen(modifier: Modifier = Modifier) {
 
     if (pickingDate) {
         val marks by viewModel.calendarMarks.collectAsStateWithLifecycle()
-        DayPickerSheet(
+        DayPickerPage(
             selected = viewModel.date,
             marks = marks,
             firstMonth = viewModel.calendarStart,

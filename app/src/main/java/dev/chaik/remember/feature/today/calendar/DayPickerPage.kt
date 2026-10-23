@@ -10,8 +10,8 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -20,13 +20,10 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -36,11 +33,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.chaik.remember.R
 import dev.chaik.remember.core.model.Rating
+import dev.chaik.remember.core.ui.components.FullScreenPage
 import dev.chaik.remember.core.ui.theme.ratingColor
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -53,16 +53,19 @@ import java.util.Locale
 private val CellShape = RoundedCornerShape(10.dp)
 
 /**
- * Выбор дня: месяцы лентой сверху вниз (старые сверху), прокрутка вверх — в прошлое.
- * Тап по дню сразу открывает его. Будущие дни недоступны.
+ * Выбор дня — полноэкранная страница: месяцы лентой сверху вниз (старые сверху),
+ * прокрутка вверх — в прошлое. Тап по дню сразу открывает его. Будущие дни недоступны.
  * В клетках — цвет и подпись оценки дня; заполненный день без оценки слегка подсвечен.
+ * Закрыть — крестик, «назад» или свайп справа налево.
+ *
+ * Раньше это был нижний лист (ModalBottomSheet), но на резком свайпе вверх
+ * он «пружинил» вверх-вниз — поэтому отдельная страница.
  *
  * @param marks дни с записью → оценка в половинках (null — без оценки)
  * @param firstMonth самый ранний месяц в ленте
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DayPickerSheet(
+fun DayPickerPage(
     selected: LocalDate,
     marks: Map<LocalDate, Int?>,
     firstMonth: YearMonth,
@@ -70,8 +73,6 @@ fun DayPickerSheet(
     onDismiss: () -> Unit,
 ) {
     val today = LocalDate.now()
-    // Старые месяцы сверху, текущий — внизу. Список не переворачиваем (reverseLayout):
-    // с перевёрнутым списком нижний лист «пружинил» вверх-вниз при броске пальцем вверх.
     val months = remember(firstMonth, today) {
         generateSequence(firstMonth) { it.plusMonths(1) }.takeWhile { it <= YearMonth.from(today) }.toList()
     }
@@ -83,32 +84,29 @@ fun DayPickerSheet(
     val firstDayOfWeek = remember { WeekFields.of(Locale.getDefault()).firstDayOfWeek }
     val haptics = LocalHapticFeedback.current
 
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-    ) {
-        Column(Modifier.fillMaxHeight(0.92f)) {
-            WeekdayHeader(firstDayOfWeek, Modifier.padding(horizontal = 16.dp))
-            HorizontalDivider(Modifier.padding(top = 8.dp))
-            LazyColumn(
-                state = listState,
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp),
-                verticalArrangement = Arrangement.spacedBy(20.dp),
-                modifier = Modifier.weight(1f),
-            ) {
-                items(months, key = { it.toString() }) { month ->
-                    MonthGrid(
-                        month = month,
-                        firstDayOfWeek = firstDayOfWeek,
-                        today = today,
-                        selected = selected,
-                        marks = marks,
-                        onPick = {
-                            haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
-                            onPick(it)
-                        },
-                    )
-                }
+    FullScreenPage(title = stringResource(R.string.today_pick_date), onDismiss = onDismiss) {
+        WeekdayHeader(firstDayOfWeek, Modifier.padding(horizontal = 16.dp))
+        HorizontalDivider(Modifier.padding(top = 8.dp))
+        LazyColumn(
+            state = listState,
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
+            modifier = Modifier
+                .weight(1f)
+                .navigationBarsPadding(),
+        ) {
+            items(months, key = { it.toString() }) { month ->
+                MonthGrid(
+                    month = month,
+                    firstDayOfWeek = firstDayOfWeek,
+                    today = today,
+                    selected = selected,
+                    marks = marks,
+                    onPick = {
+                        haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
+                        onPick(it)
+                    },
+                )
             }
         }
     }
