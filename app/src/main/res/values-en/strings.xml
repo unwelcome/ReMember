@@ -467,6 +467,15 @@
     <string name="pages_move_down">Move down</string>
     <string name="pages_remove">Remove from island</string>
     <string name="pages_fixed">Fixed position</string>
+    <string name="pages_start">Launch</string>
+    <string name="pages_welcome">Welcome screen</string>
+    <string name="pages_welcome_hint">“Good morning” and your nickname for a moment after unlocking</string>
+    <string name="pages_welcome_duration">Duration</string>
+    <string name="pages_welcome_seconds">%1$.1f s</string>
+    <string name="welcome_morning">Good morning</string>
+    <string name="welcome_day">Good afternoon</string>
+    <string name="welcome_evening">Good evening</string>
+    <string name="welcome_night">Still up?</string>
 
     <!-- About -->
     <string name="about_version">Version %1$s</string>

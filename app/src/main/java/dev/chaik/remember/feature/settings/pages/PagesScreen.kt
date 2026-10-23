@@ -21,10 +21,12 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -41,10 +43,15 @@ import dev.chaik.remember.app.navigation.moreTiles
 import dev.chaik.remember.app.ui.FloatingIsland
 import dev.chaik.remember.appContainer
 import dev.chaik.remember.core.settings.LocalAppSettings
+import dev.chaik.remember.core.settings.WELCOME_MAX
+import dev.chaik.remember.core.settings.WELCOME_MIN
+import dev.chaik.remember.core.settings.WELCOME_STEP
 import dev.chaik.remember.core.ui.components.ScreenScaffold
 import dev.chaik.remember.feature.settings.SettingsCard
 import dev.chaik.remember.feature.settings.SettingsGroupTitle
+import dev.chaik.remember.feature.settings.SettingsSwitchRow
 import kotlinx.serialization.Serializable
+import kotlin.math.roundToInt
 
 @Serializable
 data object PagesRoute : NavKey
@@ -118,6 +125,39 @@ fun PagesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                     )
                 }
                 FixedRow(Destination.Settings)
+            }
+
+            SettingsGroupTitle(stringResource(R.string.pages_start))
+            SettingsCard {
+                SettingsSwitchRow(
+                    title = stringResource(R.string.pages_welcome),
+                    hint = stringResource(R.string.pages_welcome_hint),
+                    checked = settings.welcome,
+                    onChange = { on -> store.update { it.copy(welcome = on) } },
+                )
+                if (settings.welcome) {
+                    // Ползунок двигается плавно, а сохраняется значение по отпусканию
+                    var millis by remember(settings.welcomeMillis) { mutableFloatStateOf(settings.welcomeMillis.toFloat()) }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
+                    ) {
+                        Text(stringResource(R.string.pages_welcome_duration), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                        Text(
+                            text = stringResource(R.string.pages_welcome_seconds, millis.roundToInt() / 1000f),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                    Slider(
+                        value = millis,
+                        onValueChange = { millis = it },
+                        onValueChangeFinished = { store.update { it.copy(welcomeMillis = millis.roundToInt()) } },
+                        valueRange = WELCOME_MIN.toFloat()..WELCOME_MAX.toFloat(),
+                        steps = (WELCOME_MAX - WELCOME_MIN) / WELCOME_STEP - 1,
+                        modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
+                    )
+                }
             }
 
             TextButton(

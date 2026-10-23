@@ -38,6 +38,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.platform.LocalContext
 import dev.chaik.remember.appContainer
+import dev.chaik.remember.feature.welcome.WelcomeScreen
+import kotlinx.coroutines.delay
+import androidx.compose.runtime.withFrameNanos
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.EnterTransition
 import androidx.compose.runtime.key
 import dev.chaik.remember.app.navigation.islandTabs
 import dev.chaik.remember.app.navigation.Destination
@@ -67,6 +72,9 @@ import kotlinx.coroutines.launch
 
 private val IslandBottomMargin = 12.dp
 
+/** Как быстро растворяется приветствие. */
+private const val WELCOME_FADE_MILLIS = 250
+
 @Composable
 fun ReMemberApp(lock: AppLock) {
     val locked by lock.locked.collectAsStateWithLifecycle()
@@ -77,9 +85,25 @@ fun ReMemberApp(lock: AppLock) {
     LaunchedEffect(locked) { if (!locked) unlockedOnce = true }
 
     ReMemberTheme {
+        val container = LocalContext.current.appContainer
+        val settings = LocalAppSettings.current
+        // Приветствие — один раз за запуск: сразу после PIN (или старта, если PIN нет),
+        // пока главная страница достраивается под ним, — столько, сколько выбрано в Страницах
+        var welcome by remember { mutableStateOf(settings.welcome && !container.welcomeShown) }
+        LaunchedEffect(unlockedOnce) {
+            if (!welcome || !unlockedOnce) return@LaunchedEffect
+            container.welcomeShown = true
+            delay(settings.welcomeMillis.toLong())
+            withFrameNanos { } // главная страница успела отрисоваться под приветствием
+            welcome = false
+        }
+
         Surface(color = MaterialTheme.colorScheme.surface) {
             Box(Modifier.graphicsLayer { alpha = if (unlockedOnce) 1f else 0f }) {
                 MainScaffold()
+            }
+            AnimatedVisibility(visible = welcome, enter = EnterTransition.None, exit = fadeOut(tween(WELCOME_FADE_MILLIS))) {
+                WelcomeScreen(nickname = settings.nickname)
             }
         }
     }

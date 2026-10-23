@@ -19,6 +19,10 @@ data class AppSettings(
     val backSwipe: BackSwipe = BackSwipe.RIGHT_TO_LEFT,
     val timePicker: TimePickerStyle = TimePickerStyle.DIAL,
     val font: AppFont = AppFont.SYSTEM,
+    /** Приветствие при запуске (после PIN). */
+    val welcome: Boolean = true,
+    /** Сколько держать приветствие, мс ([WELCOME_MIN]…[WELCOME_MAX]). */
+    val welcomeMillis: Int = 800,
     /** Вкладки островка (имена разделов, без «Ещё»); пусто — по умолчанию. */
     val islandTabs: List<String> = emptyList(),
     /** Порядок плиток «Ещё» (имена разделов); пусто — по умолчанию. */
@@ -48,6 +52,11 @@ enum class AccentColor(val argb: Long?) {
 
 /** Каким свайпом закрывается вложенная страница. */
 enum class BackSwipe { RIGHT_TO_LEFT, LEFT_TO_RIGHT, BOTH }
+
+/** Границы длительности приветствия и шаг ползунка, мс. */
+const val WELCOME_MIN = 300
+const val WELCOME_MAX = 2000
+const val WELCOME_STEP = 100
 
 /** Шрифт приложения: системный или один из встроенных (res/font, лицензия OFL). */
 enum class AppFont { SYSTEM, INTER, NUNITO }

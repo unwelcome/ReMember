@@ -54,6 +54,9 @@ class AppContainer(context: Context) {
 
     val appLock by lazy { AppLock(PrefsLockStore(appContext)) }
 
+    /** Приветствие уже показано в этом запуске — при пересоздании экрана (смена темы) не повторять. */
+    var welcomeShown = false
+
     /** Профиль и персонализация. */
     val settings by lazy { AppSettingsStore(appContext) }
 

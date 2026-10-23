@@ -493,6 +493,15 @@
     <string name="pages_move_down">Ниже</string>
     <string name="pages_remove">Убрать из островка</string>
     <string name="pages_fixed">Место не меняется</string>
+    <string name="pages_start">Запуск</string>
+    <string name="pages_welcome">Приветствие</string>
+    <string name="pages_welcome_hint">«Доброе утро» и ваш никнейм на мгновение после входа</string>
+    <string name="pages_welcome_duration">Длительность</string>
+    <string name="pages_welcome_seconds">%1$.1f с</string>
+    <string name="welcome_morning">Доброе утро</string>
+    <string name="welcome_day">Добрый день</string>
+    <string name="welcome_evening">Добрый вечер</string>
+    <string name="welcome_night">Доброй ночи</string>
 
     <!-- О приложении -->
     <string name="about_version">Версия %1$s</string>

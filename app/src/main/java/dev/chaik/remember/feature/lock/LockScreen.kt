@@ -19,7 +19,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Backspace
 import androidx.compose.material.icons.outlined.Fingerprint
-import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -44,6 +43,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import dev.chaik.remember.R
+import dev.chaik.remember.core.ui.components.AppIcon
 import dev.chaik.remember.core.security.AppLock
 import dev.chaik.remember.core.security.PinResult
 import kotlinx.coroutines.delay
@@ -130,11 +130,7 @@ fun LockScreen(
             .safeDrawingPadding()
             .padding(24.dp),
     ) {
-        Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.size(72.dp)) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(Icons.Outlined.Lock, null, tint = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.size(32.dp))
-            }
-        }
+        AppIcon(size = 72.dp)
         Spacer(Modifier.height(16.dp))
         Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineSmall)
         Spacer(Modifier.height(4.dp))

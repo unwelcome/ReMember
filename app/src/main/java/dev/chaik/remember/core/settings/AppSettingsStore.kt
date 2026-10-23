@@ -35,6 +35,8 @@ class AppSettingsStore(context: Context) {
             backSwipe = enumOr(prefs.getString("back_swipe", null), d.backSwipe),
             timePicker = enumOr(prefs.getString("time_picker", null), d.timePicker),
             font = enumOr(prefs.getString("font", null), d.font),
+            welcome = prefs.getBoolean("welcome", d.welcome),
+            welcomeMillis = prefs.getInt("welcome_millis", d.welcomeMillis).coerceIn(WELCOME_MIN, WELCOME_MAX),
             islandTabs = list("island_tabs"),
             moreOrder = list("more_order"),
         )
@@ -52,6 +54,8 @@ class AppSettingsStore(context: Context) {
         putString("back_swipe", s.backSwipe.name)
         putString("time_picker", s.timePicker.name)
         putString("font", s.font.name)
+        putBoolean("welcome", s.welcome)
+        putInt("welcome_millis", s.welcomeMillis)
         putString("island_tabs", s.islandTabs.joinToString(","))
         putString("more_order", s.moreOrder.joinToString(","))
     }
