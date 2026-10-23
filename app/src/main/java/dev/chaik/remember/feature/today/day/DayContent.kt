@@ -17,10 +17,12 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.InputChip
 import androidx.compose.material3.MaterialTheme
@@ -165,14 +167,31 @@ private fun TagPickerDialog(
                     },
                     modifier = Modifier.fillMaxWidth(),
                 )
+                Text(
+                    stringResource(R.string.tags_dialog_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
                 // Подсказки: подходящие по введённому тексту
                 val query = name.trim().lowercase()
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     allTags.filter { query.isEmpty() || it.name.lowercase().contains(query) }.forEach { tag ->
+                        val isSelected = selected.any { it.id == tag.id }
+                        // Отмеченный тег должен заметно отличаться: галочка и цвет
                         FilterChip(
-                            selected = selected.any { it.id == tag.id },
+                            selected = isSelected,
                             onClick = { onToggle(tag) },
                             label = { Text(tag.name) },
+                            leadingIcon = if (isSelected) {
+                                { Icon(Icons.Outlined.Check, null, Modifier.size(18.dp)) }
+                            } else {
+                                null
+                            },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.primary,
+                                selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                                selectedLeadingIconColor = MaterialTheme.colorScheme.onPrimary,
+                            ),
                         )
                     }
                 }

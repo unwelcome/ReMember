@@ -1,5 +1,6 @@
 package dev.chaik.remember.core.data
 
+import androidx.room.withTransaction
 import dev.chaik.remember.core.database.ReMemberDatabase
 import dev.chaik.remember.core.model.DEFAULT_CURRENCY
 import dev.chaik.remember.core.model.MoneyCategory
@@ -12,15 +13,36 @@ import java.time.Instant
 import java.time.LocalDate
 
 /** Траты, доходы и их категории. */
-class MoneyRepository(db: ReMemberDatabase) {
+class MoneyRepository(private val db: ReMemberDatabase) {
     private val dao = db.moneyDao()
 
-    /** При первом запуске — создать стандартные категории. Повторный вызов ничего не делает. */
-    suspend fun ensureDefaultCategories() {
-        if (dao.categoryCount() > 0) return
-        DefaultCategories.forEachIndexed { index, category ->
-            dao.insertCategory(category.copy(sortOrder = index).toEntity())
+    /**
+     * Привести стандартные категории к текущему набору ([CATEGORY_DEFAULTS_VERSION]):
+     * добавить недостающие и выставить их порядок. Свои категории пользователя не трогаются.
+     *
+     * @param appliedVersion версия набора, уже применённая на этом телефоне (0 — ни одной)
+     * @return версия, которую нужно запомнить
+     */
+    suspend fun ensureDefaultCategories(appliedVersion: Int): Int {
+        if (appliedVersion >= CATEGORY_DEFAULTS_VERSION) return appliedVersion
+        db.withTransaction {
+            if (appliedVersion < 2) {
+                // Версия 2: «Еда» стала «Продуктами» — старые траты переезжают вместе с категорией
+                val food = dao.findCategory(MoneyType.EXPENSE, "Еда")
+                if (food != null && dao.findCategory(MoneyType.EXPENSE, "Продукты") == null) {
+                    dao.updateCategory(food.copy(name = "Продукты", icon = "🛒"))
+                }
+            }
+            DefaultCategories.forEachIndexed { index, category ->
+                val existing = dao.findCategory(category.type, category.name)
+                if (existing == null) {
+                    dao.insertCategory(category.copy(sortOrder = index).toEntity())
+                } else {
+                    dao.updateCategory(existing.copy(sortOrder = index))
+                }
+            }
         }
+        return CATEGORY_DEFAULTS_VERSION
     }
 
     fun observeCategories(type: MoneyType): Flow<List<MoneyCategory>> =
@@ -56,14 +78,36 @@ class MoneyRepository(db: ReMemberDatabase) {
     suspend fun delete(id: Long) = dao.delete(id)
 }
 
-/** Категории при первом запуске; «Другое» — последней. */
+/** Версия стандартного набора категорий. Поднять, если [DefaultCategories] поменялись. */
+const val CATEGORY_DEFAULTS_VERSION = 2
+
+/** Сколько первых категорий расходов — «частые»: в списке выбора они отделены чертой. */
+const val FAVORITE_EXPENSE_CATEGORIES = 4
+
+/** Стандартные категории в нужном порядке: сначала частые, «Другое» — последней. */
 private val DefaultCategories = listOf(
-    MoneyCategory(name = "Еда", type = MoneyType.EXPENSE, icon = "🍔"),
-    MoneyCategory(name = "Одежда", type = MoneyType.EXPENSE, icon = "👕"),
+    // Частые
+    MoneyCategory(name = "Продукты", type = MoneyType.EXPENSE, icon = "🛒"),
     MoneyCategory(name = "Игры", type = MoneyType.EXPENSE, icon = "🎮"),
+    MoneyCategory(name = "Одежда", type = MoneyType.EXPENSE, icon = "👕"),
+    MoneyCategory(name = "Подписки", type = MoneyType.EXPENSE, icon = "🔁"),
+    // Остальные
+    MoneyCategory(name = "Кафе и рестораны", type = MoneyType.EXPENSE, icon = "☕"),
     MoneyCategory(name = "Транспорт", type = MoneyType.EXPENSE, icon = "🚌"),
+    MoneyCategory(name = "Такси", type = MoneyType.EXPENSE, icon = "🚕"),
     MoneyCategory(name = "Кино", type = MoneyType.EXPENSE, icon = "🎬"),
+    MoneyCategory(name = "Жильё и коммуналка", type = MoneyType.EXPENSE, icon = "🏠"),
+    MoneyCategory(name = "Связь и интернет", type = MoneyType.EXPENSE, icon = "📱"),
+    MoneyCategory(name = "Здоровье и аптека", type = MoneyType.EXPENSE, icon = "💊"),
+    MoneyCategory(name = "Спорт и зал", type = MoneyType.EXPENSE, icon = "🏋️"),
+    MoneyCategory(name = "Подарки", type = MoneyType.EXPENSE, icon = "🎁"),
+    MoneyCategory(name = "Красота и уход", type = MoneyType.EXPENSE, icon = "💄"),
+    MoneyCategory(name = "Образование и книги", type = MoneyType.EXPENSE, icon = "📚"),
+    MoneyCategory(name = "Питомцы", type = MoneyType.EXPENSE, icon = "🐾"),
+    MoneyCategory(name = "Дом и быт", type = MoneyType.EXPENSE, icon = "🧹"),
+    MoneyCategory(name = "Путешествия", type = MoneyType.EXPENSE, icon = "✈️"),
     MoneyCategory(name = "Другое", type = MoneyType.EXPENSE, icon = "📦"),
+    // Доходы
     MoneyCategory(name = "Зарплата", type = MoneyType.INCOME, icon = "💼"),
     MoneyCategory(name = "Стипендия", type = MoneyType.INCOME, icon = "🎓"),
     MoneyCategory(name = "Перевод", type = MoneyType.INCOME, icon = "💸"),

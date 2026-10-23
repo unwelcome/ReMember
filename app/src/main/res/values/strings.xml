@@ -68,6 +68,7 @@
     <string name="tags_add">Тег</string>
     <string name="tags_dialog_title">Теги</string>
     <string name="tags_new_hint">Новый тег</string>
+    <string name="tags_dialog_hint">Отмеченные — у этого дня. Тап снимает или ставит тег.</string>
     <string name="tags_create">Добавить</string>
     <string name="tags_remove">Убрать тег %1$s</string>
 
@@ -77,6 +78,7 @@
     <string name="sleep_not_set">—:—</string>
     <string name="sleep_duration">Спал %1$d ч %2$02d мин</string>
     <string name="sleep_quality">Качество сна</string>
+    <string name="sleep_quality_value">%1$s / 5</string>
     <string name="sleep_dream">Что приснилось</string>
     <string name="sleep_dream_hint">Запишите сон, пока помните…</string>
     <string name="sleep_clear_time">Сбросить время</string>
@@ -96,6 +98,7 @@
     <string name="money_undo">Вернуть</string>
     <string name="money_delete">Удалить операцию</string>
     <string name="money_no_category">Без категории</string>
+    <string name="money_category">Категория</string>
     <string name="money_editing">Изменение операции</string>
 
     <!-- Заглушки -->

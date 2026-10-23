@@ -31,9 +31,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.chaik.remember.R
 import dev.chaik.remember.core.model.Rating
+import dev.chaik.remember.core.ui.components.StarColor
 import dev.chaik.remember.core.ui.components.StarRating
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -80,11 +82,21 @@ fun SleepContent(controller: SleepController, modifier: Modifier = Modifier) {
         }
 
         Column {
-            Text(
-                text = stringResource(R.string.sleep_quality),
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = stringResource(R.string.sleep_quality),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    text = controller.quality?.let { stringResource(R.string.sleep_quality_value, Rating.format(it)) }
+                        ?: stringResource(R.string.day_rating_empty),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = if (controller.quality != null) FontWeight.Bold else null,
+                    color = if (controller.quality != null) StarColor else MaterialTheme.colorScheme.outline,
+                )
+            }
             StarRating(
                 halves = controller.quality,
                 onChange = { controller.quality = it },

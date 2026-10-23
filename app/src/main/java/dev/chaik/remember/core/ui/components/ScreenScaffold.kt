@@ -15,10 +15,10 @@ import androidx.compose.material.icons.outlined.ArrowDropDown
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -32,8 +32,9 @@ import dev.chaik.remember.R
 import dev.chaik.remember.core.ui.LocalIslandPadding
 
 /**
- * Общий каркас экрана: большой заголовок, который сжимается при прокрутке,
- * и кнопка «назад» для вложенных страниц.
+ * Общий каркас экрана: компактная шапка (обычная высота, без большого заголовка —
+ * он съедал много места) и кнопка «назад» для вложенных страниц.
+ * При прокрутке шапка слегка подкрашивается, чтобы отделяться от контента.
  *
  * [content] получает отступы сверху (под заголовок) и снизу (под островок).
  */
@@ -48,7 +49,7 @@ fun ScreenScaffold(
     actions: @Composable RowScope.() -> Unit = {},
     content: @Composable (PaddingValues) -> Unit,
 ) {
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val islandPadding = LocalIslandPadding.current
 
     Scaffold(
@@ -56,7 +57,7 @@ fun ScreenScaffold(
         // Samsung отдаёт в Material You разные background и surface — берём surface, как у заголовка
         containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
-            LargeTopAppBar(
+            TopAppBar(
                 title = {
                     if (onTitleClick == null) {
                         Text(title)

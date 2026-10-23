@@ -19,8 +19,13 @@ class ReMemberApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         appScope.launch {
-            runCatching { container.moneyRepository.ensureDefaultCategories() }
-                .onFailure { Log.w(TAG, "Не удалось создать категории", it) }
+            // Стандартные категории трат: создать при первом запуске, обновить при смене набора
+            val prefs = getSharedPreferences(PREFS, MODE_PRIVATE)
+            runCatching {
+                val applied = prefs.getInt(KEY_CATEGORY_DEFAULTS, 0)
+                val version = container.moneyRepository.ensureDefaultCategories(applied)
+                if (version != applied) prefs.edit().putInt(KEY_CATEGORY_DEFAULTS, version).apply()
+            }.onFailure { Log.w(TAG, "Не удалось обновить категории", it) }
         }
         appScope.launch {
             // Не мешаем запуску: уборка — через пару секунд после старта
@@ -33,6 +38,8 @@ class ReMemberApplication : Application() {
 
     private companion object {
         const val TAG = "ReMember"
+        const val PREFS = "app_state"
+        const val KEY_CATEGORY_DEFAULTS = "category_defaults_version"
     }
 }
 

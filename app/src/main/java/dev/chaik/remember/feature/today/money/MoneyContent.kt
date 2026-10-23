@@ -4,8 +4,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -20,7 +18,12 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilterChip
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -33,6 +36,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,6 +50,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.chaik.remember.R
+import dev.chaik.remember.core.data.FAVORITE_EXPENSE_CATEGORIES
 import dev.chaik.remember.core.model.MoneyCategory
 import dev.chaik.remember.core.model.MoneyTransaction
 import dev.chaik.remember.core.model.MoneyType
@@ -130,7 +136,6 @@ private fun TotalCard(label: String, value: String, color: Color, modifier: Modi
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun MoneyForm(controller: MoneyController, categories: List<MoneyCategory>) {
     Card(
@@ -181,17 +186,12 @@ private fun MoneyForm(controller: MoneyController, categories: List<MoneyCategor
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                categories.forEach { category ->
-                    FilterChip(
-                        selected = controller.categoryId == category.id,
-                        onClick = {
-                            controller.categoryId = if (controller.categoryId == category.id) null else category.id
-                        },
-                        label = { Text("${category.icon.orEmpty()} ${category.name}".trim()) },
-                    )
-                }
-            }
+            CategoryDropdown(
+                categories = categories,
+                selectedId = controller.categoryId,
+                favoriteCount = if (controller.type == MoneyType.EXPENSE) FAVORITE_EXPENSE_CATEGORIES else 0,
+                onSelect = { controller.categoryId = it },
+            )
 
             OutlinedTextField(
                 value = controller.comment,
@@ -210,6 +210,60 @@ private fun MoneyForm(controller: MoneyController, categories: List<MoneyCategor
         }
     }
 }
+
+/** Выпадающий список категорий; частые — сверху, отделены чертой. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CategoryDropdown(
+    categories: List<MoneyCategory>,
+    selectedId: Long?,
+    favoriteCount: Int,
+    onSelect: (Long?) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val selected = categories.firstOrNull { it.id == selectedId }
+
+    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
+        OutlinedTextField(
+            value = selected?.label ?: stringResource(R.string.money_no_category),
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(stringResource(R.string.money_category)) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            shape = RoundedCornerShape(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+        )
+        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.money_no_category)) },
+                onClick = {
+                    onSelect(null)
+                    expanded = false
+                },
+            )
+            HorizontalDivider()
+            categories.forEachIndexed { index, category ->
+                if (index == favoriteCount && favoriteCount > 0) HorizontalDivider()
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            category.label,
+                            fontWeight = if (category.id == selectedId) FontWeight.Bold else null,
+                        )
+                    },
+                    onClick = {
+                        onSelect(category.id)
+                        expanded = false
+                    },
+                )
+            }
+        }
+    }
+}
+
+private val MoneyCategory.label: String get() = "${icon.orEmpty()} $name".trim()
 
 @Composable
 private fun TransactionRow(

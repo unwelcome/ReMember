@@ -34,7 +34,7 @@ fun PlaceholderScreen(
     onBack: (() -> Unit)? = null,
 ) {
     ScreenScaffold(title = title, modifier = modifier, onBack = onBack) { padding ->
-        // Прокручиваемый контейнер, чтобы большой заголовок сжимался так же, как на настоящих экранах
+        // Прокручиваемый контейнер — как на настоящих экранах (шапка подкрашивается при прокрутке)
         Box(
             modifier = Modifier
                 .fillMaxSize()
