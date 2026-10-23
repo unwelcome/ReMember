@@ -133,6 +133,28 @@ class RepositoriesTest {
     }
 
     @Test
+    fun notesListCarriesTagsAndQuickActionsKeepUpdatedAt() = runTest {
+        val notes = NoteRepository(db)
+        val tags = TagRepository(db)
+        val folder = notes.saveFolder(NoteFolder(name = "Идеи"))
+        val read = tags.getOrCreate("читать")
+        val id = notes.save(Note(title = "Книги", tags = listOf(read, tags.getOrCreate("дом"))))
+        notes.save(Note(title = "Без тегов"))
+        val updatedAt = notes.get(id)!!.updatedAt
+
+        notes.setPinned(id, true)
+        notes.moveToFolder(id, folder)
+
+        val book = notes.observeAllWithTags().first().first { it.id == id }
+        assertEquals(setOf("читать", "дом"), book.tags.map { it.name }.toSet())
+        assertTrue(book.pinned)
+        assertEquals(folder, book.folderId)
+        // Закрепление и перенос — не «правка» заметки: дата изменения та же
+        assertEquals(updatedAt, book.updatedAt)
+        assertTrue(notes.observeAllWithTags().first().first { it.id != id }.tags.isEmpty())
+    }
+
+    @Test
     fun photoRefsFollowText() = runTest {
         val days = DayRepository(db)
         val notes = NoteRepository(db)

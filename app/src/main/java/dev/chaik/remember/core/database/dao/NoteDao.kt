@@ -33,6 +33,12 @@ interface NoteDao {
     @Query("DELETE FROM note WHERE id = :id")
     suspend fun delete(id: Long)
 
+    @Query("UPDATE note SET pinned = :pinned WHERE id = :id")
+    suspend fun setPinned(id: Long, pinned: Boolean)
+
+    @Query("UPDATE note SET folder_id = :folderId WHERE id = :id")
+    suspend fun setFolder(id: Long, folderId: Long?)
+
     // Папки
 
     @Query("SELECT * FROM note_folder ORDER BY sort_order, name")

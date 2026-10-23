@@ -18,6 +18,8 @@ import dev.chaik.remember.feature.more.MoreRoute
 import dev.chaik.remember.feature.more.MoreScreen
 import dev.chaik.remember.feature.notes.NotesRoute
 import dev.chaik.remember.feature.notes.NotesScreen
+import dev.chaik.remember.feature.notes.editor.NoteEditorRoute
+import dev.chaik.remember.feature.notes.editor.NoteEditorScreen
 import dev.chaik.remember.feature.search.SearchRoute
 import dev.chaik.remember.feature.search.SearchScreen
 import dev.chaik.remember.feature.settings.SettingsRoute
@@ -36,10 +38,18 @@ fun appEntryProvider(backStack: NavBackStack<NavKey>): (NavKey) -> NavEntry<NavK
     return entryProvider {
         // Корни вкладок
         entry<TodayRoute> { TodayScreen() }
-        entry<NotesRoute> { NotesScreen() }
+        entry<NotesRoute> {
+            NotesScreen(
+                onOpen = { backStack.add(NoteEditorRoute(noteId = it)) },
+                onCreate = { backStack.add(NoteEditorRoute(folderId = it)) },
+            )
+        }
         entry<TasksRoute> { TasksScreen() }
         entry<CalendarRoute> { CalendarScreen() }
         entry<MoreRoute> { MoreScreen(onOpen = { backStack.add(it) }) }
+
+        // Вложенные страницы вкладок
+        entry<NoteEditorRoute> { NoteEditorScreen(route = it, onBack = back) }
 
         // Разделы из «Ещё»
         entry<FeedRoute> { FeedScreen(onBack = back) }

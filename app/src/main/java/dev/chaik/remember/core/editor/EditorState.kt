@@ -142,6 +142,14 @@ class EditorState(markdown: String = "") {
         block.value = transform(block.value)
     }
 
+    /** Поставить курсор в конец последнего текстового блока (тап по пустому месту под текстом). */
+    fun focusEnd() {
+        selectPhoto(null)
+        val last = blocks.lastOrNull() as? TextBlock ?: return
+        last.value = last.value.copy(selection = TextRange(last.value.text.length))
+        last.focusRequester.requestFocus()
+    }
+
     /** Блок с курсором, а если его не было — последний текстовый. */
     fun activeTextBlock(): TextBlock? =
         blocks.firstOrNull { it.key == activeTextKey } as? TextBlock

@@ -1,0 +1,109 @@
+package dev.chaik.remember.feature.notes
+
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import dev.chaik.remember.core.data.NoteRepository
+import dev.chaik.remember.core.model.Note
+import dev.chaik.remember.core.model.NoteFolder
+import dev.chaik.remember.core.model.Tag
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+
+/** Какие заметки показывать по папке. */
+sealed interface FolderFilter {
+    data object All : FolderFilter
+    data object NoFolder : FolderFilter
+    data class Folder(val id: Long) : FolderFilter
+}
+
+/** Список заметок: фильтры по папке и тегу, действия над папками и заметками. */
+class NotesViewModel(private val notes: NoteRepository) : ViewModel() {
+
+    var folderFilter by mutableStateOf<FolderFilter>(FolderFilter.All)
+        private set
+
+    /** Выбранные теги-фильтры: показываются заметки, где есть все они сразу. Пусто — без фильтра. */
+    var tagFilter by mutableStateOf<Set<Long>>(emptySet())
+        private set
+
+    val folders: StateFlow<List<NoteFolder>> =
+        notes.observeFolders().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    private val allNotes = notes.observeAllWithTags()
+
+    /** Теги, которые есть хотя бы у одной заметки — для строки фильтра. */
+    val usedTags: StateFlow<List<Tag>> = allNotes
+        .map { list -> list.flatMap { it.tags }.distinctBy { it.id }.sortedBy { it.name.lowercase() } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /** Заметки после фильтров; порядок из базы: закреплённые сверху, потом недавно изменённые. */
+    val visibleNotes: StateFlow<List<Note>?> =
+        combine(allNotes, snapshotFlow { folderFilter to tagFilter }) { list, (folder, tags) ->
+            list.filter { note ->
+                val folderOk = when (folder) {
+                    FolderFilter.All -> true
+                    FolderFilter.NoFolder -> note.folderId == null
+                    is FolderFilter.Folder -> note.folderId == folder.id
+                }
+                folderOk && note.tags.map { it.id }.containsAll(tags)
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    /** Папка для новой заметки — та, что открыта в фильтре. */
+    val currentFolderId: Long? get() = (folderFilter as? FolderFilter.Folder)?.id
+
+    fun selectFolder(filter: FolderFilter) {
+        folderFilter = filter
+    }
+
+    fun toggleTagFilter(tag: Tag) {
+        tagFilter = if (tag.id in tagFilter) tagFilter - tag.id else tagFilter + tag.id
+    }
+
+    fun clearTagFilter() {
+        tagFilter = emptySet()
+    }
+
+    // Папки
+
+    fun createFolder(name: String) {
+        if (name.isBlank()) return
+        viewModelScope.launch {
+            val id = notes.saveFolder(NoteFolder(name = name.trim(), sortOrder = folders.value.size))
+            folderFilter = FolderFilter.Folder(id)
+        }
+    }
+
+    fun renameFolder(folder: NoteFolder, name: String) {
+        if (name.isBlank()) return
+        viewModelScope.launch { notes.saveFolder(folder.copy(name = name.trim())) }
+    }
+
+    /** Удалить папку; её заметки остаются без папки. */
+    fun deleteFolder(folder: NoteFolder) {
+        if (folderFilter == FolderFilter.Folder(folder.id)) folderFilter = FolderFilter.All
+        viewModelScope.launch { notes.deleteFolder(folder.id) }
+    }
+
+    // Заметки
+
+    fun togglePinned(note: Note) {
+        viewModelScope.launch { notes.setPinned(note.id, !note.pinned) }
+    }
+
+    fun moveToFolder(note: Note, folderId: Long?) {
+        viewModelScope.launch { notes.moveToFolder(note.id, folderId) }
+    }
+
+    fun delete(note: Note) {
+        viewModelScope.launch { notes.delete(note.id) }
+    }
+}

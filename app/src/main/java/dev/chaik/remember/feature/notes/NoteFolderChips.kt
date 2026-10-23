@@ -1,0 +1,218 @@
+package dev.chaik.remember.feature.notes
+
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.DriveFileRenameOutline
+import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import dev.chaik.remember.R
+import dev.chaik.remember.core.model.NoteFolder
+import dev.chaik.remember.core.model.Tag
+import dev.chaik.remember.core.ui.keepHorizontalScroll
+
+/**
+ * Лента папок: «Все», «Без папки», папки, «+».
+ * Тап — фильтр; долгое нажатие на папке — переименовать или удалить.
+ */
+@Composable
+fun NoteFolderChips(
+    folders: List<NoteFolder>,
+    selected: FolderFilter,
+    onSelect: (FolderFilter) -> Unit,
+    onCreate: (String) -> Unit,
+    onRename: (NoteFolder, String) -> Unit,
+    onDelete: (NoteFolder) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var creating by remember { mutableStateOf(false) }
+    var renaming by remember { mutableStateOf<NoteFolder?>(null) }
+    var deleting by remember { mutableStateOf<NoteFolder?>(null) }
+
+    LazyRow(
+        modifier = modifier.keepHorizontalScroll(),
+        contentPadding = PaddingValues(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        item {
+            FilterPill(stringResource(R.string.notes_all), selected == FolderFilter.All, onClick = { onSelect(FolderFilter.All) })
+        }
+        item {
+            FilterPill(
+                stringResource(R.string.notes_no_folder),
+                selected == FolderFilter.NoFolder,
+                onClick = { onSelect(FolderFilter.NoFolder) },
+            )
+        }
+        items(folders, key = { it.id }) { folder ->
+            var menuOpen by remember { mutableStateOf(false) }
+            Box {
+                FilterPill(
+                    label = folder.name,
+                    selected = selected == FolderFilter.Folder(folder.id),
+                    icon = Icons.Outlined.Folder,
+                    onClick = { onSelect(FolderFilter.Folder(folder.id)) },
+                    onLongClick = { menuOpen = true },
+                )
+                DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.notes_rename_folder)) },
+                        leadingIcon = { Icon(Icons.Outlined.DriveFileRenameOutline, null) },
+                        onClick = {
+                            menuOpen = false
+                            renaming = folder
+                        },
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.notes_delete_folder)) },
+                        leadingIcon = { Icon(Icons.Outlined.Delete, null) },
+                        onClick = {
+                            menuOpen = false
+                            deleting = folder
+                        },
+                    )
+                }
+            }
+        }
+        item {
+            FilterPill(
+                label = stringResource(R.string.notes_new_folder),
+                selected = false,
+                icon = Icons.Outlined.Add,
+                onClick = { creating = true },
+            )
+        }
+    }
+
+    if (creating) {
+        NameDialog(
+            title = stringResource(R.string.notes_new_folder),
+            initial = "",
+            confirmLabel = stringResource(R.string.tags_create),
+            onConfirm = onCreate,
+            onDismiss = { creating = false },
+        )
+    }
+    renaming?.let { folder ->
+        NameDialog(
+            title = stringResource(R.string.notes_rename_folder),
+            initial = folder.name,
+            confirmLabel = stringResource(R.string.action_ok),
+            onConfirm = { onRename(folder, it) },
+            onDismiss = { renaming = null },
+        )
+    }
+    deleting?.let { folder ->
+        ConfirmDialog(
+            title = stringResource(R.string.notes_delete_folder_title, folder.name),
+            text = stringResource(R.string.notes_delete_folder_text),
+            confirmLabel = stringResource(R.string.notes_delete),
+            onConfirm = { onDelete(folder) },
+            onDismiss = { deleting = null },
+        )
+    }
+}
+
+/**
+ * Лента тегов-фильтров «#тег». Можно выбрать несколько — тогда показываются заметки,
+ * где есть все выбранные теги. «×» в начале — сбросить фильтр.
+ */
+@Composable
+fun NoteTagFilter(
+    tags: List<Tag>,
+    selected: Set<Long>,
+    onToggle: (Tag) -> Unit,
+    onClear: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    LazyRow(
+        modifier = modifier.keepHorizontalScroll(),
+        contentPadding = PaddingValues(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        if (selected.isNotEmpty()) {
+            item(key = "clear") {
+                FilterPill(label = "", icon = Icons.Outlined.Close, selected = false, small = true, onClick = onClear)
+            }
+        }
+        items(tags, key = { it.id }) { tag ->
+            FilterPill(label = "#${tag.name}", selected = tag.id in selected, small = true, onClick = { onToggle(tag) })
+        }
+    }
+}
+
+/** Чип-фильтр с поддержкой долгого нажатия (у FilterChip его нет). */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun FilterPill(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    icon: ImageVector? = null,
+    small: Boolean = false,
+    onLongClick: (() -> Unit)? = null,
+) {
+    val colors = MaterialTheme.colorScheme
+    val haptics = LocalHapticFeedback.current
+    Surface(
+        shape = RoundedCornerShape(10.dp),
+        color = if (selected) colors.secondaryContainer else colors.surface,
+        contentColor = if (selected) colors.onSecondaryContainer else colors.onSurfaceVariant,
+        border = if (selected) null else BorderStroke(1.dp, colors.outlineVariant),
+        modifier = Modifier.combinedClickable(
+            onClick = onClick,
+            onLongClick = onLongClick?.let {
+                {
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    it()
+                }
+            },
+        ),
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .height(if (small) 28.dp else 34.dp)
+                .padding(horizontal = if (small) 10.dp else 12.dp),
+        ) {
+            if (icon != null) {
+                Icon(icon, null, Modifier.size(16.dp))
+                if (label.isNotEmpty()) Box(Modifier.size(6.dp))
+            }
+            if (label.isNotEmpty()) {
+                Text(label, style = if (small) MaterialTheme.typography.labelMedium else MaterialTheme.typography.labelLarge)
+            }
+        }
+    }
+}

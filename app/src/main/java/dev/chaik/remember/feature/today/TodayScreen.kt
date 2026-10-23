@@ -54,7 +54,6 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -64,7 +63,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.NavKey
 import dev.chaik.remember.R
 import dev.chaik.remember.appContainer
-import dev.chaik.remember.core.editor.EditorState
 import dev.chaik.remember.core.editor.EditorToolbar
 import dev.chaik.remember.core.editor.EditorToolbarHeight
 import dev.chaik.remember.core.editor.PhotoViewer
@@ -300,11 +298,3 @@ private fun BoxScope.PhotoButton(
 
 /** Какие фото открыты на весь экран и с какого начать. */
 private data class OpenedPhotos(val ids: List<String>, val index: Int)
-
-/** Курсор в конец последнего текстового блока. */
-private fun EditorState.focusEnd() {
-    selectPhoto(null)
-    val last = blocks.lastOrNull() as? EditorState.TextBlock ?: return
-    onTextChange(last, last.value.copy(selection = TextRange(last.value.text.length)))
-    last.focusRequester.requestFocus()
-}

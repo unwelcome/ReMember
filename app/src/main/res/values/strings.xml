@@ -99,6 +99,28 @@
     <string name="money_category">Категория</string>
     <string name="money_editing">Изменение операции</string>
 
+    <!-- Заметки -->
+    <string name="notes_all">Все</string>
+    <string name="notes_no_folder">Без папки</string>
+    <string name="notes_new_folder">Папка</string>
+    <string name="notes_rename_folder">Переименовать</string>
+    <string name="notes_delete_folder">Удалить папку</string>
+    <string name="notes_delete_folder_title">Удалить папку «%1$s»?</string>
+    <string name="notes_delete_folder_text">Заметки из неё останутся — просто без папки.</string>
+    <string name="notes_new">Новая заметка</string>
+    <string name="notes_pinned">Закреплённые</string>
+    <string name="notes_others">Остальные</string>
+    <string name="notes_empty">Заметок пока нет — нажмите «+», чтобы создать</string>
+    <string name="notes_untitled">Без названия</string>
+    <string name="notes_pin">Закрепить</string>
+    <string name="notes_unpin">Открепить</string>
+    <string name="notes_move_to_folder">В папку</string>
+    <string name="notes_delete">Удалить</string>
+    <string name="notes_delete_title">Удалить заметку?</string>
+    <string name="notes_delete_text">Её нельзя будет вернуть.</string>
+    <string name="notes_title_hint">Заголовок</string>
+    <string name="notes_text_hint">Текст заметки…</string>
+
     <!-- Заглушки -->
     <string name="placeholder_title">Раздел в разработке</string>
     <string name="placeholder_today">Запись о том, как прошёл день: текст, фото, сон и траты</string>

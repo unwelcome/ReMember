@@ -74,6 +74,16 @@ interface TagDao {
     )
     fun observeForNote(noteId: Long): Flow<List<TagEntity>>
 
+    /** Теги всех заметок разом — для списка заметок (без запроса на каждую карточку). */
+    @Query(
+        """
+        SELECT note_tag.note_id AS noteId, tag.id AS tagId, tag.name AS name FROM note_tag
+        JOIN tag ON tag.id = note_tag.tag_id
+        ORDER BY tag.`key`
+        """,
+    )
+    fun observeAllNoteTags(): Flow<List<NoteTagRow>>
+
     @Query("DELETE FROM note_tag WHERE note_id = :noteId")
     suspend fun clearNoteTags(noteId: Long)
 
@@ -86,3 +96,9 @@ interface TagDao {
         insertNoteTags(tagIds.map { NoteTagEntity(noteId, it) })
     }
 }
+
+data class NoteTagRow(
+    val noteId: Long,
+    val tagId: Long,
+    val name: String,
+)

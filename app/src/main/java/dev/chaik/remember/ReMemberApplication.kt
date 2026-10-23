@@ -4,21 +4,15 @@ import android.app.Application
 import android.content.Context
 import android.util.Log
 import dev.chaik.remember.app.AppContainer
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class ReMemberApplication : Application() {
     val container by lazy { AppContainer(this) }
 
-    /** Фоновые задачи уровня приложения — живут, пока жив процесс. */
-    val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-
     override fun onCreate() {
         super.onCreate()
-        appScope.launch {
+        container.appScope.launch {
             // Стандартные категории трат: создать при первом запуске, обновить при смене набора
             val prefs = getSharedPreferences(PREFS, MODE_PRIVATE)
             runCatching {
@@ -27,7 +21,7 @@ class ReMemberApplication : Application() {
                 if (version != applied) prefs.edit().putInt(KEY_CATEGORY_DEFAULTS, version).apply()
             }.onFailure { Log.w(TAG, "Не удалось обновить категории", it) }
         }
-        appScope.launch {
+        container.appScope.launch {
             // Не мешаем запуску: уборка — через пару секунд после старта
             delay(3_000)
             runCatching { container.photoStorage.cleanupUnreferenced() }

@@ -6,9 +6,11 @@ import dev.chaik.remember.core.database.entity.NoteFolderEntity
 import dev.chaik.remember.core.model.Note
 import dev.chaik.remember.core.model.NoteFolder
 import dev.chaik.remember.core.model.PhotoOwner
+import dev.chaik.remember.core.model.Tag
 import dev.chaik.remember.core.photos.PhotoRefs
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.time.Instant
 
@@ -20,6 +22,23 @@ class NoteRepository(private val db: ReMemberDatabase) {
 
     /** Все заметки (без тегов): закреплённые сверху, дальше — недавно изменённые. */
     fun observeAll(): Flow<List<Note>> = noteDao.observeAll().map { list -> list.map { it.toModel() } }
+
+    /** Все заметки вместе с тегами — для списка и фильтра по тегам. */
+    fun observeAllWithTags(): Flow<List<Note>> =
+        combine(noteDao.observeAll(), tagDao.observeAllNoteTags()) { notes, rows ->
+            val tags = rows.groupBy({ it.noteId }, { Tag(it.tagId, it.name) })
+            notes.map { it.toModel().copy(tags = tags[it.id].orEmpty()) }
+        }
+
+    /** Заметка один раз (для открытия редактора); null — нет такой. */
+    suspend fun get(id: Long): Note? =
+        noteDao.get(id)?.let { note -> note.toModel(tagDao.observeForNote(id).first()) }
+
+    /** Закрепить или открепить, не трогая дату изменения. */
+    suspend fun setPinned(id: Long, pinned: Boolean) = noteDao.setPinned(id, pinned)
+
+    /** Перенести в папку (null — без папки), не трогая дату изменения. */
+    suspend fun moveToFolder(id: Long, folderId: Long?) = noteDao.setFolder(id, folderId)
 
     /** Заметки папки; null — заметки без папки. */
     fun observeInFolder(folderId: Long?): Flow<List<Note>> =

@@ -10,6 +10,9 @@ import dev.chaik.remember.core.database.DatabaseFactory
 import dev.chaik.remember.core.database.ReMemberDatabase
 import dev.chaik.remember.core.photos.PhotoStorage
 import dev.chaik.remember.core.security.DatabaseKeyManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 
 /**
  * Все общие объекты приложения в одном месте (ручной DI).
@@ -17,6 +20,12 @@ import dev.chaik.remember.core.security.DatabaseKeyManager
  */
 class AppContainer(context: Context) {
     private val appContext = context.applicationContext
+
+    /**
+     * Фоновые задачи уровня приложения — живут, пока жив процесс.
+     * Сюда же — сохранения, которые должны доделаться, даже если экран уже закрыт.
+     */
+    val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     val database: ReMemberDatabase by lazy {
         DatabaseFactory.create(appContext, DatabaseKeyManager(appContext))
