@@ -2,8 +2,6 @@ package dev.chaik.remember.app
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -114,14 +112,13 @@ private fun MainScaffold() {
         snapshotFlow { pagerState.settledPage }.collect { page -> tabs.getOrNull(page)?.let { shownTab = it } }
     }
 
+    /**
+     * Переход на вкладку тапом по островку — сразу, без пролистывания: анимация через
+     * промежуточные вкладки заставляла их строиться зря и подтормаживала. Свайп листает как раньше.
+     */
     fun goTo(tab: Destination) {
         val page = tabs.indexOf(tab).takeIf { it >= 0 } ?: return
-        scope.launch {
-            pagerState.animateScrollToPage(
-                page = page,
-                animationSpec = spring(dampingRatio = 0.85f, stiffness = Spring.StiffnessMediumLow),
-            )
-        }
+        scope.launch { pagerState.scrollToPage(page) }
     }
 
     // Лёгкая вибрация при смене вкладки — и по тапу, и по свайпу
