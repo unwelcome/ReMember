@@ -7,7 +7,6 @@ import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import java.io.File
 import java.time.LocalDate
 import java.time.LocalTime
 import java.util.Locale
@@ -16,13 +15,35 @@ class WorkoutImportTest {
     @Before
     fun russian() = Locale.setDefault(Locale.forLanguageTag("ru-RU"))
 
-    /** Пример из design/ — тот же файл, что описан в чате. */
-    private val example = File("../design/gym-import-example.json").readText()
+    /** Две тренировки из блокнота в формате импорта. */
+    private val example = """
+        {
+          "version": 1,
+          "workouts": [
+            {
+              "date": "2026-09-28", "start": "17:00", "end": "18:30", "weightBefore": 66.5, "weightAfter": null,
+              "exercises": [
+                { "name": "Жим лежа", "kind": "weight_reps", "sets": [ { "weight": 40, "reps": 12 }, { "weight": 50, "reps": 8 } ] },
+                { "name": "Пресс", "kind": "reps", "sets": [ { "reps": 30 }, { "reps": 30 } ] },
+                { "name": "Планка", "kind": "time", "sets": [ { "time": "1:30" } ] }
+              ]
+            },
+            {
+              "date": "2026-10-09", "start": "15:00", "weightBefore": 65.5, "note": "мб еще что то",
+              "exercises": [
+                { "name": "Хаммер", "sets": [ { "weight": 60, "reps": 15 }, { "weight": 65, "reps": 12 } ] },
+                { "name": "Пресс", "sets": [ { "reps": 30 } ] },
+                { "name": "Планка", "sets": [ { "time": "1:30" } ] }
+              ]
+            }
+          ]
+        }
+    """.trimIndent()
 
     @Test
     fun `пример читается целиком`() {
         val workouts = WorkoutImport.parse(example)
-        assertEquals(3, workouts.size)
+        assertEquals(2, workouts.size)
 
         val first = workouts.first()
         assertEquals(LocalDate.of(2026, 9, 28), first.date)
@@ -30,7 +51,7 @@ class WorkoutImportTest {
         assertEquals(66.5, first.weightBefore!!, 0.0)
         assertNull(first.weightAfter)
         assertTrue(first.imported)
-        assertEquals(9, first.exercises.size)
+        assertEquals(3, first.exercises.size)
         assertEquals("40 × 12", first.exercises[0].sets[0].format(first.exercises[0].exercise.kind))
 
         // Без «kind» вид угадывается по подходам

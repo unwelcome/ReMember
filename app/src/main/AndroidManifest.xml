@@ -7,6 +7,15 @@
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
+    <!-- Здоровье: только чтение из Health Connect -->
+    <uses-permission android:name="android.permission.health.READ_STEPS" />
+    <uses-permission android:name="android.permission.health.READ_ACTIVE_CALORIES_BURNED" />
+    <uses-permission android:name="android.permission.health.READ_EXERCISE" />
+
+    <queries>
+        <package android:name="com.google.android.apps.healthdata" />
+    </queries>
+
     <application
         android:name=".ReMemberApplication"
         android:allowBackup="false"
@@ -34,6 +43,26 @@
             android:launchMode="singleTop"
             android:theme="@style/Theme.ReMember"
             android:windowSoftInputMode="stateAlwaysHidden" />
+
+        <!-- Зачем нужны данные о здоровье: без этой страницы Health Connect не спросит разрешения -->
+        <activity
+            android:name=".feature.health.HealthRationaleActivity"
+            android:exported="true"
+            android:theme="@style/Theme.ReMember">
+            <intent-filter>
+                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+            </intent-filter>
+        </activity>
+        <activity-alias
+            android:name="ViewPermissionUsageActivity"
+            android:exported="true"
+            android:permission="android.permission.START_VIEW_PERMISSION_USAGE"
+            android:targetActivity=".feature.health.HealthRationaleActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />
+                <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
+            </intent-filter>
+        </activity-alias>
 
         <receiver
             android:name=".core.reminders.ReminderReceiver"

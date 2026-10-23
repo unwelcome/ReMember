@@ -405,4 +405,28 @@
     <string name="notify_workout_finish">Закончить</string>
     <string name="notify_workout_long_title">Тренировка ещё идёт</string>
     <string name="notify_workout_long_text">Уже два часа. Закончить и записать вес?</string>
+
+    <!-- Здоровье -->
+    <string name="health_rationale_title">Данные о здоровье</string>
+    <string name="health_rationale_text">Re:Member читает из Health Connect шаги, активные калории и тренировки, чтобы показать вашу активность за день и неделю. Данные только читаются, остаются на этом телефоне и никуда не отправляются.</string>
+    <string name="health_goals">Цели</string>
+    <string name="health_goals_title">Цели на день</string>
+    <string name="health_steps">Шаги</string>
+    <string name="health_minutes">Активность</string>
+    <string name="health_calories">Калории</string>
+    <string name="health_goal_steps">Шагов</string>
+    <string name="health_goal_minutes">Минут активности</string>
+    <string name="health_goal_calories">Активных калорий</string>
+    <string name="health_of_steps">из %1$s</string>
+    <string name="health_of_minutes">из %1$s мин</string>
+    <string name="health_of_calories">из %1$s ккал</string>
+    <string name="health_unit_minutes">мин</string>
+    <string name="health_unit_calories">ккал</string>
+    <string name="health_connect_title">Подключите Health Connect</string>
+    <string name="health_connect_text">Шаги, калории и тренировки приходят из Samsung Health через Health Connect. Разрешите чтение — данные останутся на телефоне.</string>
+    <string name="health_connect_button">Разрешить чтение</string>
+    <string name="health_unavailable">Health Connect недоступен на этом телефоне.</string>
+    <string name="health_update">Health Connect нужно обновить.</string>
+    <string name="health_update_button">Обновить</string>
+    <string name="health_error">Не удалось прочитать данные: %1$s</string>
 </resources>

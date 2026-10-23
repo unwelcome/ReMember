@@ -11,6 +11,8 @@ import dev.chaik.remember.core.data.TaskRepository
 import dev.chaik.remember.core.data.WorkoutRepository
 import dev.chaik.remember.core.database.DatabaseFactory
 import dev.chaik.remember.core.database.ReMemberDatabase
+import dev.chaik.remember.core.health.HealthConnectSource
+import dev.chaik.remember.core.health.HealthGoalsStore
 import dev.chaik.remember.core.photos.PhotoStorage
 import dev.chaik.remember.core.reminders.Notifier
 import dev.chaik.remember.core.reminders.OpenTarget
@@ -53,6 +55,9 @@ class AppContainer(context: Context) {
     val taskRepository by lazy { TaskRepository(database) }
     val eventRepository by lazy { EventRepository(database) }
     val workoutRepository by lazy { WorkoutRepository(database) }
+
+    val health by lazy { HealthConnectSource(appContext) }
+    val healthGoals by lazy { HealthGoalsStore(appContext) }
 
     val reminderSettings by lazy { ReminderSettingsStore(appContext) }
     val notifier by lazy { Notifier(appContext) }
