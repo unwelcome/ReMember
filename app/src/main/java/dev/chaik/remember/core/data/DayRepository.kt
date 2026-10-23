@@ -25,6 +25,16 @@ class DayRepository(private val db: ReMemberDatabase) {
     fun observeRange(from: LocalDate, to: LocalDate): Flow<List<DayEntry>> =
         dayDao.observeRange(from, to).map { list -> list.map { it.toModel(emptyList()) } }
 
+    /**
+     * Какие дни периода заполнены и их оценки — для календаря.
+     * В словаре есть только дни с записью; значение — оценка (null — не выставлена).
+     */
+    fun observeMarks(from: LocalDate, to: LocalDate): Flow<Map<LocalDate, Int?>> =
+        dayDao.observeMarks(from, to).map { rows -> rows.associate { it.date to it.mood } }
+
+    /** Самый ранний день с записью; null — записей нет. */
+    suspend fun firstDate(): LocalDate? = dayDao.firstDate()
+
     /** Сохранить запись целиком: текст, настроение, теги и ссылки на фото. */
     suspend fun save(entry: DayEntry) = db.withTransaction {
         val now = Instant.now()

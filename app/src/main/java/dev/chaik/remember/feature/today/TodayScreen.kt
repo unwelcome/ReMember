@@ -35,17 +35,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AddPhotoAlternate
 import androidx.compose.material.icons.outlined.Today
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -65,6 +60,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.NavKey
 import dev.chaik.remember.R
@@ -75,6 +71,7 @@ import dev.chaik.remember.core.editor.EditorToolbarHeight
 import dev.chaik.remember.core.editor.PhotoViewer
 import dev.chaik.remember.core.editor.RichEditor
 import dev.chaik.remember.core.ui.components.ScreenScaffold
+import dev.chaik.remember.feature.today.calendar.DayPickerSheet
 import dev.chaik.remember.feature.today.day.DayController
 import dev.chaik.remember.feature.today.day.DayRating
 import dev.chaik.remember.feature.today.day.DayTags
@@ -82,9 +79,7 @@ import dev.chaik.remember.feature.today.money.MoneyContent
 import dev.chaik.remember.feature.today.sleep.SleepContent
 import kotlinx.serialization.Serializable
 import java.io.File
-import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
 @Serializable
@@ -216,8 +211,11 @@ fun TodayScreen(modifier: Modifier = Modifier) {
     }
 
     if (pickingDate) {
-        DayPickerDialog(
+        val marks by viewModel.calendarMarks.collectAsStateWithLifecycle()
+        DayPickerSheet(
             selected = viewModel.date,
+            marks = marks,
+            firstMonth = viewModel.calendarStart,
             onPick = {
                 viewModel.selectDate(it)
                 pickingDate = false
@@ -245,7 +243,9 @@ private fun DayModeContent(
 ) {
     if (!day.isLoaded) return
     DayRating(day, Modifier.padding(top = 4.dp))
-    DayTags(day, Modifier.padding(top = 8.dp, bottom = 12.dp))
+    DayTags(day, Modifier.padding(top = 8.dp))
+    // Черта отделяет «шапку» дня (оценка, теги) от самой записи
+    HorizontalDivider(Modifier.padding(top = 12.dp, bottom = 16.dp))
     RichEditor(
         state = day.editor,
         photoFile = photoFile,
@@ -305,41 +305,6 @@ private fun BoxScope.BottomButtons(
                 Icon(Icons.Outlined.AddPhotoAlternate, stringResource(R.string.editor_add_photo))
             }
         }
-    }
-}
-
-/** Календарь для выбора дня; будущие дни недоступны. */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun DayPickerDialog(
-    selected: LocalDate,
-    onPick: (LocalDate) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    // DatePicker работает с полночью по UTC
-    val todayMillis = LocalDate.now().atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli()
-    val state = rememberDatePickerState(
-        initialSelectedDateMillis = selected.atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli(),
-        selectableDates = object : SelectableDates {
-            override fun isSelectableDate(utcTimeMillis: Long) = utcTimeMillis <= todayMillis
-            override fun isSelectableYear(year: Int) = year <= LocalDate.now().year
-        },
-    )
-    DatePickerDialog(
-        onDismissRequest = onDismiss,
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    state.selectedDateMillis?.let { onPick(Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate()) }
-                        ?: onDismiss()
-                },
-            ) { Text(stringResource(R.string.action_ok)) }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
-        },
-    ) {
-        DatePicker(state = state, title = null)
     }
 }
 

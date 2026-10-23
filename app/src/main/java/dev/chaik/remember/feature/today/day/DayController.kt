@@ -93,12 +93,9 @@ class DayController(
             .collect { save(it) }
     }
 
+    /** 0 звёзд — оценки нет. */
     fun setMood(halves: Int) {
-        mood = halves
-    }
-
-    fun clearMood() {
-        mood = null
+        mood = halves.takeIf { it > 0 }
     }
 
     /** Добавить тег по имени (новый создаётся). */

@@ -3,18 +3,25 @@ package dev.chaik.remember.feature.today
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.chaik.remember.app.AppContainer
 import dev.chaik.remember.feature.today.day.DayController
 import dev.chaik.remember.feature.today.money.MoneyController
 import dev.chaik.remember.feature.today.sleep.SleepController
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
+import java.time.YearMonth
 
 /**
  * Страница «Сегодня»: выбранный день и режим (день / сон / траты).
@@ -34,11 +41,27 @@ class TodayViewModel(container: AppContainer) : ViewModel() {
 
     val isToday: Boolean get() = date == LocalDate.now()
 
+    /** Самый ранний месяц в календаре выбора дня: год назад или раньше, если записи старше. */
+    var calendarStart by mutableStateOf(YearMonth.now().minusMonths(CALENDAR_MONTHS_BACK))
+        private set
+
+    /** Заполненные дни и их оценки — для календаря выбора дня. */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val calendarMarks: StateFlow<Map<LocalDate, Int?>> = snapshotFlow { calendarStart }
+        .flatMapLatest { container.dayRepository.observeMarks(it.atDay(1), LocalDate.now()) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
+
     // Смена дня: сначала сохранить старый, потом загрузить новый — строго по очереди
     private val switchLock = Mutex()
 
     init {
         load(date)
+        viewModelScope.launch {
+            container.dayRepository.firstDate()
+                ?.let(YearMonth::from)
+                ?.takeIf { it < calendarStart }
+                ?.let { calendarStart = it }
+        }
     }
 
     fun selectDate(date: LocalDate) {
@@ -69,5 +92,9 @@ class TodayViewModel(container: AppContainer) : ViewModel() {
                 sleep.load(date)
             }
         }
+    }
+
+    private companion object {
+        const val CALENDAR_MONTHS_BACK = 12L
     }
 }

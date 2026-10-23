@@ -19,6 +19,14 @@ interface DayEntryDao {
     @Query("SELECT * FROM day_entry WHERE date BETWEEN :from AND :to ORDER BY date DESC")
     fun observeRange(from: LocalDate, to: LocalDate): Flow<List<DayEntryEntity>>
 
+    /** Только даты и оценки — для календаря, без тяжёлых текстов. */
+    @Query("SELECT date, mood FROM day_entry WHERE date BETWEEN :from AND :to")
+    fun observeMarks(from: LocalDate, to: LocalDate): Flow<List<DayMarkRow>>
+
+    /** Самый ранний день с записью; null — записей нет. */
+    @Query("SELECT MIN(date) FROM day_entry")
+    suspend fun firstDate(): LocalDate?
+
     // Upsert, а не REPLACE: REPLACE удаляет строку и каскадом сносит её теги
     @Upsert
     suspend fun upsert(entry: DayEntryEntity)
@@ -26,3 +34,8 @@ interface DayEntryDao {
     @Query("DELETE FROM day_entry WHERE date = :date")
     suspend fun delete(date: LocalDate)
 }
+
+data class DayMarkRow(
+    val date: LocalDate,
+    val mood: Int?,
+)

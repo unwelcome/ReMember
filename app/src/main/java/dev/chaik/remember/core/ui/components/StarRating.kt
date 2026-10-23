@@ -45,11 +45,16 @@ val StarColor = Color(0xFFFFC107)
 /** Сколько надо тапнуть по последней звезде при максимуме, чтобы открыть секрет. */
 private const val SECRET_TAPS = 3
 private val StarSpacing = 2.dp
+
+/** Доля первой звезды слева, тап или слайд в которую ставит 0 звёзд. */
+private const val ZERO_ZONE = 0.25f
 private const val SECRET_TAP_WINDOW_MS = 700L
 
 /**
  * Оценка звёздами. Тап по левой половине звезды — половинка, по правой — целая;
  * можно вести пальцем по звёздам — шкала заполняется следом.
+ * Левый край первой звезды (или слайд левее неё) — 0 звёзд: [onChange] получает 0,
+ * это значит «оценки нет».
  *
  * Значение — в половинках звезды ([Rating]): 19 из [stars] = 10 → 9.5 звезды.
  * Если [secret] = true: при максимуме три быстрых тапа по последней звезде
@@ -115,6 +120,8 @@ fun StarRating(
 
             /** Сколько половинок соответствует точке под пальцем. */
             fun valueAt(x: Float): Int {
+                // Левая четверть первой звезды (и всё левее) — 0, то есть «без оценки»
+                if (x < star * ZERO_ZONE) return 0
                 val index = (x / cell).toInt().coerceIn(0, stars - 1)
                 val leftHalf = (x - index * cell) < star / 2
                 val raw = if (allowHalf && leftHalf) index * 2 + 1 else index * 2 + 2

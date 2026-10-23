@@ -58,13 +58,11 @@
     <string name="today_go_today">К сегодняшнему дню</string>
     <string name="action_ok">Готово</string>
     <string name="action_cancel">Отмена</string>
-    <string name="action_clear">Очистить</string>
 
     <!-- День: оценка и теги -->
-    <string name="day_rating">Оценка дня</string>
-    <string name="day_rating_value">%1$s / 10</string>
-    <string name="day_rating_secret">11 / 10 ✨</string>
-    <string name="day_rating_empty">не выставлена</string>
+    <string name="day_rating_value">%1$s/10</string>
+    <string name="day_rating_secret">11/10 ✨</string>
+    <string name="day_rating_none">0/10</string>
     <string name="tags_add">Тег</string>
     <string name="tags_dialog_title">Теги</string>
     <string name="tags_new_hint">Новый тег</string>

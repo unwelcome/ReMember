@@ -1,17 +1,15 @@
 package dev.chaik.remember.feature.today.day
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -36,7 +34,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -48,47 +45,29 @@ import dev.chaik.remember.core.model.Tag
 import dev.chaik.remember.core.ui.components.StarRating
 import dev.chaik.remember.core.ui.components.StarColor
 
-/** Оценка дня с подписью «9.5 / 10» и кнопкой сброса. */
+/** Оценка дня: звёзды и справа число «9.5/10». 0 звёзд — оценки нет. */
 @Composable
 fun DayRating(controller: DayController, modifier: Modifier = Modifier) {
     val mood = controller.mood
-    Column(modifier) {
-        // Высота строки постоянная: появление «Очистить» не должно сдвигать звёзды под пальцем
-        Row(Modifier.height(32.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = stringResource(R.string.day_rating),
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.weight(1f),
-            )
-            Text(
-                text = when {
-                    mood == null -> stringResource(R.string.day_rating_empty)
-                    Rating.isSecret(mood) -> stringResource(R.string.day_rating_secret)
-                    else -> stringResource(R.string.day_rating_value, Rating.format(mood))
-                },
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = if (mood != null) FontWeight.Bold else null,
-                color = if (mood != null) StarColor else MaterialTheme.colorScheme.outline,
-            )
-            if (mood != null) {
-                Text(
-                    text = stringResource(R.string.action_clear),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier
-                        .padding(start = 8.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .clickable(onClick = controller::clearMood)
-                        .padding(horizontal = 8.dp, vertical = 4.dp),
-                )
-            }
-        }
+    Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         StarRating(
             halves = mood,
             onChange = controller::setMood,
             secret = true,
-            modifier = Modifier.padding(top = 4.dp),
+            starSize = 24.dp,
+        )
+        Spacer(Modifier.weight(1f))
+        Text(
+            text = when {
+                mood == null -> stringResource(R.string.day_rating_none)
+                Rating.isSecret(mood) -> stringResource(R.string.day_rating_secret)
+                else -> stringResource(R.string.day_rating_value, Rating.format(mood))
+            },
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            color = if (mood != null) StarColor else MaterialTheme.colorScheme.outline,
+            maxLines = 1,
+            modifier = Modifier.padding(start = 8.dp),
         )
     }
 }

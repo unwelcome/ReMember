@@ -90,16 +90,15 @@ fun SleepContent(controller: SleepController, modifier: Modifier = Modifier) {
                     modifier = Modifier.weight(1f),
                 )
                 Text(
-                    text = controller.quality?.let { stringResource(R.string.sleep_quality_value, Rating.format(it)) }
-                        ?: stringResource(R.string.day_rating_empty),
+                    text = stringResource(R.string.sleep_quality_value, controller.quality?.let(Rating::format) ?: "0"),
                     style = MaterialTheme.typography.titleSmall,
-                    fontWeight = if (controller.quality != null) FontWeight.Bold else null,
+                    fontWeight = FontWeight.Bold,
                     color = if (controller.quality != null) StarColor else MaterialTheme.colorScheme.outline,
                 )
             }
             StarRating(
                 halves = controller.quality,
-                onChange = { controller.quality = it },
+                onChange = { controller.quality = it.takeIf { halves -> halves > 0 } }, // 0 звёзд — не указано
                 stars = Rating.SLEEP_STARS,
                 starSize = 36.dp,
                 modifier = Modifier.padding(top = 4.dp),
