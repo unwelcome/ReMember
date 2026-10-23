@@ -6,6 +6,7 @@ import dev.chaik.remember.core.data.MoneyRepository
 import dev.chaik.remember.core.data.NoteRepository
 import dev.chaik.remember.core.data.SleepRepository
 import dev.chaik.remember.core.data.TagRepository
+import dev.chaik.remember.core.data.TaskRepository
 import dev.chaik.remember.core.database.DatabaseFactory
 import dev.chaik.remember.core.database.ReMemberDatabase
 import dev.chaik.remember.core.photos.PhotoStorage
@@ -42,4 +43,5 @@ class AppContainer(context: Context) {
     val moneyRepository by lazy { MoneyRepository(database) }
     val noteRepository by lazy { NoteRepository(database) }
     val tagRepository by lazy { TagRepository(database) }
+    val taskRepository by lazy { TaskRepository(database) }
 }

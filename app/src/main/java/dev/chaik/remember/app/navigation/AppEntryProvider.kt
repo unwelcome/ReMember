@@ -28,6 +28,8 @@ import dev.chaik.remember.feature.stats.StatsRoute
 import dev.chaik.remember.feature.stats.StatsScreen
 import dev.chaik.remember.feature.tasks.TasksRoute
 import dev.chaik.remember.feature.tasks.TasksScreen
+import dev.chaik.remember.feature.tasks.editor.TaskEditorRoute
+import dev.chaik.remember.feature.tasks.editor.TaskEditorScreen
 import dev.chaik.remember.feature.today.TodayRoute
 import dev.chaik.remember.feature.today.TodayScreen
 
@@ -44,12 +46,13 @@ fun appEntryProvider(backStack: NavBackStack<NavKey>): (NavKey) -> NavEntry<NavK
                 onCreate = { backStack.add(NoteEditorRoute(folderId = it)) },
             )
         }
-        entry<TasksRoute> { TasksScreen() }
+        entry<TasksRoute> { TasksScreen(onOpen = { backStack.add(TaskEditorRoute(it)) }) }
         entry<CalendarRoute> { CalendarScreen() }
         entry<MoreRoute> { MoreScreen(onOpen = { backStack.add(it) }) }
 
         // Вложенные страницы вкладок
         entry<NoteEditorRoute> { NoteEditorScreen(route = it, onBack = back) }
+        entry<TaskEditorRoute> { TaskEditorScreen(route = it, onBack = back) }
 
         // Разделы из «Ещё»
         entry<FeedRoute> { FeedScreen(onBack = back) }

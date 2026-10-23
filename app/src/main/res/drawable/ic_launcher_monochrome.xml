@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Одноцветный вариант иконки для «тематических значков» Android 13+:
+  система берёт только форму и перекрашивает её в цвета обоев.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Призма: контуры граней -->
+    <path
+        android:pathData="M45,29 L27,71 L63,76 Z M45,29 L57,25 L75,68 L63,76"
+        android:strokeWidth="2.2"
+        android:strokeColor="#FFFFFF"
+        android:strokeLineJoin="round" />
+
+    <!-- Входящий луч и радуга на выходе -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M18,61 L33.2,55.7 L33.2,57.8 L18,63.2 Z M52.66,49 L80,42.5 L80,67.6 L54.96,55 Z" />
+</vector>

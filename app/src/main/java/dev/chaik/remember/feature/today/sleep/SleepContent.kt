@@ -11,17 +11,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Bedtime
 import androidx.compose.material.icons.outlined.WbTwilight
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TimePicker
-import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,6 +32,7 @@ import dev.chaik.remember.R
 import dev.chaik.remember.core.model.Rating
 import dev.chaik.remember.core.ui.components.StarColor
 import dev.chaik.remember.core.ui.components.StarRating
+import dev.chaik.remember.core.ui.components.TimePickerDialog
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
@@ -138,6 +134,7 @@ fun SleepContent(controller: SleepController, modifier: Modifier = Modifier) {
                 picking = null
             },
             onDismiss = { picking = null },
+            clearLabel = stringResource(R.string.sleep_clear_time),
         )
     }
 }
@@ -175,27 +172,4 @@ private fun TimeButton(
             )
         }
     }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun TimePickerDialog(
-    initial: LocalTime,
-    onPick: (LocalTime) -> Unit,
-    onClear: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    val state = rememberTimePickerState(initialHour = initial.hour, initialMinute = initial.minute, is24Hour = true)
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        text = { TimePicker(state = state) },
-        confirmButton = {
-            TextButton(onClick = { onPick(LocalTime.of(state.hour, state.minute)) }) {
-                Text(stringResource(R.string.action_ok))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onClear) { Text(stringResource(R.string.sleep_clear_time)) }
-        },
-    )
 }

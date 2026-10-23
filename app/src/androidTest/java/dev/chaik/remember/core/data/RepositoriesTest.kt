@@ -13,6 +13,9 @@ import dev.chaik.remember.core.model.MoneyType
 import dev.chaik.remember.core.model.Note
 import dev.chaik.remember.core.model.NoteFolder
 import dev.chaik.remember.core.model.SleepEntry
+import dev.chaik.remember.core.model.Subtask
+import dev.chaik.remember.core.model.Task
+import dev.chaik.remember.core.model.TaskRepeat
 import dev.chaik.remember.core.photos.PhotoRefs
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -169,6 +172,33 @@ class RepositoriesTest {
         assertTrue(withPhoto.preview.startsWith("Начало жирным"))
         assertTrue(withPhoto.preview.length <= 151)
         assertNull(list.first { it.title == "Без фото" }.coverPhotoId)
+    }
+
+    @Test
+    fun repeatingTaskMovesToNextDateAndResetsSubtasks() = runTest {
+        val tasks = TaskRepository(db)
+        val id = tasks.save(
+            Task(
+                title = "Зал",
+                dueDate = today,
+                repeat = TaskRepeat.Daily,
+                subtasks = listOf(Subtask(title = "Разминка", done = true), Subtask(title = "Спина")),
+            ),
+        )
+        tasks.setDone(tasks.get(id)!!, done = true, today = today)
+
+        val moved = tasks.get(id)!!
+        assertEquals(today.plusDays(1), moved.dueDate)
+        assertTrue(!moved.done)
+        assertTrue(moved.subtasks.none { it.done })
+        assertEquals(listOf("Разминка", "Спина"), moved.subtasks.map { it.title })
+
+        // Обычная задача — просто выполнена, и её можно вернуть
+        val once = tasks.save(Task(title = "Купить хлеб"))
+        tasks.setDone(tasks.get(once)!!, done = true, today = today)
+        assertTrue(tasks.get(once)!!.done)
+        tasks.deleteDone()
+        assertNull(tasks.get(once))
     }
 
     @Test

@@ -17,7 +17,7 @@ class AppLockTest {
 
     private var now = 1_000_000L
     private val store = MemoryStore()
-    private val lock = AppLock(store) { now }
+    private val lock = AppLock(store, clock = { now }, enabled = true)
 
     @Test
     fun `хэш PIN проверяется и не совпадает с другим PIN`() {
@@ -38,6 +38,16 @@ class AppLockTest {
 
         assertFalse(PinHasher.needsRehash(store.pinHash!!))
         assertTrue(PinHasher.verify(AppLock.DEFAULT_PIN, store.pinHash!!))
+    }
+
+    @Test
+    fun `выключенная блокировка не запирает ни при запуске, ни после фона`() {
+        val off = AppLock(MemoryStore(), clock = { now }, enabled = false)
+        assertFalse(off.locked.value)
+        off.onBackground()
+        now += AppLock.DEFAULT_TIMEOUT_MILLIS * 2
+        off.onForeground()
+        assertFalse(off.locked.value)
     }
 
     @Test

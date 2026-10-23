@@ -37,14 +37,16 @@ sealed interface PinResult {
 class AppLock(
     private val store: LockStore,
     private val clock: () -> Long = System::currentTimeMillis,
+    /** Включена ли блокировка вообще. Пока выключена по умолчанию — включится в настройках. */
+    val enabled: Boolean = ENABLED_BY_DEFAULT,
 ) {
     val timeoutMillis: Long = DEFAULT_TIMEOUT_MILLIS
     val pinLength: Int = DEFAULT_PIN.length
     val biometricEnabled: Boolean = true
 
-    private val _locked = MutableStateFlow(true)
+    private val _locked = MutableStateFlow(enabled)
 
-    /** Заблокировано ли сейчас. При запуске процесса — всегда да. */
+    /** Заблокировано ли сейчас. При запуске процесса — всегда да (если блокировка включена). */
     val locked: StateFlow<Boolean> = _locked.asStateFlow()
 
     /** Приложение ушло в фон. */
@@ -54,6 +56,7 @@ class AppLock(
 
     /** Приложение вернулось: если пробыло в фоне дольше таймаута — блокируем. */
     fun onForeground() {
+        if (!enabled) return
         val since = store.backgroundSince
         store.backgroundSince = 0
         if (since > 0 && clock() - since >= timeoutMillis) _locked.value = true
@@ -94,6 +97,8 @@ class AppLock(
     }
 
     companion object {
+        /** Блокировка временно выключена, чтобы не мешала разработке; включатель будет в настройках. */
+        const val ENABLED_BY_DEFAULT = false
         const val DEFAULT_PIN = "1111"
         const val DEFAULT_TIMEOUT_MILLIS = 10 * 60 * 1000L
         const val MAX_ATTEMPTS = 5

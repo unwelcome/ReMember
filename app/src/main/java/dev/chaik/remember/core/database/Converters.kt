@@ -3,6 +3,7 @@ package dev.chaik.remember.core.database
 import androidx.room.TypeConverter
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
 
 /** Как хранить в базе типы, которых SQLite не знает. */
 class Converters {
@@ -19,4 +20,11 @@ class Converters {
 
     @TypeConverter
     fun longToInstant(value: Long?): Instant? = value?.let(Instant::ofEpochMilli)
+
+    // Время дня — секунды от полуночи
+    @TypeConverter
+    fun localTimeToInt(time: LocalTime?): Int? = time?.toSecondOfDay()
+
+    @TypeConverter
+    fun intToLocalTime(value: Int?): LocalTime? = value?.let { LocalTime.ofSecondOfDay(it.toLong()) }
 }

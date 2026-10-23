@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">ReMember</string>
+    <string name="app_name">Re:Member</string>
 
     <!-- Общие действия -->
     <string name="action_back">Назад</string>
@@ -58,6 +58,7 @@
     <string name="today_go_today">К сегодняшнему дню</string>
     <string name="action_ok">Готово</string>
     <string name="action_cancel">Отмена</string>
+    <string name="action_remove">Убрать</string>
 
     <!-- День: оценка и теги -->
     <string name="day_rating_value">%1$s/10</string>
@@ -126,7 +127,7 @@
     <string name="lock_wait">Слишком много попыток. Подождите %1$d с</string>
     <string name="lock_fingerprint">Войти по отпечатку</string>
     <string name="lock_backspace">Стереть</string>
-    <string name="lock_biometric_title">Вход в ReMember</string>
+    <string name="lock_biometric_title">Вход в Re:Member</string>
     <string name="lock_biometric_use_pin">Ввести PIN</string>
     <plurals name="lock_wrong">
         <item quantity="one">Неверный PIN. Осталась %1$d попытка</item>
@@ -134,6 +135,47 @@
         <item quantity="many">Неверный PIN. Осталось %1$d попыток</item>
         <item quantity="other">Неверный PIN. Осталось %1$d попытки</item>
     </plurals>
+
+    <!-- Задачи -->
+    <string name="tasks_overdue">Просрочено</string>
+    <string name="tasks_today">Сегодня</string>
+    <string name="tasks_tomorrow">Завтра</string>
+    <string name="tasks_later">Позже</string>
+    <string name="tasks_no_date">Без срока</string>
+    <string name="tasks_done">Выполнено (%1$d)</string>
+    <string name="tasks_clear_done">Очистить</string>
+    <string name="tasks_clear_done_title">Удалить выполненные задачи?</string>
+    <string name="tasks_clear_done_text">Их нельзя будет вернуть.</string>
+    <string name="tasks_empty">Задач пока нет — нажмите «+», чтобы добавить</string>
+    <string name="tasks_new">Новая задача</string>
+    <string name="tasks_quick_hint">Что нужно сделать?</string>
+    <string name="tasks_add">Добавить</string>
+    <string name="tasks_pick_date">Дата</string>
+    <string name="tasks_priority">Приоритет</string>
+    <string name="tasks_mark_done">Отметить выполненной</string>
+    <string name="tasks_mark_undone">Вернуть в работу</string>
+    <string name="tasks_yesterday">Вчера</string>
+    <string name="tasks_title_hint">Название задачи</string>
+    <string name="tasks_due">Срок</string>
+    <string name="tasks_no_due">Без срока</string>
+    <string name="tasks_no_time">Время</string>
+    <string name="tasks_repeat">Повтор</string>
+    <string name="tasks_subtasks">Подзадачи</string>
+    <string name="tasks_add_subtask">Подзадача</string>
+    <string name="tasks_subtask_hint">Шаг</string>
+    <string name="tasks_remove_subtask">Убрать подзадачу</string>
+    <string name="tasks_notes">Заметка к задаче</string>
+    <string name="tasks_delete_title">Удалить задачу?</string>
+    <string name="tasks_priority_none">Нет</string>
+    <string name="tasks_priority_low">Низкий</string>
+    <string name="tasks_priority_medium">Средний</string>
+    <string name="tasks_priority_high">Высокий</string>
+    <string name="tasks_repeat_none">Не повторять</string>
+    <string name="tasks_repeat_daily">Каждый день</string>
+    <string name="tasks_repeat_weekly">Каждую неделю</string>
+    <string name="tasks_repeat_monthly">Каждый месяц</string>
+    <string name="tasks_repeat_yearly">Каждый год</string>
+    <string name="tasks_repeat_weekdays">По дням недели</string>
 
     <!-- Заглушки -->
     <string name="placeholder_title">Раздел в разработке</string>
