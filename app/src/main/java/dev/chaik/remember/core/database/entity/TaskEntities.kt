@@ -18,7 +18,7 @@ data class TaskEntity(
     @ColumnInfo(name = "due_time") val dueTime: LocalTime?,
     /** 0 — без приоритета, 1 — низкий, 2 — средний, 3 — высокий. */
     val priority: Int,
-    /** Повтор, см. TaskRepeat.encode: «», «D», «W», «M», «Y», «WD:1,3,5». */
+    /** Повтор, см. Repeat.encode: «», «D», «W», «M», «Y», «WD:1,3,5». */
     val repeat: String,
     val done: Boolean,
     @ColumnInfo(name = "done_at") val doneAt: Instant?,

@@ -5,6 +5,7 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import dev.chaik.remember.core.database.dao.DayEntryDao
+import dev.chaik.remember.core.database.dao.EventDao
 import dev.chaik.remember.core.database.dao.MoneyDao
 import dev.chaik.remember.core.database.dao.NoteDao
 import dev.chaik.remember.core.database.dao.PhotoDao
@@ -13,6 +14,7 @@ import dev.chaik.remember.core.database.dao.TagDao
 import dev.chaik.remember.core.database.dao.TaskDao
 import dev.chaik.remember.core.database.entity.DayEntryEntity
 import dev.chaik.remember.core.database.entity.DayEntryTagEntity
+import dev.chaik.remember.core.database.entity.EventEntity
 import dev.chaik.remember.core.database.entity.MoneyCategoryEntity
 import dev.chaik.remember.core.database.entity.MoneyTransactionEntity
 import dev.chaik.remember.core.database.entity.NoteEntity
@@ -32,7 +34,7 @@ import dev.chaik.remember.core.database.entity.TaskEntity
  * (`autoMigrations` — для простых случаев). Схемы лежат в app/schemas.
  */
 @Database(
-    version = 2,
+    version = 3,
     entities = [
         DayEntryEntity::class,
         SleepEntryEntity::class,
@@ -47,10 +49,13 @@ import dev.chaik.remember.core.database.entity.TaskEntity
         PhotoRefEntity::class,
         TaskEntity::class,
         SubtaskEntity::class,
+        EventEntity::class,
     ],
     autoMigrations = [
         // 2: задачи и подзадачи — только новые таблицы
         AutoMigration(from = 1, to = 2),
+        // 3: события календаря — новая таблица
+        AutoMigration(from = 2, to = 3),
     ],
     exportSchema = true,
 )
@@ -63,4 +68,5 @@ abstract class ReMemberDatabase : RoomDatabase() {
     abstract fun tagDao(): TagDao
     abstract fun photoDao(): PhotoDao
     abstract fun taskDao(): TaskDao
+    abstract fun eventDao(): EventDao
 }

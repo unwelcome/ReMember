@@ -19,14 +19,14 @@ import java.time.ZoneOffset
 
 /**
  * Часы для выбора времени (24 часа).
- * [onClear] — убрать время (кнопка слева), [clearLabel] — её подпись.
+ * [onClear] — убрать время (кнопка слева; null — без неё), [clearLabel] — её подпись.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimePickerDialog(
     initial: LocalTime,
     onPick: (LocalTime) -> Unit,
-    onClear: () -> Unit,
+    onClear: (() -> Unit)?,
     onDismiss: () -> Unit,
     clearLabel: String = stringResource(R.string.action_remove),
 ) {
@@ -39,19 +39,19 @@ fun TimePickerDialog(
                 Text(stringResource(R.string.action_ok))
             }
         },
-        dismissButton = {
-            TextButton(onClick = onClear) { Text(clearLabel) }
+        dismissButton = onClear?.let { clear ->
+            { TextButton(onClick = clear) { Text(clearLabel) } }
         },
     )
 }
 
-/** Календарь для выбора срока — любые даты, включая будущие. [onClear] — убрать дату. */
+/** Календарь для выбора срока — любые даты, включая будущие. [onClear] — убрать дату (null — без кнопки). */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DueDatePickerDialog(
     initial: LocalDate?,
     onPick: (LocalDate) -> Unit,
-    onClear: () -> Unit,
+    onClear: (() -> Unit)?,
     onDismiss: () -> Unit,
 ) {
     // DatePicker работает с полночью по UTC
@@ -68,8 +68,8 @@ fun DueDatePickerDialog(
                 },
             ) { Text(stringResource(R.string.action_ok)) }
         },
-        dismissButton = {
-            TextButton(onClick = onClear) { Text(stringResource(R.string.action_remove)) }
+        dismissButton = onClear?.let { clear ->
+            { TextButton(onClick = clear) { Text(stringResource(R.string.action_remove)) } }
         },
     ) {
         DatePicker(state = state, title = null)

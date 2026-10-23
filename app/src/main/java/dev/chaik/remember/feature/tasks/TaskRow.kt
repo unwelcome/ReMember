@@ -23,7 +23,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.chaik.remember.core.model.Task
-import dev.chaik.remember.core.model.TaskRepeat
+import dev.chaik.remember.core.model.Repeat
 import java.time.LocalDate
 
 /**
@@ -57,7 +57,7 @@ fun TaskRow(
                 overflow = TextOverflow.Ellipsis,
             )
             val due = task.dueDate
-            val hasMeta = due != null || task.repeat != TaskRepeat.None || task.subtasks.isNotEmpty() || task.notes.isNotBlank()
+            val hasMeta = due != null || task.repeat != Repeat.None || task.subtasks.isNotEmpty() || task.notes.isNotBlank()
             if (hasMeta && !task.done) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -72,7 +72,7 @@ fun TaskRow(
                             color = if (overdue) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
                         )
                     }
-                    if (task.repeat != TaskRepeat.None) Meta(Icons.Outlined.Repeat, null, muted)
+                    if (task.repeat != Repeat.None) Meta(Icons.Outlined.Repeat, null, muted)
                     if (task.subtasks.isNotEmpty()) {
                         Meta(Icons.Outlined.Checklist, "${task.subtasks.count { it.done }}/${task.subtasks.size}", muted)
                     }

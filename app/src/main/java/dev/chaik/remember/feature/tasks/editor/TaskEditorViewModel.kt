@@ -11,7 +11,7 @@ import dev.chaik.remember.app.AppContainer
 import dev.chaik.remember.core.model.Subtask
 import dev.chaik.remember.core.model.Task
 import dev.chaik.remember.core.model.TaskPriority
-import dev.chaik.remember.core.model.TaskRepeat
+import dev.chaik.remember.core.model.Repeat
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.drop
@@ -43,7 +43,7 @@ class TaskEditorViewModel(
     var dueDate by mutableStateOf<LocalDate?>(null)
     var dueTime by mutableStateOf<LocalTime?>(null)
     var priority by mutableStateOf(TaskPriority.NONE)
-    var repeat by mutableStateOf<TaskRepeat>(TaskRepeat.None)
+    var repeat by mutableStateOf<Repeat>(Repeat.None)
     var done by mutableStateOf(false)
         private set
     val subtasks = mutableStateListOf<EditableSubtask>()

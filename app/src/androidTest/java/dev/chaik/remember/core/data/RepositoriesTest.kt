@@ -7,6 +7,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.chaik.remember.core.database.ReMemberDatabase
 import dev.chaik.remember.core.database.entity.PhotoEntity
 import dev.chaik.remember.core.model.DayEntry
+import dev.chaik.remember.core.model.Event
+import dev.chaik.remember.core.model.EventColor
 import dev.chaik.remember.core.model.MoneyCategory
 import dev.chaik.remember.core.model.MoneyTransaction
 import dev.chaik.remember.core.model.MoneyType
@@ -15,7 +17,7 @@ import dev.chaik.remember.core.model.NoteFolder
 import dev.chaik.remember.core.model.SleepEntry
 import dev.chaik.remember.core.model.Subtask
 import dev.chaik.remember.core.model.Task
-import dev.chaik.remember.core.model.TaskRepeat
+import dev.chaik.remember.core.model.Repeat
 import dev.chaik.remember.core.photos.PhotoRefs
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -181,7 +183,7 @@ class RepositoriesTest {
             Task(
                 title = "Зал",
                 dueDate = today,
-                repeat = TaskRepeat.Daily,
+                repeat = Repeat.Daily,
                 subtasks = listOf(Subtask(title = "Разминка", done = true), Subtask(title = "Спина")),
             ),
         )
@@ -199,6 +201,36 @@ class RepositoriesTest {
         assertTrue(tasks.get(once)!!.done)
         tasks.deleteDone()
         assertNull(tasks.get(once))
+    }
+
+    @Test
+    fun eventsAreStoredAsRulesAndBirthdaysAreYearly() = runTest {
+        val events = EventRepository(db)
+        val id = events.save(
+            Event(
+                title = "Иван Петров",
+                date = LocalDate.of(2026, 3, 10),
+                color = EventColor.PURPLE,
+                repeat = Repeat.None,
+                remindMinutes = 1440,
+                isBirthday = true,
+                birthYear = 1995,
+            ),
+        )
+        val saved = events.get(id)!!
+        // У дня рождения повтор всегда ежегодный, даже если пришёл другой
+        assertEquals(Repeat.Yearly, saved.repeat)
+        assertEquals(EventColor.PURPLE, saved.color)
+        assertEquals(1440, saved.remindMinutes)
+        assertEquals(1995, saved.birthYear)
+
+        // Обычное событие: год рождения не хранится
+        val other = events.save(Event(title = "Подписка", date = today, repeat = Repeat.Monthly, birthYear = 2000))
+        assertNull(events.get(other)!!.birthYear)
+        assertEquals(2, events.observeAll().first().size)
+
+        events.delete(id)
+        assertNull(events.get(id))
     }
 
     @Test

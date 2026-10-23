@@ -12,28 +12,28 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 
-class TaskRepeatTest {
+class RepeatTest {
     // Пятница
     private val today = LocalDate.of(2026, 10, 23)
 
     @Test
     fun `ежедневная — на завтра, даже если была просрочена`() {
-        assertEquals(today.plusDays(1), TaskRepeat.Daily.next(today, today))
-        assertEquals(today.plusDays(1), TaskRepeat.Daily.next(today.minusDays(5), today))
+        assertEquals(today.plusDays(1), Repeat.Daily.next(today, today))
+        assertEquals(today.plusDays(1), Repeat.Daily.next(today.minusDays(5), today))
     }
 
     @Test
     fun `еженедельная, ежемесячная, ежегодная`() {
-        assertEquals(today.plusWeeks(1), TaskRepeat.Weekly.next(today, today))
+        assertEquals(today.plusWeeks(1), Repeat.Weekly.next(today, today))
         // Выполнили заранее — следующий раз через неделю после срока
-        assertEquals(today.plusDays(10), TaskRepeat.Weekly.next(today.plusDays(3), today))
-        assertEquals(LocalDate.of(2026, 11, 30), TaskRepeat.Monthly.next(LocalDate.of(2026, 10, 31), LocalDate.of(2026, 10, 31)))
-        assertEquals(today.plusYears(1), TaskRepeat.Yearly.next(today, today))
+        assertEquals(today.plusDays(10), Repeat.Weekly.next(today.plusDays(3), today))
+        assertEquals(LocalDate.of(2026, 11, 30), Repeat.Monthly.next(LocalDate.of(2026, 10, 31), LocalDate.of(2026, 10, 31)))
+        assertEquals(today.plusYears(1), Repeat.Yearly.next(today, today))
     }
 
     @Test
     fun `по дням недели`() {
-        val gym = TaskRepeat.Weekdays(setOf(MONDAY, WEDNESDAY, FRIDAY))
+        val gym = Repeat.Weekdays(setOf(MONDAY, WEDNESDAY, FRIDAY))
         // Пятница → понедельник
         assertEquals(LocalDate.of(2026, 10, 26), gym.next(today, today))
         // Без срока — ближайший подходящий день после сегодня
@@ -42,17 +42,17 @@ class TaskRepeatTest {
 
     @Test
     fun `без повтора следующего срока нет`() {
-        assertNull(TaskRepeat.None.next(today, today))
+        assertNull(Repeat.None.next(today, today))
     }
 
     @Test
     fun `повтор сохраняется и читается из базы`() {
         listOf(
-            TaskRepeat.None, TaskRepeat.Daily, TaskRepeat.Weekly, TaskRepeat.Monthly, TaskRepeat.Yearly,
-            TaskRepeat.Weekdays(setOf(FRIDAY, MONDAY)),
-        ).forEach { assertEquals(it, TaskRepeat.decode(TaskRepeat.encode(it))) }
-        assertEquals("WD:1,5", TaskRepeat.encode(TaskRepeat.Weekdays(setOf(FRIDAY, MONDAY))))
-        assertEquals(TaskRepeat.None, TaskRepeat.decode("мусор"))
+            Repeat.None, Repeat.Daily, Repeat.Weekly, Repeat.Monthly, Repeat.Yearly,
+            Repeat.Weekdays(setOf(FRIDAY, MONDAY)),
+        ).forEach { assertEquals(it, Repeat.decode(Repeat.encode(it))) }
+        assertEquals("WD:1,5", Repeat.encode(Repeat.Weekdays(setOf(FRIDAY, MONDAY))))
+        assertEquals(Repeat.None, Repeat.decode("мусор"))
     }
 
     @Test

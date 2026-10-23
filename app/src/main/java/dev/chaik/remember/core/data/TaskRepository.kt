@@ -7,7 +7,7 @@ import dev.chaik.remember.core.database.entity.TaskEntity
 import dev.chaik.remember.core.model.Subtask
 import dev.chaik.remember.core.model.Task
 import dev.chaik.remember.core.model.TaskPriority
-import dev.chaik.remember.core.model.TaskRepeat
+import dev.chaik.remember.core.model.Repeat
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import java.time.Instant
@@ -69,7 +69,7 @@ private fun TaskEntity.toModel(subtasks: List<Subtask>) = Task(
     dueDate = dueDate,
     dueTime = dueTime,
     priority = TaskPriority.fromLevel(priority),
-    repeat = TaskRepeat.decode(repeat),
+    repeat = Repeat.decode(repeat),
     done = done,
     doneAt = doneAt,
     subtasks = subtasks,
@@ -83,7 +83,7 @@ private fun Task.toEntity(createdAt: Instant, updatedAt: Instant) = TaskEntity(
     dueDate = dueDate,
     dueTime = dueTime?.takeIf { dueDate != null },
     priority = priority.level,
-    repeat = TaskRepeat.encode(repeat),
+    repeat = Repeat.encode(repeat),
     done = done,
     doneAt = doneAt,
     createdAt = createdAt,

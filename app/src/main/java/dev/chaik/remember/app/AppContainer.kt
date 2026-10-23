@@ -2,6 +2,7 @@ package dev.chaik.remember.app
 
 import android.content.Context
 import dev.chaik.remember.core.data.DayRepository
+import dev.chaik.remember.core.data.EventRepository
 import dev.chaik.remember.core.data.MoneyRepository
 import dev.chaik.remember.core.data.NoteRepository
 import dev.chaik.remember.core.data.SleepRepository
@@ -44,4 +45,5 @@ class AppContainer(context: Context) {
     val noteRepository by lazy { NoteRepository(database) }
     val tagRepository by lazy { TagRepository(database) }
     val taskRepository by lazy { TaskRepository(database) }
+    val eventRepository by lazy { EventRepository(database) }
 }

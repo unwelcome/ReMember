@@ -45,6 +45,29 @@ class MigrationTest {
         }
     }
 
+    @Test
+    fun from2To3KeepsTasksAndAddsEvents() {
+        helper.createDatabase(DB, 2).use { db ->
+            db.execSQL(
+                "INSERT INTO task (title, notes, due_date, due_time, priority, repeat, done, done_at, created_at, updated_at) " +
+                    "VALUES ('Задача', '', NULL, NULL, 2, 'D', 0, NULL, 0, 0)",
+            )
+        }
+
+        helper.runMigrationsAndValidate(DB, 3, true).use { db ->
+            db.query("SELECT title, priority, repeat FROM task").use { cursor ->
+                cursor.moveToFirst()
+                assertEquals("Задача", cursor.getString(0))
+                assertEquals(2, cursor.getInt(1))
+                assertEquals("D", cursor.getString(2))
+            }
+            db.execSQL(
+                "INSERT INTO event (title, description, date, time, color, repeat, remind_minutes, is_birthday, birth_year, " +
+                    "created_at, updated_at) VALUES ('Иван', '', 20522, 28800, 'RED', 'Y', 1440, 1, 1995, 0, 0)",
+            )
+        }
+    }
+
     private companion object {
         const val DB = "migration-test.db"
     }

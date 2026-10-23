@@ -159,7 +159,7 @@
     <string name="tasks_due">Срок</string>
     <string name="tasks_no_due">Без срока</string>
     <string name="tasks_no_time">Время</string>
-    <string name="tasks_repeat">Повтор</string>
+    <string name="repeat_title">Повтор</string>
     <string name="tasks_subtasks">Подзадачи</string>
     <string name="tasks_add_subtask">Подзадача</string>
     <string name="tasks_subtask_hint">Шаг</string>
@@ -170,17 +170,72 @@
     <string name="tasks_priority_low">Низкий</string>
     <string name="tasks_priority_medium">Средний</string>
     <string name="tasks_priority_high">Высокий</string>
-    <string name="tasks_repeat_none">Не повторять</string>
-    <string name="tasks_repeat_daily">Каждый день</string>
-    <string name="tasks_repeat_weekly">Каждую неделю</string>
-    <string name="tasks_repeat_monthly">Каждый месяц</string>
-    <string name="tasks_repeat_yearly">Каждый год</string>
-    <string name="tasks_repeat_weekdays">По дням недели</string>
+    <string name="repeat_none">Не повторять</string>
+    <string name="repeat_daily">Каждый день</string>
+    <string name="repeat_weekly">Каждую неделю</string>
+    <string name="repeat_monthly">Каждый месяц</string>
+    <string name="repeat_yearly">Каждый год</string>
+    <string name="repeat_weekdays">По дням недели</string>
 
     <!-- Заглушки -->
     <string name="placeholder_title">Раздел в разработке</string>
     <string name="placeholder_today">Запись о том, как прошёл день: текст, фото, сон и траты</string>
     <string name="placeholder_notes">Заметки с папками, тегами и закреплением</string>
     <string name="placeholder_tasks">Список дел со сроками и приоритетами</string>
-    <string name="placeholder_calendar">Календарь событий: дни рождения, подписки и другое</string>
+
+    <!-- Календарь и события -->
+    <string name="calendar_today">Сегодня</string>
+    <string name="calendar_today_day">Сегодня, %1$s</string>
+    <string name="calendar_prev_month">Предыдущий месяц</string>
+    <string name="calendar_next_month">Следующий месяц</string>
+    <string name="calendar_no_events">В этот день событий нет</string>
+    <string name="calendar_add_event">Добавить событие</string>
+    <string name="event_title">Событие</string>
+    <string name="event_new">Новое событие</string>
+    <string name="event_title_hint">Название события</string>
+    <string name="event_untitled">Без названия</string>
+    <string name="event_birthday">День рождения</string>
+    <string name="event_person_hint">Фамилия и имя</string>
+    <string name="event_birth_year">Год рождения</string>
+    <string name="event_turns_on_day">Исполняется %1$s</string>
+    <string name="event_turns_next">%1$s исполнится %2$s</string>
+    <string name="event_when">Когда</string>
+    <string name="event_color">Цвет</string>
+    <string name="event_remind">Предупредить</string>
+    <string name="event_remind_none">Не предупреждать</string>
+    <string name="event_remind_at_time">В момент события</string>
+    <string name="event_remind_custom">Своё…</string>
+    <string name="event_remind_custom_title">Предупредить за</string>
+    <string name="event_remind_amount">Сколько</string>
+    <string name="event_unit_minutes">Минут</string>
+    <string name="event_unit_hours">Часов</string>
+    <string name="event_unit_days">Дней</string>
+    <string name="event_description">Описание</string>
+    <string name="event_delete_title">Удалить событие?</string>
+    <string name="event_delete_text">Его нельзя будет вернуть.</string>
+    <string name="event_delete_repeating_text">Событие удалится во все дни повтора.</string>
+    <plurals name="years">
+        <item quantity="one">%1$d год</item>
+        <item quantity="few">%1$d года</item>
+        <item quantity="many">%1$d лет</item>
+        <item quantity="other">%1$d года</item>
+    </plurals>
+    <plurals name="remind_minutes">
+        <item quantity="one">За %1$d минуту</item>
+        <item quantity="few">За %1$d минуты</item>
+        <item quantity="many">За %1$d минут</item>
+        <item quantity="other">За %1$d минуты</item>
+    </plurals>
+    <plurals name="remind_hours">
+        <item quantity="one">За %1$d час</item>
+        <item quantity="few">За %1$d часа</item>
+        <item quantity="many">За %1$d часов</item>
+        <item quantity="other">За %1$d часа</item>
+    </plurals>
+    <plurals name="remind_days">
+        <item quantity="one">За %1$d день</item>
+        <item quantity="few">За %1$d дня</item>
+        <item quantity="many">За %1$d дней</item>
+        <item quantity="other">За %1$d дня</item>
+    </plurals>
 </resources>

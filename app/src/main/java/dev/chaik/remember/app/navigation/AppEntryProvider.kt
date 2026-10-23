@@ -6,6 +6,8 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import dev.chaik.remember.feature.calendar.CalendarRoute
 import dev.chaik.remember.feature.calendar.CalendarScreen
+import dev.chaik.remember.feature.calendar.editor.EventEditorRoute
+import dev.chaik.remember.feature.calendar.editor.EventEditorScreen
 import dev.chaik.remember.feature.feed.FeedRoute
 import dev.chaik.remember.feature.feed.FeedScreen
 import dev.chaik.remember.feature.finance.FinanceRoute
@@ -47,12 +49,18 @@ fun appEntryProvider(backStack: NavBackStack<NavKey>): (NavKey) -> NavEntry<NavK
             )
         }
         entry<TasksRoute> { TasksScreen(onOpen = { backStack.add(TaskEditorRoute(it)) }) }
-        entry<CalendarRoute> { CalendarScreen() }
+        entry<CalendarRoute> {
+            CalendarScreen(
+                onOpen = { backStack.add(EventEditorRoute(eventId = it)) },
+                onCreate = { backStack.add(EventEditorRoute(date = it.toEpochDay())) },
+            )
+        }
         entry<MoreRoute> { MoreScreen(onOpen = { backStack.add(it) }) }
 
         // Вложенные страницы вкладок
         entry<NoteEditorRoute> { NoteEditorScreen(route = it, onBack = back) }
         entry<TaskEditorRoute> { TaskEditorScreen(route = it, onBack = back) }
+        entry<EventEditorRoute> { EventEditorScreen(route = it, onBack = back) }
 
         // Разделы из «Ещё»
         entry<FeedRoute> { FeedScreen(onBack = back) }
