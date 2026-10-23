@@ -8,6 +8,7 @@ import dev.chaik.remember.core.data.NoteRepository
 import dev.chaik.remember.core.data.SleepRepository
 import dev.chaik.remember.core.data.TagRepository
 import dev.chaik.remember.core.data.TaskRepository
+import dev.chaik.remember.core.data.WorkoutRepository
 import dev.chaik.remember.core.database.DatabaseFactory
 import dev.chaik.remember.core.database.ReMemberDatabase
 import dev.chaik.remember.core.photos.PhotoStorage
@@ -28,7 +29,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
  * Создаются лениво — при первом обращении, а не при запуске.
  */
 class AppContainer(context: Context) {
-    private val appContext = context.applicationContext
+    val appContext: Context = context.applicationContext
 
     /**
      * Фоновые задачи уровня приложения — живут, пока жив процесс.
@@ -51,11 +52,21 @@ class AppContainer(context: Context) {
     val tagRepository by lazy { TagRepository(database) }
     val taskRepository by lazy { TaskRepository(database) }
     val eventRepository by lazy { EventRepository(database) }
+    val workoutRepository by lazy { WorkoutRepository(database) }
 
     val reminderSettings by lazy { ReminderSettingsStore(appContext) }
     val notifier by lazy { Notifier(appContext) }
     val reminderScheduler by lazy {
-        ReminderScheduler(appContext, reminderSettings, notifier, dayRepository, sleepRepository, eventRepository, taskRepository)
+        ReminderScheduler(
+            appContext,
+            reminderSettings,
+            notifier,
+            dayRepository,
+            sleepRepository,
+            eventRepository,
+            taskRepository,
+            workoutRepository,
+        )
     }
 
     /** Куда перейти по тапу на уведомление; экран, который это выполнил, обнуляет запрос. */

@@ -12,7 +12,13 @@ sealed interface Reminder {
     data class Summary(val date: LocalDate) : Reminder
     data class EventAlert(val eventId: Long, val occurrence: LocalDateTime) : Reminder
     data class TaskDue(val taskId: Long, val due: LocalDateTime) : Reminder
+    data class WorkoutRunning(val workoutId: Long) : Reminder
 }
+
+/** Идущая тренировка: через [WORKOUT_REMINDER_HOURS] после начала спросим, не пора ли закончить. */
+data class ActiveWorkout(val id: Long, val start: LocalDateTime)
+
+const val WORKOUT_REMINDER_HOURS = 2L
 
 /** Напоминание, приведённое к тихим часам: [at] — когда показать, [silent] — без звука. */
 data class PlannedReminder(val at: LocalDateTime, val reminder: Reminder, val silent: Boolean = false)
@@ -28,6 +34,7 @@ object ReminderPlanner {
         settings: ReminderSettings,
         events: List<Event>,
         tasks: List<Task>,
+        activeWorkout: ActiveWorkout? = null,
     ): List<PlannedReminder> {
         if (!settings.enabled || !to.isAfter(from)) return emptyList()
         val raw = mutableListOf<Pair<LocalDateTime, Reminder>>()
@@ -66,6 +73,9 @@ object ReminderPlanner {
                 }
             }
         }
+
+        // Напоминание о незакрытой тренировке не зависит от настроек отдельных видов
+        activeWorkout?.let { raw += it.start.plusHours(WORKOUT_REMINDER_HOURS) to Reminder.WorkoutRunning(it.id) }
 
         return raw
             .mapNotNull { (at, reminder) -> applyQuiet(at, reminder, settings.quiet) }

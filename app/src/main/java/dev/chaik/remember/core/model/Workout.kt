@@ -41,11 +41,12 @@ data class Exercise(
     val kind: ExerciseKind = ExerciseKind.WEIGHT_REPS,
 )
 
-/** Как записываются подходы: «40×12», «30» или «1:30». */
+/** Как записываются подходы: «40×12», «30», «1:30» или «9,4 км/ч × 10:00» (бег). */
 enum class ExerciseKind(val code: String) {
     WEIGHT_REPS("WR"),
     REPS("R"),
     TIME("T"),
+    SPEED_TIME("ST"),
     ;
 
     companion object {
@@ -60,12 +61,17 @@ data class WorkoutSet(
     val weight: Double? = null,
     val reps: Int? = null,
     val seconds: Int? = null,
+    /** Скорость, км/ч — для бега. */
+    val speed: Double? = null,
 ) {
-    /** Как подход выглядит в записи: «40 × 12», «30», «1:30». */
+    /** Как подход выглядит в записи: «40 × 12», «30», «1:30», «9,4 км/ч × 10:00». */
     fun format(kind: ExerciseKind): String = when (kind) {
         ExerciseKind.WEIGHT_REPS -> "${weight?.let(::formatKg) ?: "—"} × ${reps ?: "—"}"
         ExerciseKind.REPS -> reps?.toString() ?: "—"
         ExerciseKind.TIME -> seconds?.let(::formatDuration) ?: "—"
+        ExerciseKind.SPEED_TIME -> listOfNotNull(speed?.let { "${formatKg(it)} км/ч" }, seconds?.let(::formatDuration))
+            .joinToString(" × ")
+            .ifEmpty { "—" }
     }
 }
 
@@ -79,6 +85,7 @@ data class WorkoutSummary(
     val weightBefore: Double?,
     val weightAfter: Double?,
     val active: Boolean,
+    val imported: Boolean,
     val exerciseNames: List<String>,
 )
 

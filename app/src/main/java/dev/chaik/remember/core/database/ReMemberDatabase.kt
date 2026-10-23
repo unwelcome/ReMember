@@ -12,9 +12,11 @@ import dev.chaik.remember.core.database.dao.PhotoDao
 import dev.chaik.remember.core.database.dao.SleepDao
 import dev.chaik.remember.core.database.dao.TagDao
 import dev.chaik.remember.core.database.dao.TaskDao
+import dev.chaik.remember.core.database.dao.WorkoutDao
 import dev.chaik.remember.core.database.entity.DayEntryEntity
 import dev.chaik.remember.core.database.entity.DayEntryTagEntity
 import dev.chaik.remember.core.database.entity.EventEntity
+import dev.chaik.remember.core.database.entity.ExerciseEntity
 import dev.chaik.remember.core.database.entity.MoneyCategoryEntity
 import dev.chaik.remember.core.database.entity.MoneyTransactionEntity
 import dev.chaik.remember.core.database.entity.NoteEntity
@@ -26,6 +28,9 @@ import dev.chaik.remember.core.database.entity.SleepEntryEntity
 import dev.chaik.remember.core.database.entity.SubtaskEntity
 import dev.chaik.remember.core.database.entity.TagEntity
 import dev.chaik.remember.core.database.entity.TaskEntity
+import dev.chaik.remember.core.database.entity.WorkoutEntity
+import dev.chaik.remember.core.database.entity.WorkoutExerciseEntity
+import dev.chaik.remember.core.database.entity.WorkoutSetEntity
 
 /**
  * Вся база приложения.
@@ -34,7 +39,7 @@ import dev.chaik.remember.core.database.entity.TaskEntity
  * (`autoMigrations` — для простых случаев). Схемы лежат в app/schemas.
  */
 @Database(
-    version = 3,
+    version = 5,
     entities = [
         DayEntryEntity::class,
         SleepEntryEntity::class,
@@ -50,12 +55,20 @@ import dev.chaik.remember.core.database.entity.TaskEntity
         TaskEntity::class,
         SubtaskEntity::class,
         EventEntity::class,
+        ExerciseEntity::class,
+        WorkoutEntity::class,
+        WorkoutExerciseEntity::class,
+        WorkoutSetEntity::class,
     ],
     autoMigrations = [
         // 2: задачи и подзадачи — только новые таблицы
         AutoMigration(from = 1, to = 2),
         // 3: события календаря — новая таблица
         AutoMigration(from = 2, to = 3),
+        // 4: зал — упражнения, тренировки, подходы
+        AutoMigration(from = 3, to = 4),
+        // 5: скорость в подходе — для бега
+        AutoMigration(from = 4, to = 5),
     ],
     exportSchema = true,
 )
@@ -69,4 +82,5 @@ abstract class ReMemberDatabase : RoomDatabase() {
     abstract fun photoDao(): PhotoDao
     abstract fun taskDao(): TaskDao
     abstract fun eventDao(): EventDao
+    abstract fun workoutDao(): WorkoutDao
 }

@@ -41,13 +41,15 @@ class ReMemberApplication : Application() {
             }.onFailure { Log.w(TAG, "Не удалось обновить категории", it) }
         }
         container.appScope.launch {
-            // Расписание напоминаний пересчитывается при любом изменении событий, задач и настроек
+            // Расписание напоминаний пересчитывается при любом изменении событий, задач, настроек
+            // и идущей тренировки
             // (и сразу при запуске). Пока приложение не запущено, его ведут будильник и ReminderReceiver
             combine(
                 container.eventRepository.observeAll(),
                 container.taskRepository.observeAll(),
                 container.reminderSettings.settings,
-            ) { _, _, _ -> }
+                container.workoutRepository.observeActive(),
+            ) { _, _, _, _ -> }
                 .debounce(RESCHEDULE_DEBOUNCE_MS)
                 .collect {
                     runCatching { container.reminderScheduler.check() }

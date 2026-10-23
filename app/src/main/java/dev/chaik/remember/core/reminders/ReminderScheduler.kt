@@ -9,6 +9,7 @@ import dev.chaik.remember.core.data.DayRepository
 import dev.chaik.remember.core.data.EventRepository
 import dev.chaik.remember.core.data.SleepRepository
 import dev.chaik.remember.core.data.TaskRepository
+import dev.chaik.remember.core.data.WorkoutRepository
 import dev.chaik.remember.core.model.Event
 import dev.chaik.remember.core.model.Task
 import dev.chaik.remember.feature.calendar.eventsOn
@@ -36,6 +37,7 @@ class ReminderScheduler(
     private val sleep: SleepRepository,
     private val events: EventRepository,
     private val tasks: TaskRepository,
+    private val workouts: WorkoutRepository,
 ) {
     private val alarms = context.getSystemService(AlarmManager::class.java)
     private val lock = Mutex()
@@ -49,11 +51,19 @@ class ReminderScheduler(
 
         val allEvents = events.observeAll().first()
         val allTasks = tasks.observeAll().first()
+        val workout = workouts.active()
+        val active = workout?.start?.let { ActiveWorkout(workout.id, workout.date.atTime(it)) }
+        // Висящее уведомление тренировки — вместе с остальными: так оно вернётся и после перезагрузки
+        if (workout != null && active != null && settings.enabled) {
+            notifier.showWorkout(workout.id, workout.number, active.start.atZone(zone).toInstant())
+        } else {
+            notifier.hideWorkout()
+        }
 
         // Всё, что подошло с прошлой проверки. Старше GRACE не показываем: телефон был выключен
         // или часы перевели — устаревшее «как прошёл день» утром только мешает
         val last = store.lastCheck?.let { LocalDateTime.ofInstant(it, zone) } ?: now
-        val due = ReminderPlanner.plan(maxOf(last, now.minus(GRACE)), now, settings, allEvents, allTasks)
+        val due = ReminderPlanner.plan(maxOf(last, now.minus(GRACE)), now, settings, allEvents, allTasks, active)
         for (planned in due) {
             message(planned, now.toLocalDate(), allEvents, allTasks)?.let { notifier.post(it, settings.sound) }
         }
@@ -65,7 +75,7 @@ class ReminderScheduler(
         }
         // Ничего не нашлось на ближайшие дни — всё равно проснёмся и посмотрим ещё раз:
         // у события может быть «предупредить за месяц»
-        val next = ReminderPlanner.plan(now, now.plusDays(LOOKAHEAD_DAYS), settings, allEvents, allTasks).firstOrNull()?.at
+        val next = ReminderPlanner.plan(now, now.plusDays(LOOKAHEAD_DAYS), settings, allEvents, allTasks, active).firstOrNull()?.at
             ?: now.plusDays(LOOKAHEAD_DAYS)
         setAlarm(next.atZone(zone).toInstant())
     }
@@ -122,6 +132,18 @@ class ReminderScheduler(
             }
             is Reminder.Summary -> if (r.date == today) summary(r.date, allEvents, allTasks, planned.silent) else null
             is Reminder.EventAlert -> eventMessage(r, planned.silent, today, allEvents)
+            is Reminder.WorkoutRunning -> if (workouts.active()?.id != r.workoutId) {
+                null
+            } else {
+                Message(
+                    id = "w${r.workoutId}".hashCode(),
+                    type = NotificationType.WORKOUT,
+                    title = context.getString(R.string.notify_workout_long_title),
+                    text = context.getString(R.string.notify_workout_long_text),
+                    target = OpenTarget.Workout(r.workoutId, finish = true),
+                    silent = planned.silent,
+                )
+            }
             is Reminder.TaskDue -> {
                 val task = allTasks.firstOrNull { it.id == r.taskId }
                 val due = task?.dueTime?.let { time -> task.dueDate?.atTime(time) }

@@ -37,6 +37,7 @@ import dev.chaik.remember.core.ui.LocalIslandPadding
  * При прокрутке шапка слегка подкрашивается, чтобы отделяться от контента.
  *
  * [content] получает отступы сверху (под заголовок) и снизу (под островок).
+ * [navigationIcon] заменяет «назад» — например, на «Выделить все» в режиме выделения.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,6 +48,7 @@ fun ScreenScaffold(
     /** Если задано — заголовок нажимается (например, чтобы выбрать дату). */
     onTitleClick: (() -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {},
+    navigationIcon: (@Composable () -> Unit)? = null,
     content: @Composable (PaddingValues) -> Unit,
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
@@ -74,7 +76,9 @@ fun ScreenScaffold(
                     }
                 },
                 navigationIcon = {
-                    if (onBack != null) {
+                    if (navigationIcon != null) {
+                        navigationIcon()
+                    } else if (onBack != null) {
                         IconButton(onClick = onBack) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,

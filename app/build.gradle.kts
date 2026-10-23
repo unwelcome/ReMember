@@ -67,6 +67,8 @@ dependencies {
     implementation(libs.androidx.navigation3.ui)
     implementation(libs.androidx.navigationevent.compose)
     implementation(libs.kotlinx.serialization.core)
+    // Импорт тренировок из JSON
+    implementation(libs.kotlinx.serialization.json)
     // Явная версия корутин: иначе в приложении оказывается старая (от Room/Lifecycle),
     // а тестам нужна та же, что у kotlinx-coroutines-test
     implementation(libs.kotlinx.coroutines.android)

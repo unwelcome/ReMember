@@ -9,6 +9,8 @@ import dev.chaik.remember.core.database.entity.PhotoEntity
 import dev.chaik.remember.core.model.DayEntry
 import dev.chaik.remember.core.model.Event
 import dev.chaik.remember.core.model.EventColor
+import dev.chaik.remember.core.model.ExerciseKind
+import dev.chaik.remember.core.model.WorkoutSet
 import dev.chaik.remember.core.model.MoneyCategory
 import dev.chaik.remember.core.model.MoneyTransaction
 import dev.chaik.remember.core.model.MoneyType
@@ -30,6 +32,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.temporal.ChronoUnit
 
 /** Логика репозиториев на базе в памяти (без шифрования — оно проверяется отдельно). */
@@ -201,6 +204,72 @@ class RepositoriesTest {
         assertTrue(tasks.get(once)!!.done)
         tasks.deleteDone()
         assertNull(tasks.get(once))
+    }
+
+    @Test
+    fun workoutsAreNumberedByChronologyAndKeepSets() = runTest {
+        val gym = WorkoutRepository(db)
+        // Сначала новая (через кнопку), потом вписали прошлую — номера встают по датам
+        val now = gym.start(today.atTime(17, 0), weightBefore = 65.7)
+        assertEquals(now, gym.start(today.atTime(18, 0)))
+        val past = gym.createPast(today.minusDays(20), LocalTime.of(16, 30), LocalTime.of(17, 10))
+
+        val summaries = gym.observeSummaries().first()
+        assertEquals(listOf(past, now), summaries.map { it.id })
+        assertEquals(listOf(1, 2), summaries.map { it.number })
+        assertEquals(2, gym.observe(now).first()!!.number)
+
+        // Упражнения: одно название в разном регистре — одна запись справочника
+        val bench = gym.addExercise(now, "Жим лежа", ExerciseKind.WEIGHT_REPS)
+        gym.addExercise(past, "жим лежа ", ExerciseKind.TIME)
+        gym.addSet(bench, WorkoutSet(weight = 40.0, reps = 12))
+        gym.addSet(bench, WorkoutSet(weight = 50.0, reps = 8))
+        assertEquals(1, gym.observeExercises().first().size)
+        assertEquals(ExerciseKind.WEIGHT_REPS, gym.findExercise("ЖИМ ЛЕЖА")!!.kind)
+
+        val workout = gym.observe(now).first()!!
+        assertTrue(workout.active)
+        assertEquals(listOf("40 × 12", "50 × 8"), workout.exercises.single().sets.map { it.format(ExerciseKind.WEIGHT_REPS) })
+
+        gym.finish(now, LocalTime.of(18, 30, 15))
+        val finished = gym.observe(now).first()!!
+        assertTrue(!finished.active)
+        assertEquals(LocalTime.of(18, 30), finished.end)
+        assertNull(gym.active())
+        assertEquals(65.7, gym.lastBodyWeight()!!, 0.0)
+
+        gym.delete(now)
+        assertNull(gym.observe(now).first())
+        assertEquals(1, gym.observeSummaries().first().size)
+    }
+
+    @Test
+    fun importSkipsDuplicatesAndRenumbers() = runTest {
+        val gym = WorkoutRepository(db)
+        val current = gym.start(LocalDate.of(2026, 10, 23).atTime(17, 0))
+        val json = """
+            {"workouts": [
+              {"date": "2026-10-20", "start": "16:30", "exercises": [{"name": "Пресс", "sets": [{"reps": 30}]}]},
+              {"date": "2026-10-20", "start": "16:30"},
+              {"date": "2026-09-28", "start": "17:00", "weightBefore": 66.5,
+               "exercises": [{"name": "Жим лежа", "sets": [{"weight": 40, "reps": 12}]}]}
+            ]}
+        """.trimIndent()
+        val preview = gym.previewImport(WorkoutImport.parse(json))
+        assertEquals(2, preview.workouts.size)
+        assertEquals(1, preview.duplicates)
+        assertEquals(listOf("Жим лежа", "Пресс"), preview.newExercises)
+
+        assertEquals(2, gym.import(preview.workouts))
+        val summaries = gym.observeSummaries().first()
+        // Текущая тренировка, начатая раньше импорта, стала третьей
+        assertEquals(3, summaries.first { it.id == current }.number)
+        val imported = gym.observe(summaries.first().id).first()!!
+        assertTrue(imported.imported)
+        assertEquals("40 × 12", imported.exercises.single().sets.single().format(ExerciseKind.WEIGHT_REPS))
+
+        // Повторный импорт того же файла ничего не добавит
+        assertTrue(gym.previewImport(WorkoutImport.parse(json)).workouts.isEmpty())
     }
 
     @Test

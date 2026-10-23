@@ -14,6 +14,8 @@ import dev.chaik.remember.feature.finance.FinanceRoute
 import dev.chaik.remember.feature.finance.FinanceScreen
 import dev.chaik.remember.feature.gym.GymRoute
 import dev.chaik.remember.feature.gym.GymScreen
+import dev.chaik.remember.feature.gym.workout.WorkoutRoute
+import dev.chaik.remember.feature.gym.workout.WorkoutScreen
 import dev.chaik.remember.feature.health.HealthRoute
 import dev.chaik.remember.feature.health.HealthScreen
 import dev.chaik.remember.feature.more.MoreRoute
@@ -70,7 +72,8 @@ fun appEntryProvider(backStack: NavBackStack<NavKey>): (NavKey) -> NavEntry<NavK
         entry<StatsRoute> { StatsScreen(onBack = back) }
         entry<FinanceRoute> { FinanceScreen(onBack = back) }
         entry<HealthRoute> { HealthScreen(onBack = back) }
-        entry<GymRoute> { GymScreen(onBack = back) }
+        entry<GymRoute> { GymScreen(onBack = back, onOpen = { backStack.add(WorkoutRoute(it)) }) }
+        entry<WorkoutRoute> { WorkoutScreen(route = it, onBack = back) }
         entry<SettingsRoute> { SettingsScreen(onBack = back, onOpen = { backStack.add(it) }) }
         entry<RemindersRoute> { RemindersScreen(onBack = back) }
     }

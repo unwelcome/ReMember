@@ -4,6 +4,7 @@ import androidx.room.testing.MigrationTestHelper
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -42,6 +43,54 @@ class MigrationTest {
                     "VALUES ('Задача', '', NULL, NULL, 0, '', 0, NULL, 0, 0)",
             )
             db.execSQL("INSERT INTO subtask (task_id, title, done, sort_order) VALUES (1, 'Шаг', 0, 0)")
+        }
+    }
+
+    @Test
+    fun from4To5KeepsSetsAndAddsSpeed() {
+        helper.createDatabase(DB, 4).use { db ->
+            db.execSQL("INSERT INTO exercise (name, name_key, kind, created_at) VALUES ('Жим лежа', 'жим лежа', 'WR', 0)")
+            db.execSQL(
+                "INSERT INTO workout (date, start_time, end_time, weight_before, weight_after, note, active, imported, " +
+                    "created_at, updated_at) VALUES (20359, 61200, NULL, NULL, NULL, '', 0, 0, 0, 0)",
+            )
+            db.execSQL("INSERT INTO workout_exercise (workout_id, exercise_id, sort_order) VALUES (1, 1, 0)")
+            db.execSQL("INSERT INTO workout_set (workout_exercise_id, sort_order, weight, reps, seconds) VALUES (1, 0, 40.0, 12, NULL)")
+        }
+
+        helper.runMigrationsAndValidate(DB, 5, true).use { db ->
+            db.query("SELECT weight, reps, speed FROM workout_set").use { cursor ->
+                cursor.moveToFirst()
+                assertEquals(40.0, cursor.getDouble(0), 0.0)
+                assertEquals(12, cursor.getInt(1))
+                assertTrue(cursor.isNull(2))
+            }
+            db.execSQL("INSERT INTO workout_set (workout_exercise_id, sort_order, weight, reps, seconds, speed) VALUES (1, 1, NULL, NULL, 600, 9.4)")
+        }
+    }
+
+    @Test
+    fun from3To4KeepsEventsAndAddsGym() {
+        helper.createDatabase(DB, 3).use { db ->
+            db.execSQL(
+                "INSERT INTO event (title, description, date, time, color, repeat, remind_minutes, is_birthday, birth_year, " +
+                    "created_at, updated_at) VALUES ('Иван', '', 20522, 28800, 'RED', 'Y', NULL, 1, 1995, 0, 0)",
+            )
+        }
+
+        helper.runMigrationsAndValidate(DB, 4, true).use { db ->
+            db.query("SELECT title, birth_year FROM event").use { cursor ->
+                cursor.moveToFirst()
+                assertEquals("Иван", cursor.getString(0))
+                assertEquals(1995, cursor.getInt(1))
+            }
+            db.execSQL("INSERT INTO exercise (name, name_key, kind, created_at) VALUES ('Жим лежа', 'жим лежа', 'WR', 0)")
+            db.execSQL(
+                "INSERT INTO workout (date, start_time, end_time, weight_before, weight_after, note, active, imported, " +
+                    "created_at, updated_at) VALUES (20359, 61200, 66600, 66.5, NULL, '', 0, 1, 0, 0)",
+            )
+            db.execSQL("INSERT INTO workout_exercise (workout_id, exercise_id, sort_order) VALUES (1, 1, 0)")
+            db.execSQL("INSERT INTO workout_set (workout_exercise_id, sort_order, weight, reps, seconds) VALUES (1, 0, 40.0, 12, NULL)")
         }
     }
 

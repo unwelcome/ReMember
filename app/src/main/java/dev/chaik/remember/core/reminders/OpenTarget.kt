@@ -10,6 +10,9 @@ sealed interface OpenTarget {
     data class Calendar(val date: LocalDate) : OpenTarget
     data class Task(val taskId: Long) : OpenTarget
 
+    /** [finish] — сразу с формой «закончить тренировку». */
+    data class Workout(val workoutId: Long, val finish: Boolean = false) : OpenTarget
+
     companion object {
         private const val EXTRA = "dev.chaik.remember.OPEN"
 
@@ -20,6 +23,7 @@ sealed interface OpenTarget {
                 Sleep -> "sleep"
                 is Calendar -> "calendar:${target.date.toEpochDay()}"
                 is Task -> "task:${target.taskId}"
+                is Workout -> (if (target.finish) "finish:" else "workout:") + target.workoutId
             },
         )
 
@@ -31,6 +35,8 @@ sealed interface OpenTarget {
                 value == "sleep" -> Sleep
                 value.startsWith("calendar:") && arg != null -> Calendar(LocalDate.ofEpochDay(arg))
                 value.startsWith("task:") && arg != null -> Task(arg)
+                value.startsWith("workout:") && arg != null -> Workout(arg)
+                value.startsWith("finish:") && arg != null -> Workout(arg, finish = true)
                 else -> null
             }
         }

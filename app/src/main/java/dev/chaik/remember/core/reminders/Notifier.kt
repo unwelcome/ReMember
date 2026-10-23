@@ -16,6 +16,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import dev.chaik.remember.MainActivity
 import dev.chaik.remember.R
+import java.time.Instant
 
 /** Виды уведомлений — у каждого свой канал, их можно отдельно выключить в настройках Android. */
 enum class NotificationType(val id: String, @param:StringRes val title: Int) {
@@ -23,6 +24,7 @@ enum class NotificationType(val id: String, @param:StringRes val title: Int) {
     EVENTS("events", R.string.channel_events),
     TASKS("tasks", R.string.channel_tasks),
     SUMMARY("summary", R.string.channel_summary),
+    WORKOUT("workout", R.string.channel_workout),
 }
 
 /** Готовое к показу уведомление. */
@@ -52,7 +54,7 @@ class Notifier(private val context: Context) {
      */
     fun ensureChannels(sound: SoundMode) {
         manager.createNotificationChannelGroup(NotificationChannelGroup(GROUP, context.getString(R.string.app_name)))
-        val wanted = NotificationType.entries.map { channelId(it, sound) }.toSet() + QUIET_CHANNEL
+        val wanted = NotificationType.entries.map { channelId(it, sound) }.toSet() + QUIET_CHANNEL + LIVE_CHANNEL
         manager.notificationChannels
             .filter { it.id !in wanted }
             .forEach { manager.deleteNotificationChannel(it.id) }
@@ -83,18 +85,59 @@ class Notifier(private val context: Context) {
         )
     }
 
+    /**
+     * Висящее уведомление идущей тренировки: таймер от начала считает сам Android.
+     * Тап — открыть тренировку, «Закончить» — открыть её с формой веса.
+     */
+    fun showWorkout(workoutId: Long, number: Int, startedAt: Instant) {
+        if (!canPost) return
+        if (manager.getNotificationChannel(LIVE_CHANNEL) == null) {
+            manager.createNotificationChannel(
+                NotificationChannel(LIVE_CHANNEL, context.getString(R.string.channel_workout_live), NotificationManager.IMPORTANCE_LOW).apply {
+                    group = GROUP
+                    setSound(null, null)
+                    enableVibration(false)
+                    setShowBadge(false)
+                },
+            )
+        }
+        val notification = NotificationCompat.Builder(context, LIVE_CHANNEL)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setColor(context.getColor(R.color.notification_accent))
+            .setContentTitle(context.getString(R.string.notify_workout_running, number))
+            .setContentText(context.getString(R.string.notify_workout_running_text))
+            .setWhen(startedAt.toEpochMilli())
+            .setShowWhen(true)
+            .setUsesChronometer(true)
+            .setOngoing(true)
+            .setOnlyAlertOnce(true)
+            .setSilent(true)
+            .setCategory(NotificationCompat.CATEGORY_STOPWATCH)
+            .setContentIntent(openIntent(OpenTarget.Workout(workoutId), REQUEST_WORKOUT))
+            .addAction(0, context.getString(R.string.notify_workout_finish), openIntent(OpenTarget.Workout(workoutId, finish = true), REQUEST_FINISH))
+            .build()
+        try {
+            NotificationManagerCompat.from(context).notify(ID_WORKOUT_LIVE, notification)
+        } catch (_: SecurityException) {
+            // Разрешение отозвали между проверкой и показом
+        }
+    }
+
+    fun hideWorkout() = NotificationManagerCompat.from(context).cancel(ID_WORKOUT_LIVE)
+
+    private fun openIntent(target: OpenTarget, requestCode: Int): PendingIntent = PendingIntent.getActivity(
+        context,
+        requestCode,
+        OpenTarget.put(
+            Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP),
+            target,
+        ),
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+    )
+
     fun post(message: Message, sound: SoundMode) {
         if (!canPost) return
-        val intent = OpenTarget.put(
-            Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP),
-            message.target,
-        )
-        val tap = PendingIntent.getActivity(
-            context,
-            message.id,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-        )
+        val tap = openIntent(message.target, message.id)
         val builder = NotificationCompat.Builder(context, if (message.silent) QUIET_CHANNEL else channelId(message.type, sound))
             .setSmallIcon(R.drawable.ic_notification)
             .setColor(context.getColor(R.color.notification_accent))
@@ -120,5 +163,9 @@ class Notifier(private val context: Context) {
     private companion object {
         const val GROUP = "remember"
         const val QUIET_CHANNEL = "quiet"
+        const val LIVE_CHANNEL = "workout_live"
+        const val ID_WORKOUT_LIVE = 100
+        const val REQUEST_WORKOUT = 101
+        const val REQUEST_FINISH = 102
     }
 }

@@ -42,6 +42,8 @@ import androidx.compose.ui.platform.LocalContext
 import dev.chaik.remember.appContainer
 import dev.chaik.remember.core.reminders.OpenTarget
 import dev.chaik.remember.feature.tasks.editor.TaskEditorRoute
+import dev.chaik.remember.feature.gym.GymRoute
+import dev.chaik.remember.feature.gym.workout.WorkoutRoute
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
@@ -124,14 +126,21 @@ private fun MainScaffold() {
             OpenTarget.Day, OpenTarget.Sleep -> TopLevelTab.Today
             is OpenTarget.Calendar -> TopLevelTab.Calendar
             is OpenTarget.Task -> TopLevelTab.Tasks
+            is OpenTarget.Workout -> TopLevelTab.More
         }
         val stack = backStacks.getValue(tab)
         while (stack.size > 1) stack.removeLastOrNull()
         pagerState.scrollToPage(tab.ordinal)
-        if (target is OpenTarget.Task) {
-            stack.add(TaskEditorRoute(target.taskId))
-            container.openRequests.value = null
+        when (target) {
+            is OpenTarget.Task -> stack.add(TaskEditorRoute(target.taskId))
+            // Зал живёт в «Ещё»: открываем его и тренировку поверх, чтобы «назад» вёл в список
+            is OpenTarget.Workout -> {
+                stack.add(GymRoute)
+                stack.add(WorkoutRoute(target.workoutId, target.finish))
+            }
+            else -> return@LaunchedEffect
         }
+        container.openRequests.value = null
     }
 
     // «Назад» на корне любой вкладки, кроме «Сегодня», возвращает на «Сегодня»
