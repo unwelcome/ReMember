@@ -19,3 +19,17 @@ data class NoteFolder(
     val name: String,
     val sortOrder: Int = 0,
 )
+
+/** Заметка для списка: без полного текста, только то, что видно на карточке. */
+data class NoteSummary(
+    val id: Long,
+    val title: String,
+    /** Начало текста без разметки, до ~150 символов. */
+    val preview: String,
+    /** Первое фото — обложка карточки; null — фото нет. */
+    val coverPhotoId: String?,
+    val folderId: Long?,
+    val pinned: Boolean,
+    val tags: List<Tag>,
+    val updatedAt: Instant,
+)

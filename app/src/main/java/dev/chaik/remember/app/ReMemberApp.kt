@@ -109,6 +109,9 @@ private fun MainScaffold() {
                 // Во вложенной странице горизонтальный свайп отдан жесту «назад»
                 userScrollEnabled = currentStack.size == 1,
                 key = { tabs[it].name },
+                // Соседние вкладки держим готовыми: иначе после паузы страница строилась заново
+                // прямо во время свайпа, и первые кадры анимации подтормаживали
+                beyondViewportPageCount = 1,
                 modifier = Modifier.fillMaxSize(),
             ) { page ->
                 TabContent(backStacks.getValue(tabs[page]))

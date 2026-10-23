@@ -7,13 +7,14 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.chaik.remember.core.data.NoteRepository
-import dev.chaik.remember.core.model.Note
+import dev.chaik.remember.core.model.NoteSummary
 import dev.chaik.remember.core.model.NoteFolder
 import dev.chaik.remember.core.model.Tag
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -35,17 +36,21 @@ class NotesViewModel(private val notes: NoteRepository) : ViewModel() {
         private set
 
     val folders: StateFlow<List<NoteFolder>> =
-        notes.observeFolders().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+        notes.observeFolders().stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
-    private val allNotes = notes.observeAllWithTags()
+    // Одна подписка на базу на всех: и для карточек, и для ленты тегов.
+    // Lazily — данные остаются в памяти, пока жива ViewModel: вернулись на вкладку — карточки уже готовы
+    // (с WhileSubscribed они выгружались через 5 с и перечитывались при каждом возвращении)
+    private val allNotes = notes.observeSummaries()
+        .shareIn(viewModelScope, SharingStarted.Lazily, replay = 1)
 
     /** Теги, которые есть хотя бы у одной заметки — для строки фильтра. */
     val usedTags: StateFlow<List<Tag>> = allNotes
         .map { list -> list.flatMap { it.tags }.distinctBy { it.id }.sortedBy { it.name.lowercase() } }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     /** Заметки после фильтров; порядок из базы: закреплённые сверху, потом недавно изменённые. */
-    val visibleNotes: StateFlow<List<Note>?> =
+    val visibleNotes: StateFlow<List<NoteSummary>?> =
         combine(allNotes, snapshotFlow { folderFilter to tagFilter }) { list, (folder, tags) ->
             list.filter { note ->
                 val folderOk = when (folder) {
@@ -55,7 +60,7 @@ class NotesViewModel(private val notes: NoteRepository) : ViewModel() {
                 }
                 folderOk && note.tags.map { it.id }.containsAll(tags)
             }
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+        }.stateIn(viewModelScope, SharingStarted.Lazily, null)
 
     /** Папка для новой заметки — та, что открыта в фильтре. */
     val currentFolderId: Long? get() = (folderFilter as? FolderFilter.Folder)?.id
@@ -95,15 +100,15 @@ class NotesViewModel(private val notes: NoteRepository) : ViewModel() {
 
     // Заметки
 
-    fun togglePinned(note: Note) {
+    fun togglePinned(note: NoteSummary) {
         viewModelScope.launch { notes.setPinned(note.id, !note.pinned) }
     }
 
-    fun moveToFolder(note: Note, folderId: Long?) {
+    fun moveToFolder(note: NoteSummary, folderId: Long?) {
         viewModelScope.launch { notes.moveToFolder(note.id, folderId) }
     }
 
-    fun delete(note: Note) {
+    fun delete(note: NoteSummary) {
         viewModelScope.launch { notes.delete(note.id) }
     }
 }

@@ -3,14 +3,18 @@ package dev.chaik.remember.core.data
 import androidx.room.withTransaction
 import dev.chaik.remember.core.database.ReMemberDatabase
 import dev.chaik.remember.core.database.entity.NoteFolderEntity
+import dev.chaik.remember.core.editor.MarkdownPreview
 import dev.chaik.remember.core.model.Note
 import dev.chaik.remember.core.model.NoteFolder
+import dev.chaik.remember.core.model.NoteSummary
 import dev.chaik.remember.core.model.PhotoOwner
 import dev.chaik.remember.core.model.Tag
 import dev.chaik.remember.core.photos.PhotoRefs
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import java.time.Instant
 
@@ -23,12 +27,26 @@ class NoteRepository(private val db: ReMemberDatabase) {
     /** Все заметки (без тегов): закреплённые сверху, дальше — недавно изменённые. */
     fun observeAll(): Flow<List<Note>> = noteDao.observeAll().map { list -> list.map { it.toModel() } }
 
-    /** Все заметки вместе с тегами — для списка и фильтра по тегам. */
-    fun observeAllWithTags(): Flow<List<Note>> =
-        combine(noteDao.observeAll(), tagDao.observeAllNoteTags()) { notes, rows ->
-            val tags = rows.groupBy({ it.noteId }, { Tag(it.tagId, it.name) })
-            notes.map { it.toModel().copy(tags = tags[it.id].orEmpty()) }
-        }
+    /**
+     * Список для карточек вместе с тегами. Полный текст не читается: только начало,
+     * из которого в фоновом потоке готовится превью без разметки.
+     */
+    fun observeSummaries(): Flow<List<NoteSummary>> =
+        combine(noteDao.observeSummaries(), tagDao.observeAllNoteTags()) { rows, tagRows ->
+            val tags = tagRows.groupBy({ it.noteId }, { Tag(it.tagId, it.name) })
+            rows.map { row ->
+                NoteSummary(
+                    id = row.id,
+                    title = row.title,
+                    preview = MarkdownPreview.plain(row.head, maxChars = PREVIEW_CHARS),
+                    coverPhotoId = row.coverPhotoId,
+                    folderId = row.folderId,
+                    pinned = row.pinned,
+                    tags = tags[row.id].orEmpty(),
+                    updatedAt = row.updatedAt,
+                )
+            }
+        }.flowOn(Dispatchers.Default)
 
     /** Заметка один раз (для открытия редактора); null — нет такой. */
     suspend fun get(id: Long): Note? =
@@ -85,3 +103,6 @@ class NoteRepository(private val db: ReMemberDatabase) {
     /** Удаляет папку; её заметки остаются без папки. */
     suspend fun deleteFolder(id: Long) = noteDao.deleteFolder(id)
 }
+
+/** Сколько символов превью показывать на карточке: ~6 строк по ~23 символа. */
+private const val PREVIEW_CHARS = 150

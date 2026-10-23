@@ -80,13 +80,9 @@ fun StarRating(
     var secretTaps by remember { mutableIntStateOf(0) }
     var lastSecretTap by remember { mutableLongStateOf(0L) }
 
-    // Радуга для 11 из 10: оттенок плывёт по кругу
-    val hueShift by rememberInfiniteTransition(label = "rainbow").animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(tween(2_400, easing = LinearEasing), RepeatMode.Restart),
-        label = "hue",
-    )
+    // Радуга для 11 из 10: оттенок плывёт по кругу. Анимация живёт только при секрете —
+    // иначе бесконечная анимация заставляла экран перерисовываться всё время
+    val hueShift = if (isSecret) rainbowHue() else 0f
     val pulse by animateFloatAsState(
         targetValue = if (isSecret) 1.15f else 1f,
         animationSpec = spring(dampingRatio = Spring.DampingRatioHighBouncy, stiffness = Spring.StiffnessLow),
@@ -192,4 +188,16 @@ fun StarRating(
             )
         }
     }
+}
+
+/** Плывущий по кругу оттенок (0…360) для радужных звёзд. */
+@Composable
+private fun rainbowHue(): Float {
+    val hue by rememberInfiniteTransition(label = "rainbow").animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(tween(2_400, easing = LinearEasing), RepeatMode.Restart),
+        label = "hue",
+    )
+    return hue
 }

@@ -145,13 +145,30 @@ class RepositoriesTest {
         notes.setPinned(id, true)
         notes.moveToFolder(id, folder)
 
-        val book = notes.observeAllWithTags().first().first { it.id == id }
+        val book = notes.observeSummaries().first().first { it.id == id }
         assertEquals(setOf("читать", "дом"), book.tags.map { it.name }.toSet())
         assertTrue(book.pinned)
         assertEquals(folder, book.folderId)
         // Закрепление и перенос — не «правка» заметки: дата изменения та же
         assertEquals(updatedAt, book.updatedAt)
-        assertTrue(notes.observeAllWithTags().first().first { it.id != id }.tags.isEmpty())
+        assertTrue(notes.observeSummaries().first().first { it.id != id }.tags.isEmpty())
+    }
+
+    @Test
+    fun noteSummaryHasShortPreviewAndCover() = runTest {
+        val notes = NoteRepository(db)
+        val photo = "3f2b8c1e-0d4a-4b6f-9e21-7c5a0b9d1e42"
+        val long = "очень длинный текст ".repeat(100)
+        notes.save(Note(title = "С фото", text = "Начало **жирным**\n![](photo:$photo?w=50)\n$long"))
+        notes.save(Note(title = "Без фото", text = "просто текст"))
+
+        val list = notes.observeSummaries().first()
+        val withPhoto = list.first { it.title == "С фото" }
+        // Обложка нашлась прямо в базе, превью — без разметки и не длиннее лимита
+        assertEquals(photo, withPhoto.coverPhotoId)
+        assertTrue(withPhoto.preview.startsWith("Начало жирным"))
+        assertTrue(withPhoto.preview.length <= 151)
+        assertNull(list.first { it.title == "Без фото" }.coverPhotoId)
     }
 
     @Test

@@ -7,6 +7,7 @@ import androidx.room.Update
 import dev.chaik.remember.core.database.entity.NoteEntity
 import dev.chaik.remember.core.database.entity.NoteFolderEntity
 import kotlinx.coroutines.flow.Flow
+import java.time.Instant
 
 @Dao
 interface NoteDao {
@@ -14,6 +15,24 @@ interface NoteDao {
 
     @Query("SELECT * FROM note ORDER BY pinned DESC, updated_at DESC")
     fun observeAll(): Flow<List<NoteEntity>>
+
+    /**
+     * Лёгкий список для карточек: вместо всего текста — только начало ([NOTE_HEAD_CHARS] символов)
+     * и id первого фото (ищем прямо в базе). Порядок: закреплённые, потом недавно изменённые.
+     */
+    @Query(
+        """
+        SELECT id, title,
+            substr(text, 1, $NOTE_HEAD_CHARS) AS head,
+            CASE WHEN instr(text, '](photo:') > 0
+                THEN substr(text, instr(text, '](photo:') + 8, 36)
+            END AS coverPhotoId,
+            folder_id AS folderId, pinned, updated_at AS updatedAt
+        FROM note
+        ORDER BY pinned DESC, updated_at DESC
+        """,
+    )
+    fun observeSummaries(): Flow<List<NoteSummaryRow>>
 
     @Query("SELECT * FROM note WHERE folder_id IS :folderId ORDER BY pinned DESC, updated_at DESC")
     fun observeInFolder(folderId: Long?): Flow<List<NoteEntity>>
@@ -53,3 +72,19 @@ interface NoteDao {
     @Query("DELETE FROM note_folder WHERE id = :id")
     suspend fun deleteFolder(id: Long)
 }
+
+/**
+ * Сколько символов текста брать для карточки. На карточке — до 6 строк (~150 символов),
+ * но в базе текст с разметкой: строка с фото сама по себе ~50 символов, поэтому с запасом.
+ */
+const val NOTE_HEAD_CHARS = 300
+
+data class NoteSummaryRow(
+    val id: Long,
+    val title: String,
+    val head: String,
+    val coverPhotoId: String?,
+    val folderId: Long?,
+    val pinned: Boolean,
+    val updatedAt: Instant,
+)

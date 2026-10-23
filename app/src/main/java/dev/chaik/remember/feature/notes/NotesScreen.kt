@@ -1,16 +1,20 @@
 package dev.chaik.remember.feature.notes
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.lazy.staggeredgrid.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material3.FloatingActionButton
@@ -19,12 +23,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -35,10 +41,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.NavKey
 import dev.chaik.remember.R
 import dev.chaik.remember.appContainer
-import dev.chaik.remember.core.model.Note
+import dev.chaik.remember.core.model.NoteSummary
 import dev.chaik.remember.core.ui.components.ScreenScaffold
-import kotlinx.serialization.Serializable
+import dev.chaik.remember.core.ui.components.shimmer
 import java.io.File
+import kotlinx.coroutines.delay
+import kotlinx.serialization.Serializable
 
 @Serializable
 data object NotesRoute : NavKey
@@ -59,8 +67,8 @@ fun NotesScreen(
     val tags by viewModel.usedTags.collectAsStateWithLifecycle()
     val notes by viewModel.visibleNotes.collectAsStateWithLifecycle()
 
-    var moving by remember { mutableStateOf<Note?>(null) }
-    var deleting by remember { mutableStateOf<Note?>(null) }
+    var moving by remember { mutableStateOf<NoteSummary?>(null) }
+    var deleting by remember { mutableStateOf<NoteSummary?>(null) }
 
     ScreenScaffold(title = stringResource(R.string.tab_notes), modifier = modifier) { padding ->
         Box(Modifier.fillMaxSize()) {
@@ -89,7 +97,7 @@ fun NotesScreen(
 
                 val list = notes
                 when {
-                    list == null -> Unit // ещё грузится
+                    list == null -> NotesSkeleton(bottomPadding = padding.calculateBottomPadding())
                     list.isEmpty() -> EmptyNotes(Modifier.fillMaxWidth().padding(32.dp))
                     else -> NotesGrid(
                         notes = list,
@@ -144,14 +152,14 @@ fun NotesScreen(
 
 @Composable
 private fun NotesGrid(
-    notes: List<Note>,
+    notes: List<NoteSummary>,
     folderNames: Map<Long, String>,
     thumbnail: (String) -> File,
     bottomPadding: Dp,
     onOpen: (Long) -> Unit,
-    onTogglePin: (Note) -> Unit,
-    onMove: (Note) -> Unit,
-    onDelete: (Note) -> Unit,
+    onTogglePin: (NoteSummary) -> Unit,
+    onMove: (NoteSummary) -> Unit,
+    onDelete: (NoteSummary) -> Unit,
 ) {
     val (pinned, others) = notes.partition { it.pinned }
 
@@ -181,6 +189,62 @@ private fun NotesGrid(
             NoteCard(note, note.folderId?.let(folderNames::get), thumbnail, { onOpen(note.id) }, { onTogglePin(note) }, { onMove(note) }, { onDelete(note) })
         }
     }
+}
+
+/** Сколько ждём данных, прежде чем показать скелеты: быстрая загрузка не должна «мигать». */
+private const val SKELETON_DELAY_MS = 150L
+
+/** Высоты карточек-заглушек — разные, как у настоящих заметок. */
+private val SkeletonHeights = listOf(150, 210, 120, 180, 230, 140)
+
+/** Скелеты карточек с бликом, пока заметки читаются из базы (дольше [SKELETON_DELAY_MS]). */
+@Composable
+private fun NotesSkeleton(bottomPadding: Dp) {
+    var visible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        delay(SKELETON_DELAY_MS)
+        visible = true
+    }
+    if (!visible) return
+
+    LazyVerticalStaggeredGrid(
+        columns = StaggeredGridCells.Fixed(2),
+        contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 8.dp, bottom = bottomPadding + 88.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalItemSpacing = 8.dp,
+        userScrollEnabled = false,
+        modifier = Modifier.fillMaxSize(),
+    ) {
+        items(SkeletonHeights.size) { index ->
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .height(SkeletonHeights[index].dp)
+                    .clip(RoundedCornerShape(18.dp))
+                    .background(MaterialTheme.colorScheme.surfaceContainer)
+                    .padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                SkeletonLine(0.6f, 14.dp)
+                SkeletonLine(1f, 10.dp)
+                SkeletonLine(0.9f, 10.dp)
+                SkeletonLine(0.7f, 10.dp)
+                Spacer(Modifier.weight(1f))
+                SkeletonLine(0.4f, 8.dp)
+            }
+        }
+    }
+}
+
+@Composable
+private fun SkeletonLine(widthFraction: Float, height: Dp) {
+    Box(
+        Modifier
+            .fillMaxWidth(widthFraction)
+            .height(height)
+            .clip(RoundedCornerShape(4.dp))
+            .shimmer(),
+    )
 }
 
 @Composable

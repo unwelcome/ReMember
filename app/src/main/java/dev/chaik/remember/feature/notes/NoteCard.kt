@@ -42,9 +42,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import dev.chaik.remember.R
-import dev.chaik.remember.core.editor.MarkdownPreview
-import dev.chaik.remember.core.model.Note
-import dev.chaik.remember.core.photos.PhotoRefs
+import dev.chaik.remember.core.model.NoteSummary
+import dev.chaik.remember.core.ui.components.shimmer
 import java.io.File
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -58,7 +57,7 @@ import java.time.format.DateTimeFormatter
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun NoteCard(
-    note: Note,
+    note: NoteSummary,
     /** Название папки — показывается в режиме «Все»; null — не показывать. */
     folderName: String?,
     thumbnail: (String) -> File,
@@ -70,11 +69,9 @@ fun NoteCard(
 ) {
     val haptics = LocalHapticFeedback.current
     var menuOpen by remember { mutableStateOf(false) }
-    val preview = remember(note.text) { MarkdownPreview.plain(note.text) }
-    val firstPhoto = remember(note.text) { PhotoRefs.extract(note.text).firstOrNull() }
-    // Без заголовка заголовком служит первая строка текста
-    val title = note.title.ifBlank { preview.substringBefore('\n') }
-    val body = if (note.title.isBlank()) preview.substringAfter('\n', "") else preview
+    // Превью готово заранее (в фоне, при чтении из базы); без заголовка заголовком служит первая строка
+    val title = note.title.ifBlank { note.preview.substringBefore('\n') }
+    val body = if (note.title.isBlank()) note.preview.substringAfter('\n', "") else note.preview
 
     Box(modifier) {
         Card(
@@ -91,15 +88,8 @@ fun NoteCard(
                     },
                 ),
         ) {
-            if (firstPhoto != null) {
-                AsyncImage(
-                    model = thumbnail(firstPhoto),
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(4f / 3f),
-                )
+            note.coverPhotoId?.let { photoId ->
+                Cover(thumbnail(photoId))
             }
             Column(Modifier.padding(12.dp)) {
                 Row(verticalAlignment = Alignment.Top) {
@@ -128,7 +118,7 @@ fun NoteCard(
                         text = body,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 8,
+                        maxLines = BODY_LINES,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.padding(top = 4.dp),
                     )
@@ -162,13 +152,11 @@ fun NoteCard(
                         )
                     }
                 }
-                note.updatedAt?.let { updated ->
-                    Text(
-                        text = formatUpdated(updated.atZone(ZoneId.systemDefault()).toLocalDateTime()),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.outline,
-                    )
-                }
+                Text(
+                    text = formatUpdated(note.updatedAt.atZone(ZoneId.systemDefault()).toLocalDateTime()),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.outline,
+                )
             }
         }
 
@@ -198,6 +186,30 @@ fun NoteCard(
                 },
             )
         }
+    }
+}
+
+/** Сколько строк текста на карточке. */
+private const val BODY_LINES = 6
+
+/** Обложка из первого фото; пока миниатюра грузится — на её месте переливающийся блик. */
+@Composable
+private fun Cover(file: File) {
+    var loading by remember(file) { mutableStateOf(true) }
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .aspectRatio(4f / 3f),
+    ) {
+        AsyncImage(
+            model = file,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            onSuccess = { loading = false },
+            onError = { loading = false },
+            modifier = Modifier.matchParentSize(),
+        )
+        if (loading) Box(Modifier.matchParentSize().shimmer())
     }
 }
 
