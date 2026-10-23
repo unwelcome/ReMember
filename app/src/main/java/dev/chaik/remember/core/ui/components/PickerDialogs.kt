@@ -6,12 +6,15 @@ import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimeInput
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import dev.chaik.remember.R
+import dev.chaik.remember.core.settings.LocalAppSettings
+import dev.chaik.remember.core.settings.TimePickerStyle
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
@@ -33,7 +36,9 @@ fun TimePickerDialog(
     val state = rememberTimePickerState(initialHour = initial.hour, initialMinute = initial.minute, is24Hour = true)
     AlertDialog(
         onDismissRequest = onDismiss,
-        text = { TimePicker(state = state) },
+        text = {
+            if (LocalAppSettings.current.timePicker == TimePickerStyle.INPUT) TimeInput(state = state) else TimePicker(state = state)
+        },
         confirmButton = {
             TextButton(onClick = { onPick(LocalTime.of(state.hour, state.minute)) }) {
                 Text(stringResource(R.string.action_ok))

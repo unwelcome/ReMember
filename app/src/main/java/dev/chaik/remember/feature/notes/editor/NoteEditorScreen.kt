@@ -72,6 +72,7 @@ import dev.chaik.remember.core.editor.PhotoViewer
 import dev.chaik.remember.core.editor.RichEditor
 import dev.chaik.remember.core.ui.components.ScreenScaffold
 import dev.chaik.remember.core.ui.components.TagChips
+import dev.chaik.remember.core.ui.primaryCornerModifier
 import dev.chaik.remember.feature.notes.ConfirmDialog
 import dev.chaik.remember.feature.notes.FolderPickerDialog
 import kotlinx.serialization.Serializable
@@ -188,9 +189,7 @@ fun NoteEditorScreen(
                 visible = !keyboardVisible,
                 enter = scaleIn() + fadeIn(),
                 exit = scaleOut() + fadeOut(),
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(end = 20.dp, bottom = padding.calculateBottomPadding()),
+                modifier = primaryCornerModifier(bottom = padding.calculateBottomPadding()),
             ) {
                 FloatingActionButton(onClick = { if (!viewModel.isImporting) launchPicker() }) {
                     if (viewModel.isImporting) {

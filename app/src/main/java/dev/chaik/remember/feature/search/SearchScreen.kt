@@ -6,7 +6,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.navigation3.runtime.NavKey
 import dev.chaik.remember.R
 import dev.chaik.remember.core.ui.components.PlaceholderScreen
-import dev.chaik.remember.feature.more.MoreSection
+import dev.chaik.remember.app.navigation.Destination
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -14,12 +14,12 @@ data object SearchRoute : NavKey
 
 @Composable
 fun SearchScreen(
-    onBack: () -> Unit,
+    onBack: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     PlaceholderScreen(
         title = stringResource(R.string.section_search),
-        icon = MoreSection.Search.icon,
+        icon = Destination.Search.icon,
         description = stringResource(R.string.section_search_hint),
         modifier = modifier,
         onBack = onBack,

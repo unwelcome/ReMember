@@ -1,5 +1,6 @@
 package dev.chaik.remember.app.ui
 
+import dev.chaik.remember.app.navigation.Destination
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
@@ -26,7 +27,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import dev.chaik.remember.app.navigation.TopLevelTab
 import kotlin.math.roundToInt
 
 private val ItemWidth = 60.dp
@@ -45,10 +45,10 @@ val IslandHeight = ItemHeight + IslandPadding * 2
  */
 @Composable
 fun FloatingIsland(
-    tabs: List<TopLevelTab>,
-    selected: TopLevelTab,
+    tabs: List<Destination>,
+    selected: Destination,
     indicatorPosition: () -> Float,
-    onSelect: (TopLevelTab) -> Unit,
+    onSelect: (Destination) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = MaterialTheme.colorScheme
@@ -83,7 +83,7 @@ fun FloatingIsland(
 
 @Composable
 private fun IslandItem(
-    tab: TopLevelTab,
+    tab: Destination,
     selected: Boolean,
     onClick: () -> Unit,
 ) {

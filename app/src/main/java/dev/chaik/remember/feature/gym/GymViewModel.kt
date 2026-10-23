@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.chaik.remember.app.AppContainer
 import dev.chaik.remember.core.data.ImportPreview
+import dev.chaik.remember.core.data.ImportProblem
 import dev.chaik.remember.core.data.WorkoutImport
 import dev.chaik.remember.core.data.WorkoutImportException
 import dev.chaik.remember.core.model.WorkoutSummary
@@ -26,7 +27,7 @@ import java.time.LocalTime
 sealed interface ImportState {
     data object Reading : ImportState
     data class Ready(val preview: ImportPreview) : ImportState
-    data class Failed(val message: String) : ImportState
+    data class Failed(val error: WorkoutImportException) : ImportState
     data class Done(val count: Int) : ImportState
 }
 
@@ -56,13 +57,13 @@ class GymViewModel(private val container: AppContainer) : ViewModel() {
             importState = try {
                 val text = withContext(Dispatchers.IO) {
                     container.appContext.contentResolver.openInputStream(uri)?.use { it.readBytes().decodeToString() }
-                } ?: throw WorkoutImportException("Файл не открылся")
+                } ?: throw IOException()
                 val parsed = withContext(Dispatchers.Default) { WorkoutImport.parse(text) }
                 ImportState.Ready(workouts.previewImport(parsed))
             } catch (e: WorkoutImportException) {
-                ImportState.Failed(e.message.orEmpty())
-            } catch (e: IOException) {
-                ImportState.Failed(e.message.orEmpty())
+                ImportState.Failed(e)
+            } catch (_: IOException) {
+                ImportState.Failed(WorkoutImportException(ImportProblem.NotWorkoutFile))
             }
         }
     }

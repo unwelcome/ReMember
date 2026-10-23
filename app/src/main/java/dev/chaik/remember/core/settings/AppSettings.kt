@@ -1,0 +1,67 @@
+package dev.chaik.remember.core.settings
+
+import androidx.compose.runtime.staticCompositionLocalOf
+import java.time.DayOfWeek
+
+/** Настройки приложения (Профиль и Персонализация). Язык хранит сам Android — см. [AppLanguage]. */
+data class AppSettings(
+    val nickname: String = "",
+    val gender: Gender = Gender.UNSET,
+    /** Код валюты ISO 4217: RUB, USD, EUR… */
+    val currency: String = "RUB",
+    val firstDayOfWeek: DayOfWeek = DayOfWeek.MONDAY,
+    val theme: ThemeMode = ThemeMode.SYSTEM,
+    val accent: AccentColor = AccentColor.WALLPAPER,
+    /** Кнопки в нижних углах — слева, веер мастеркнопки раскрывается вправо. */
+    val leftHanded: Boolean = false,
+    val backSwipe: BackSwipe = BackSwipe.RIGHT_TO_LEFT,
+    val timePicker: TimePickerStyle = TimePickerStyle.DIAL,
+    /** Вкладки островка (имена разделов, без «Ещё»); пусто — по умолчанию. */
+    val islandTabs: List<String> = emptyList(),
+    /** Порядок плиток «Ещё» (имена разделов); пусто — по умолчанию. */
+    val moreOrder: List<String> = emptyList(),
+)
+
+enum class Gender { UNSET, MALE, FEMALE }
+
+enum class ThemeMode { SYSTEM, LIGHT, DARK, AMOLED }
+
+/** Акцентный цвет: из обоев (Material You) или свой. */
+enum class AccentColor(val argb: Long?) {
+    WALLPAPER(null),
+    INDIGO(0xFF5B6CF0),
+    BLUE(0xFF2F80ED),
+    TEAL(0xFF14A38B),
+    GREEN(0xFF3FA34D),
+    AMBER(0xFFE0A21B),
+    ORANGE(0xFFF0742E),
+    RED(0xFFE5484D),
+    PINK(0xFFE0569B),
+    PURPLE(0xFF9A5CE6),
+}
+
+/** Каким свайпом закрывается вложенная страница. */
+enum class BackSwipe { RIGHT_TO_LEFT, LEFT_TO_RIGHT }
+
+/** Выбор времени: циферблат или ввод цифрами. */
+enum class TimePickerStyle { DIAL, INPUT }
+
+/** Валюты на выбор: код и знак. */
+val Currencies: List<Pair<String, String>> = listOf(
+    "RUB" to "₽",
+    "USD" to "$",
+    "EUR" to "€",
+    "KZT" to "₸",
+    "BYN" to "Br",
+    "UAH" to "₴",
+    "GBP" to "£",
+    "CNY" to "¥",
+)
+
+/** Семь дней недели, начиная с [first]. */
+fun weekDays(first: DayOfWeek): List<DayOfWeek> = List(7) { first.plus(it.toLong()) }
+
+fun currencySymbol(code: String): String = Currencies.firstOrNull { it.first == code }?.second ?: code
+
+/** Настройки для экранов; кладёт их [dev.chaik.remember.core.ui.theme.ReMemberTheme]. */
+val LocalAppSettings = staticCompositionLocalOf { AppSettings() }

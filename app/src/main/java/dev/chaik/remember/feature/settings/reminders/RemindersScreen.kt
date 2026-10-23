@@ -54,13 +54,19 @@ import dev.chaik.remember.appContainer
 import dev.chaik.remember.core.reminders.DailyReminder
 import dev.chaik.remember.core.reminders.QuietMode
 import dev.chaik.remember.core.reminders.SoundMode
+import dev.chaik.remember.core.settings.LocalAppSettings
+import dev.chaik.remember.core.settings.weekDays
 import dev.chaik.remember.core.ui.components.ScreenScaffold
 import dev.chaik.remember.core.ui.components.TimePickerDialog
-import kotlinx.serialization.Serializable
+import dev.chaik.remember.feature.settings.SettingsCard
+import dev.chaik.remember.feature.settings.SettingsGroupTitle
+import dev.chaik.remember.feature.settings.SettingsRadioRow
+import dev.chaik.remember.feature.settings.SettingsSwitchRow
 import java.time.DayOfWeek
 import java.time.LocalTime
 import java.time.format.TextStyle
 import java.util.Locale
+import kotlinx.serialization.Serializable
 
 @Serializable
 data object RemindersRoute : NavKey
@@ -108,8 +114,8 @@ fun RemindersScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 PermissionBanner(onAllow = { askPermission.launch(Manifest.permission.POST_NOTIFICATIONS) })
             }
 
-            Card {
-                SwitchRow(
+            SettingsCard {
+                SettingsSwitchRow(
                     title = stringResource(R.string.reminders_all),
                     checked = settings.enabled,
                     onChange = { on -> store.update { it.copy(enabled = on) } },
@@ -118,7 +124,7 @@ fun RemindersScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
 
             AnimatedVisibility(visible = settings.enabled) {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    GroupTitle(stringResource(R.string.reminders_group_records))
+                    SettingsGroupTitle(stringResource(R.string.reminders_group_records))
                     DailyCard(
                         title = stringResource(R.string.reminders_day),
                         hint = stringResource(R.string.reminders_day_hint),
@@ -134,15 +140,15 @@ fun RemindersScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                         onPickTime = { picking = TimeField.Sleep },
                     )
 
-                    GroupTitle(stringResource(R.string.reminders_group_plans))
-                    Card {
-                        SwitchRow(
+                    SettingsGroupTitle(stringResource(R.string.reminders_group_plans))
+                    SettingsCard {
+                        SettingsSwitchRow(
                             title = stringResource(R.string.reminders_events),
                             hint = stringResource(R.string.reminders_events_hint),
                             checked = settings.events,
                             onChange = { on -> store.update { it.copy(events = on) } },
                         )
-                        SwitchRow(
+                        SettingsSwitchRow(
                             title = stringResource(R.string.reminders_tasks),
                             hint = stringResource(R.string.reminders_tasks_hint),
                             checked = settings.tasks,
@@ -157,10 +163,10 @@ fun RemindersScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                         onPickTime = { picking = TimeField.Summary },
                     )
 
-                    GroupTitle(stringResource(R.string.reminders_group_quiet))
-                    Card {
+                    SettingsGroupTitle(stringResource(R.string.reminders_group_quiet))
+                    SettingsCard {
                         val quiet = settings.quiet
-                        SwitchRow(
+                        SettingsSwitchRow(
                             title = stringResource(R.string.reminders_quiet),
                             checked = quiet.enabled,
                             onChange = { on -> store.update { it.copy(quiet = it.quiet.copy(enabled = on)) } },
@@ -178,22 +184,22 @@ fun RemindersScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                                 QuietMode.SILENT to R.string.reminders_quiet_silent,
                                 QuietMode.SKIP to R.string.reminders_quiet_skip,
                             ).forEach { (mode, label) ->
-                                RadioRow(stringResource(label), selected = quiet.mode == mode) {
+                                SettingsRadioRow(stringResource(label), selected = quiet.mode == mode) {
                                     store.update { it.copy(quiet = it.quiet.copy(mode = mode)) }
                                 }
                             }
                         }
                     }
 
-                    GroupTitle(stringResource(R.string.reminders_group_sound))
-                    Card {
+                    SettingsGroupTitle(stringResource(R.string.reminders_group_sound))
+                    SettingsCard {
                         listOf(
                             SoundMode.SOUND_AND_VIBRATION to R.string.reminders_sound_both,
                             SoundMode.SOUND_ONLY to R.string.reminders_sound_only,
                             SoundMode.VIBRATION_ONLY to R.string.reminders_vibration_only,
                             SoundMode.SILENT to R.string.reminders_silent,
                         ).forEach { (mode, label) ->
-                            RadioRow(stringResource(label), selected = settings.sound == mode) {
+                            SettingsRadioRow(stringResource(label), selected = settings.sound == mode) {
                                 store.update { it.copy(sound = mode) }
                             }
                         }
@@ -286,8 +292,8 @@ private fun DailyCard(
     onChange: (DailyReminder) -> Unit,
     onPickTime: () -> Unit,
 ) {
-    Card {
-        SwitchRow(title = title, hint = hint, checked = reminder.enabled, onChange = { onChange(reminder.copy(enabled = it)) })
+    SettingsCard {
+        SettingsSwitchRow(title = title, hint = hint, checked = reminder.enabled, onChange = { onChange(reminder.copy(enabled = it)) })
         if (reminder.enabled) {
             TimeChip(reminder.time.toString(), Modifier.padding(horizontal = 16.dp), onPickTime)
             Row(
@@ -296,7 +302,7 @@ private fun DailyCard(
                     .fillMaxWidth()
                     .padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 8.dp),
             ) {
-                DayOfWeek.entries.forEach { day ->
+                weekDays(LocalAppSettings.current.firstDayOfWeek).forEach { day ->
                     val selected = day in reminder.days
                     DayToggle(day, selected) {
                         val days = if (selected) reminder.days - day else reminder.days + day
@@ -338,59 +344,4 @@ private fun TimeChip(label: String, modifier: Modifier = Modifier, onClick: () -
         leadingIcon = { Icon(Icons.Outlined.Schedule, null, Modifier.size(18.dp)) },
         modifier = modifier,
     )
-}
-
-@Composable
-private fun Card(content: @Composable ColumnScope.() -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainerLow)
-            .padding(vertical = 4.dp),
-        content = content,
-    )
-}
-
-@Composable
-private fun GroupTitle(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(start = 4.dp, top = 8.dp),
-    )
-}
-
-@Composable
-private fun SwitchRow(title: String, checked: Boolean, onChange: (Boolean) -> Unit, hint: String? = null) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onChange(!checked) }
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-    ) {
-        Column(Modifier.weight(1f).padding(end = 12.dp)) {
-            Text(title, style = MaterialTheme.typography.bodyLarge)
-            if (hint != null) {
-                Text(hint, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        }
-        Switch(checked = checked, onCheckedChange = onChange)
-    }
-}
-
-@Composable
-private fun RadioRow(label: String, selected: Boolean, onClick: () -> Unit) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 4.dp),
-    ) {
-        RadioButton(selected = selected, onClick = onClick)
-        Text(label, style = MaterialTheme.typography.bodyLarge)
-    }
 }

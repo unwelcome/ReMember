@@ -24,6 +24,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -33,18 +34,26 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavKey
 import dev.chaik.remember.R
+import dev.chaik.remember.app.navigation.Destination
+import dev.chaik.remember.app.navigation.moreTiles
+import dev.chaik.remember.core.settings.LocalAppSettings
 import dev.chaik.remember.core.ui.components.ScreenScaffold
 import kotlinx.serialization.Serializable
 
 @Serializable
 data object MoreRoute : NavKey
 
-/** Полноэкранное «боковое меню»: плитки со ссылками на остальные разделы. */
+/**
+ * Полноэкранное «боковое меню»: плитки разделов, которых нет в островке, в порядке
+ * из Настроек → Страницы; «Настройки» — последней плиткой на всю ширину.
+ */
 @Composable
 fun MoreScreen(
     onOpen: (NavKey) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val settings = LocalAppSettings.current
+    val tiles = remember(settings.islandTabs, settings.moreOrder) { settings.moreTiles() }
     ScreenScaffold(title = stringResource(R.string.tab_more), modifier = modifier) { padding ->
         val layoutDirection = LocalLayoutDirection.current
         LazyVerticalGrid(
@@ -60,15 +69,15 @@ fun MoreScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             items(
-                items = MoreSection.entries,
+                items = tiles,
                 key = { it.name },
                 // Настройки — последней плиткой на всю ширину
-                span = { GridItemSpan(if (it == MoreSection.Settings) maxLineSpan else 1) },
+                span = { GridItemSpan(if (it == Destination.Settings) maxLineSpan else 1) },
             ) { section ->
                 MoreTile(
                     section = section,
                     accent = MaterialTheme.colorScheme.accentFor(section.ordinal),
-                    onClick = { onOpen(section.route) },
+                    onClick = { onOpen(section.root) },
                 )
             }
         }
@@ -77,7 +86,7 @@ fun MoreScreen(
 
 @Composable
 private fun MoreTile(
-    section: MoreSection,
+    section: Destination,
     accent: Pair<Color, Color>,
     onClick: () -> Unit,
 ) {
@@ -99,7 +108,7 @@ private fun MoreTile(
             }
             Spacer(Modifier.height(14.dp))
             Text(
-                text = stringResource(section.title),
+                text = stringResource(section.label),
                 style = MaterialTheme.typography.titleMedium,
             )
             Spacer(Modifier.height(2.dp))

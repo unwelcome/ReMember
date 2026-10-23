@@ -44,6 +44,7 @@ import dev.chaik.remember.appContainer
 import dev.chaik.remember.core.model.NoteSummary
 import dev.chaik.remember.core.ui.components.ScreenScaffold
 import dev.chaik.remember.core.ui.components.shimmer
+import dev.chaik.remember.core.ui.primaryCornerModifier
 import java.io.File
 import kotlinx.coroutines.delay
 import kotlinx.serialization.Serializable
@@ -57,6 +58,7 @@ data object NotesRoute : NavKey
  */
 @Composable
 fun NotesScreen(
+    onBack: (() -> Unit)?,
     onOpen: (noteId: Long) -> Unit,
     onCreate: (folderId: Long?) -> Unit,
     modifier: Modifier = Modifier,
@@ -70,7 +72,7 @@ fun NotesScreen(
     var moving by remember { mutableStateOf<NoteSummary?>(null) }
     var deleting by remember { mutableStateOf<NoteSummary?>(null) }
 
-    ScreenScaffold(title = stringResource(R.string.tab_notes), modifier = modifier) { padding ->
+    ScreenScaffold(title = stringResource(R.string.tab_notes), modifier = modifier, onBack = onBack) { padding ->
         Box(Modifier.fillMaxSize()) {
             Column(Modifier.padding(top = padding.calculateTopPadding())) {
                 // Блок фильтров: с отступами сверху и снизу и тонкой чертой — отделён от прокручиваемых карточек
@@ -119,9 +121,7 @@ fun NotesScreen(
 
             FloatingActionButton(
                 onClick = { onCreate(viewModel.currentFolderId) },
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(end = 20.dp, bottom = padding.calculateBottomPadding()),
+                modifier = primaryCornerModifier(bottom = padding.calculateBottomPadding()),
             ) {
                 Icon(Icons.Outlined.Add, stringResource(R.string.notes_new))
             }

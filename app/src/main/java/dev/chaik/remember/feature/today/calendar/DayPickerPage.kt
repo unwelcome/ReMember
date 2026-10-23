@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.chaik.remember.R
 import dev.chaik.remember.core.model.Rating
+import dev.chaik.remember.core.settings.LocalAppSettings
 import dev.chaik.remember.core.ui.components.FullScreenPage
 import dev.chaik.remember.core.ui.theme.ratingColor
 import java.time.DayOfWeek
@@ -81,7 +82,7 @@ fun DayPickerPage(
     val listState = rememberLazyListState(
         initialFirstVisibleItemIndex = months.indexOf(YearMonth.from(selected)).coerceAtLeast(0),
     )
-    val firstDayOfWeek = remember { WeekFields.of(Locale.getDefault()).firstDayOfWeek }
+    val firstDayOfWeek = LocalAppSettings.current.firstDayOfWeek
     val haptics = LocalHapticFeedback.current
 
     FullScreenPage(title = stringResource(R.string.today_pick_date), onDismiss = onDismiss) {

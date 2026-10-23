@@ -40,6 +40,9 @@ interface MoneyDao {
     @Update
     suspend fun update(transaction: MoneyTransactionEntity)
 
+    @Query("UPDATE money_transaction SET currency = :currency")
+    suspend fun setCurrency(currency: String)
+
     @Query("DELETE FROM money_transaction WHERE id = :id")
     suspend fun delete(id: Long)
 

@@ -58,6 +58,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.chaik.remember.core.settings.LocalAppSettings
 import kotlin.math.PI
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -120,6 +121,9 @@ fun <T> BoxScope.MasterButton(
 ) {
     val haptics = LocalHapticFeedback.current
     val density = LocalDensity.current
+    // Режим левши: кнопка слева, веер раскрывается вправо-вверх (углы зеркалятся: x → 180° − x)
+    val mirrored = LocalAppSettings.current.leftHanded
+    fun deg(value: Double) = if (mirrored) 180.0 - value else value
     val select by rememberUpdatedState(onSelect)
     val currentItems by rememberUpdatedState(items)
 
@@ -160,8 +164,9 @@ fun <T> BoxScope.MasterButton(
         val min = with(density) { (InnerRadius * 0.6f).toPx() }
         val max = with(density) { (OuterRadius + 40.dp).toPx() }
         if (distance !in min..max) return null
-        var degrees = atan2(dy, dx) * 180 / PI
+        var degrees = deg(atan2(dy, dx) * 180 / PI)
         if (degrees < -90) degrees += 360
+        if (degrees > 270) degrees -= 360
         return geometry.indexAt(degrees)
     }
 
@@ -194,14 +199,14 @@ fun <T> BoxScope.MasterButton(
                         center = center,
                         inner = (inner - grow / 3).coerceAtLeast(0f),
                         outer = outer + grow,
-                        fromDegrees = geometry.sectorStart(index),
-                        toDegrees = geometry.sectorEnd(index),
+                        fromDegrees = deg(geometry.sectorStart(index)),
+                        toDegrees = deg(geometry.sectorEnd(index)),
                         color = if (growth[index] > 0f) lerp(ringColor, hoverColor, growth[index]) else ringColor,
                     )
                 }
                 // Разделители — на всех границах секторов, включая края веера
                 (0..currentItems.size).forEach { boundary ->
-                    val angle = geometry.boundary(boundary) * PI / 180
+                    val angle = deg(geometry.boundary(boundary)) * PI / 180
                     drawLine(
                         color = dividerColor,
                         start = center + polar(inner, angle),
@@ -219,7 +224,7 @@ fun <T> BoxScope.MasterButton(
                     progress = itemProgress(progress.value, index),
                     position = {
                         val radius = with(density) { ((InnerRadius + OuterRadius) / 2).toPx() } * progress.value
-                        center + polar(radius, geometry.itemDegrees(index) * PI / 180)
+                        center + polar(radius, deg(geometry.itemDegrees(index)) * PI / 180)
                     },
                     onClick = { choose(index) },
                 )
@@ -232,7 +237,7 @@ fun <T> BoxScope.MasterButton(
         enter = scaleIn() + fadeIn(),
         exit = scaleOut() + fadeOut(),
         modifier = Modifier
-            .align(Alignment.BottomEnd)
+            .align(if (mirrored) Alignment.BottomStart else Alignment.BottomEnd)
             .padding(padding)
             .onGloballyPositioned { coordinates ->
                 val bounds = coordinates.boundsInParent()

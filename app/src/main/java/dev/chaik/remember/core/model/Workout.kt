@@ -64,12 +64,15 @@ data class WorkoutSet(
     /** Скорость, км/ч — для бега. */
     val speed: Double? = null,
 ) {
-    /** Как подход выглядит в записи: «40 × 12», «30», «1:30», «9,4 км/ч × 10:00». */
-    fun format(kind: ExerciseKind): String = when (kind) {
+    /**
+     * Как подход выглядит в записи: «40 × 12», «30», «1:30», «9,4 км/ч × 10:00».
+     * [speedUnit] — подпись скорости на языке приложения (strings.xml, unit_kmh).
+     */
+    fun format(kind: ExerciseKind, speedUnit: String = "km/h"): String = when (kind) {
         ExerciseKind.WEIGHT_REPS -> "${weight?.let(::formatKg) ?: "—"} × ${reps ?: "—"}"
         ExerciseKind.REPS -> reps?.toString() ?: "—"
         ExerciseKind.TIME -> seconds?.let(::formatDuration) ?: "—"
-        ExerciseKind.SPEED_TIME -> listOfNotNull(speed?.let { "${formatKg(it)} км/ч" }, seconds?.let(::formatDuration))
+        ExerciseKind.SPEED_TIME -> listOfNotNull(speed?.let { "${formatKg(it)} $speedUnit" }, seconds?.let(::formatDuration))
             .joinToString(" × ")
             .ifEmpty { "—" }
     }

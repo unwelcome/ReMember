@@ -47,9 +47,10 @@ import androidx.navigation3.runtime.NavKey
 import dev.chaik.remember.R
 import dev.chaik.remember.appContainer
 import dev.chaik.remember.core.ui.components.ScreenScaffold
+import dev.chaik.remember.core.ui.primaryCornerModifier
 import dev.chaik.remember.feature.notes.ConfirmDialog
-import kotlinx.serialization.Serializable
 import java.time.LocalDate
+import kotlinx.serialization.Serializable
 
 @Serializable
 data object TasksRoute : NavKey
@@ -60,6 +61,7 @@ data object TasksRoute : NavKey
  */
 @Composable
 fun TasksScreen(
+    onBack: (() -> Unit)?,
     onOpen: (taskId: Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -74,7 +76,7 @@ fun TasksScreen(
     var confirmClear by remember { mutableStateOf(false) }
     BackHandler(enabled = adding) { adding = false }
 
-    ScreenScaffold(title = stringResource(R.string.tab_tasks), modifier = modifier) { padding ->
+    ScreenScaffold(title = stringResource(R.string.tab_tasks), modifier = modifier, onBack = onBack) { padding ->
         Box(Modifier.fillMaxSize()) {
             when {
                 groups == null -> Unit
@@ -126,9 +128,7 @@ fun TasksScreen(
                 visible = !adding,
                 enter = scaleIn() + fadeIn(),
                 exit = scaleOut() + fadeOut(),
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(end = 20.dp, bottom = padding.calculateBottomPadding()),
+                modifier = primaryCornerModifier(bottom = padding.calculateBottomPadding()),
             ) {
                 FloatingActionButton(onClick = { adding = true }) {
                     Icon(Icons.Outlined.Add, stringResource(R.string.tasks_new))

@@ -214,13 +214,14 @@ private fun Cover(file: File) {
 }
 
 /** Когда последний раз правили: «сегодня, 14:05», «вчера, 9:30», «23 окт., 14:05», «23 окт. 2025 г., 14:05». */
+@Composable
 private fun formatUpdated(time: LocalDateTime): String {
     val date = time.toLocalDate()
     val today = LocalDate.now()
     val day = when (date) {
-        today -> "сегодня"
-        today.minusDays(1) -> "вчера"
+        today -> stringResource(R.string.date_today_lower)
+        today.minusDays(1) -> stringResource(R.string.date_yesterday_lower)
         else -> date.format(DateTimeFormatter.ofPattern(if (date.year == today.year) "d MMM" else "d MMM yyyy"))
     }
-    return "$day, " + time.format(DateTimeFormatter.ofPattern("H:mm"))
+    return stringResource(R.string.date_time_pair, day, time.format(DateTimeFormatter.ofPattern("H:mm")))
 }

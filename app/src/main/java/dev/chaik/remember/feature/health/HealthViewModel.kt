@@ -12,12 +12,13 @@ import dev.chaik.remember.app.AppContainer
 import dev.chaik.remember.core.health.DayActivity
 import dev.chaik.remember.core.health.HealthAvailability
 import dev.chaik.remember.core.health.HealthGoals
+import java.io.IOException
+import java.time.DayOfWeek
+import java.time.LocalDate
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import java.io.IOException
-import java.time.LocalDate
 
 /** Что показывать на странице здоровья. */
 sealed interface HealthState {
@@ -61,7 +62,7 @@ class HealthViewModel(private val container: AppContainer) : ViewModel() {
                 return@launch
             }
             state = HealthState.Ready
-            weekShown?.let(::loadWeek) ?: loadWeek(weekStart(selected))
+            weekShown?.let(::loadWeek) ?: loadWeek(weekStart(selected, container.settings.settings.value.firstDayOfWeek))
         }
     }
 
@@ -70,7 +71,7 @@ class HealthViewModel(private val container: AppContainer) : ViewModel() {
         selected = date
     }
 
-    /** Неделя с понедельника [monday] — дочитать дни, которых ещё нет. */
+    /** Неделя с первого дня [monday] — дочитать дни, которых ещё нет. */
     fun loadWeek(monday: LocalDate) {
         weekShown = monday
         if (state != HealthState.Ready) return
@@ -112,5 +113,5 @@ class HealthViewModel(private val container: AppContainer) : ViewModel() {
     }
 }
 
-/** Понедельник недели [date]. */
-fun weekStart(date: LocalDate): LocalDate = date.minusDays((date.dayOfWeek.value - 1).toLong())
+/** Первый день недели [date] — по настройке Профиля. */
+fun weekStart(date: LocalDate, first: DayOfWeek): LocalDate = date.minusDays(((date.dayOfWeek.value - first.value + 7) % 7).toLong())

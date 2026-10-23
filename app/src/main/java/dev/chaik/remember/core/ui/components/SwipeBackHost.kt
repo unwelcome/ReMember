@@ -15,6 +15,8 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.unit.dp
+import dev.chaik.remember.core.settings.BackSwipe
+import dev.chaik.remember.core.settings.LocalAppSettings
 import androidx.navigationevent.DirectNavigationEventInput
 import androidx.navigationevent.NavigationEvent
 import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
@@ -30,7 +32,7 @@ private val FlingVelocity = 400.dp
 private const val CooldownMillis = 350L
 
 /**
- * Свайп справа налево в любом месте экрана = «назад».
+ * Свайп в любом месте экрана = «назад»: справа налево или, по настройке, слева направо.
  *
  * Жест передаётся в систему навигации как predictive back, поэтому
  * NavDisplay сам анимирует страницу за пальцем и показывает предыдущую под ней —
@@ -53,6 +55,8 @@ fun SwipeBackHost(
         onDispose { dispatcher?.removeInput(input) }
     }
     val isEnabled by rememberUpdatedState(enabled)
+    // Направление жеста: −1 — справа налево (палец идёт влево), +1 — слева направо
+    val direction by rememberUpdatedState(if (LocalAppSettings.current.backSwipe == BackSwipe.LEFT_TO_RIGHT) 1f else -1f)
 
     Box(
         modifier = modifier.pointerInput(input) {
@@ -67,7 +71,7 @@ fun SwipeBackHost(
                 // почти все точки приходятся на этап распознавания направления
                 val tracker = VelocityTracker().apply { addPosition(down.uptimeMillis, down.position) }
 
-                // Распознаём направление: начинаем только с явного движения влево
+                // Распознаём направление: начинаем только с явного движения в сторону «назад»
                 val slop = viewConfiguration.touchSlop
                 var dx = 0f
                 var dy = 0f
@@ -80,24 +84,26 @@ fun SwipeBackHost(
                     dx += delta.x
                     dy += delta.y
                     if (abs(dx) > slop || abs(dy) > slop) {
-                        if (dx >= -slop || abs(dx) <= abs(dy) * 1.5f) return@awaitEachGesture
+                        if (dx * direction <= slop || abs(dx) <= abs(dy) * 1.5f) return@awaitEachGesture
                         change.consume()
                         start = change
                     }
                 }
 
                 val width = size.width.toFloat()
-                var travel = -dx // пройденное влево расстояние, включая этап распознавания
-                input.backStarted(backEvent(start.position.x, start.position.y, progress(travel, width)))
+                val sign = direction
+                var travel = dx * sign // пройденное в сторону «назад» расстояние, включая этап распознавания
+                val edge = if (sign < 0) NavigationEvent.EDGE_RIGHT else NavigationEvent.EDGE_LEFT
+                input.backStarted(backEvent(start.position.x, start.position.y, progress(travel, width), edge))
 
                 val lifted = drag(start.id) { change ->
-                    travel -= change.positionChange().x
+                    travel += change.positionChange().x * sign
                     change.consume()
                     tracker.addPosition(change.uptimeMillis, change.position)
-                    input.backProgressed(backEvent(change.position.x, change.position.y, progress(travel, width)))
+                    input.backProgressed(backEvent(change.position.x, change.position.y, progress(travel, width), edge))
                 }
 
-                val velocity = -tracker.calculateVelocity().x // скорость влево
+                val velocity = tracker.calculateVelocity().x * sign // скорость в сторону «назад»
                 val farEnough = travel / width > CompleteThreshold && velocity > -flingVelocity
                 val flung = velocity > flingVelocity
                 if (lifted && (farEnough || flung)) {
@@ -115,9 +121,9 @@ fun SwipeBackHost(
 
 private fun progress(travel: Float, width: Float) = (travel / width).coerceIn(0f, 1f)
 
-private fun backEvent(x: Float, y: Float, progress: Float) = NavigationEvent(
+private fun backEvent(x: Float, y: Float, progress: Float, edge: Int) = NavigationEvent(
     touchX = x,
     touchY = y,
     progress = progress,
-    swipeEdge = NavigationEvent.EDGE_RIGHT,
+    swipeEdge = edge,
 )

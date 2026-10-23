@@ -72,18 +72,21 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.NavKey
 import dev.chaik.remember.R
 import dev.chaik.remember.appContainer
+import dev.chaik.remember.core.data.ImportProblem
+import dev.chaik.remember.core.data.WorkoutImportException
 import dev.chaik.remember.core.model.WorkoutSummary
 import dev.chaik.remember.core.model.formatKg
 import dev.chaik.remember.core.ui.components.DueDatePickerDialog
 import dev.chaik.remember.core.ui.components.ScreenScaffold
 import dev.chaik.remember.core.ui.components.TimePickerDialog
+import dev.chaik.remember.core.ui.primaryCornerModifier
 import dev.chaik.remember.feature.calendar.formatDay
 import dev.chaik.remember.feature.notes.ConfirmDialog
-import kotlinx.coroutines.launch
-import kotlinx.serialization.Serializable
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
 
 @Serializable
 data object GymRoute : NavKey
@@ -94,7 +97,7 @@ data object GymRoute : NavKey
  */
 @Composable
 fun GymScreen(
-    onBack: () -> Unit,
+    onBack: (() -> Unit)?,
     onOpen: (workoutId: Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -227,9 +230,7 @@ fun GymScreen(
                 visible = selecting,
                 enter = scaleIn() + fadeIn(),
                 exit = scaleOut() + fadeOut(),
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(end = 20.dp, bottom = padding.calculateBottomPadding() + 8.dp),
+                modifier = primaryCornerModifier(bottom = padding.calculateBottomPadding() + 8.dp),
             ) {
                 FloatingActionButton(
                     onClick = { confirmDelete = true },
@@ -315,9 +316,9 @@ private fun WorkoutCard(
     ).joinToString(" · ")
     val weight = when {
         summary.weightBefore != null && summary.weightAfter != null ->
-            "${formatKg(summary.weightBefore)} → ${formatKg(summary.weightAfter)} кг"
-        summary.weightBefore != null -> "${formatKg(summary.weightBefore)} кг"
-        summary.weightAfter != null -> "→ ${formatKg(summary.weightAfter)} кг"
+            stringResource(R.string.gym_weight_change, formatKg(summary.weightBefore), formatKg(summary.weightAfter))
+        summary.weightBefore != null -> stringResource(R.string.unit_kg_value, formatKg(summary.weightBefore))
+        summary.weightAfter != null -> stringResource(R.string.gym_weight_after_only, formatKg(summary.weightAfter))
         else -> null
     }
 
@@ -380,6 +381,29 @@ private fun WorkoutCard(
     }
 }
 
+/** Ошибки импорта по строчке; в конце — «…и ещё N». */
+@Composable
+private fun importErrorText(error: WorkoutImportException): String {
+    val lines = error.problems.map { problemText(it) }
+    val more = if (error.more > 0) listOf(stringResource(R.string.gym_import_more_errors, error.more)) else emptyList()
+    return (lines + more).joinToString("\n")
+}
+
+@Composable
+private fun problemText(problem: ImportProblem): String = when (problem) {
+    ImportProblem.NotWorkoutFile -> stringResource(R.string.gym_import_not_file)
+    is ImportProblem.UnknownVersion -> stringResource(R.string.gym_import_bad_version, problem.version)
+    is ImportProblem.BadDate -> stringResource(R.string.gym_import_bad_date, problem.value)
+    is ImportProblem.BadTime -> stringResource(
+        if (problem.isStart) R.string.gym_import_bad_start else R.string.gym_import_bad_end,
+        problem.value,
+    )
+    ImportProblem.NoName -> stringResource(R.string.gym_import_no_name)
+    is ImportProblem.BadDuration -> stringResource(R.string.gym_import_bad_duration, problem.exercise, problem.value)
+    is ImportProblem.BadKind -> stringResource(R.string.gym_import_bad_kind, problem.exercise, problem.value)
+    is ImportProblem.InWorkout -> stringResource(R.string.gym_import_in_workout, problem.index, problem.date, problemText(problem.problem))
+}
+
 @Composable
 private fun ImportDialog(state: ImportState, onConfirm: () -> Unit, onDismiss: () -> Unit) {
     AlertDialog(
@@ -391,7 +415,7 @@ private fun ImportDialog(state: ImportState, onConfirm: () -> Unit, onDismiss: (
                     CircularProgressIndicator(Modifier.size(24.dp))
                     Text(stringResource(R.string.gym_import_reading), modifier = Modifier.padding(start = 16.dp))
                 }
-                is ImportState.Failed -> Text(stringResource(R.string.gym_import_failed, state.message))
+                is ImportState.Failed -> Text(stringResource(R.string.gym_import_failed, importErrorText(state.error)))
                 is ImportState.Done -> Text(pluralStringResource(R.plurals.gym_import_done, state.count, state.count))
                 is ImportState.Ready -> {
                     val p = state.preview

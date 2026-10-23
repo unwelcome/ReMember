@@ -63,24 +63,25 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.NavKey
 import dev.chaik.remember.R
 import dev.chaik.remember.appContainer
-import dev.chaik.remember.core.reminders.OpenTarget
 import dev.chaik.remember.core.editor.EditorToolbar
 import dev.chaik.remember.core.editor.EditorToolbarHeight
 import dev.chaik.remember.core.editor.PhotoViewer
 import dev.chaik.remember.core.editor.RichEditor
+import dev.chaik.remember.core.reminders.OpenTarget
 import dev.chaik.remember.core.ui.components.MasterButton
 import dev.chaik.remember.core.ui.components.MasterButtonItem
 import dev.chaik.remember.core.ui.components.ScreenScaffold
+import dev.chaik.remember.core.ui.secondaryCorner
 import dev.chaik.remember.feature.today.calendar.DayPickerPage
 import dev.chaik.remember.feature.today.day.DayController
 import dev.chaik.remember.feature.today.day.DayRating
 import dev.chaik.remember.feature.today.day.DayTags
 import dev.chaik.remember.feature.today.money.MoneyContent
 import dev.chaik.remember.feature.today.sleep.SleepContent
-import kotlinx.serialization.Serializable
 import java.io.File
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import kotlinx.serialization.Serializable
 
 @Serializable
 data object TodayRoute : NavKey
@@ -93,7 +94,7 @@ private val FabSpace = 96.dp
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun TodayScreen(modifier: Modifier = Modifier) {
+fun TodayScreen(modifier: Modifier = Modifier, onBack: (() -> Unit)? = null) {
     val context = LocalContext.current
     val container = context.appContainer
     val viewModel = viewModel { TodayViewModel(container) }
@@ -144,6 +145,7 @@ fun TodayScreen(modifier: Modifier = Modifier) {
     ScreenScaffold(
         title = title,
         modifier = modifier,
+        onBack = onBack,
         onTitleClick = { pickingDate = true },
         actions = {
             if (!viewModel.isToday) {
@@ -296,8 +298,9 @@ private fun BoxScope.PhotoButton(
         visible = visible,
         enter = scaleIn() + fadeIn(),
         exit = scaleOut() + fadeOut(),
+        // Напротив мастеркнопки: у левши — справа
         modifier = Modifier
-            .align(Alignment.BottomStart)
+            .align(secondaryCorner())
             .padding(padding),
     ) {
         FloatingActionButton(onClick = onClick) {

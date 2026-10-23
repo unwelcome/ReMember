@@ -40,9 +40,13 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.platform.LocalContext
 import dev.chaik.remember.appContainer
+import androidx.compose.runtime.key
+import dev.chaik.remember.app.navigation.islandTabs
+import dev.chaik.remember.app.navigation.Destination
+import dev.chaik.remember.core.settings.BackSwipe
+import dev.chaik.remember.core.settings.LocalAppSettings
 import dev.chaik.remember.core.reminders.OpenTarget
 import dev.chaik.remember.feature.tasks.editor.TaskEditorRoute
-import dev.chaik.remember.feature.gym.GymRoute
 import dev.chaik.remember.feature.gym.workout.WorkoutRoute
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
@@ -50,7 +54,6 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
-import dev.chaik.remember.app.navigation.TopLevelTab
 import dev.chaik.remember.app.navigation.appEntryProvider
 import dev.chaik.remember.app.navigation.popTransition
 import dev.chaik.remember.app.navigation.pushTransition
@@ -84,7 +87,7 @@ fun ReMemberApp(lock: AppLock) {
 }
 
 /**
- * Вкладки островка, листаются свайпом влево/вправо.
+ * Вкладки островка, листаются свайпом влево/вправо. Состав и порядок — из Настроек → Страницы.
  *
  * У каждой вкладки свой стек экранов: например, «Ещё → Настройки» остаётся открытым,
  * пока вы на других вкладках. Пока во вкладке открыта вложенная страница,
@@ -93,17 +96,28 @@ fun ReMemberApp(lock: AppLock) {
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun MainScaffold() {
-    val tabs = TopLevelTab.entries
+    val settings = LocalAppSettings.current
+    val tabs = remember(settings.islandTabs) { settings.islandTabs() }
     val pagerState = rememberPagerState { tabs.size }
-    val backStacks = tabs.associateWith { rememberNavBackStack(it.root) }
-    val currentStack = backStacks.getValue(tabs[pagerState.currentPage])
+    // Стек у каждой вкладки свой; key — чтобы при смене состава стеки не перепутались
+    val backStacks = tabs.associateWith { tab -> key(tab) { rememberNavBackStack(tab.root) } }
+    val currentTab = tabs[pagerState.currentPage.coerceIn(tabs.indices)]
+    val currentStack = backStacks.getValue(currentTab)
     val scope = rememberCoroutineScope()
     val haptics = LocalHapticFeedback.current
 
-    fun goTo(tab: TopLevelTab) {
+    // Поменяли состав островка (обычно из «Ещё → Настройки») — остаёмся на той же вкладке
+    var shownTab by remember { mutableStateOf(currentTab) }
+    LaunchedEffect(pagerState, tabs) {
+        tabs.indexOf(shownTab).takeIf { it >= 0 && it != pagerState.currentPage }?.let { pagerState.scrollToPage(it) }
+        snapshotFlow { pagerState.settledPage }.collect { page -> tabs.getOrNull(page)?.let { shownTab = it } }
+    }
+
+    fun goTo(tab: Destination) {
+        val page = tabs.indexOf(tab).takeIf { it >= 0 } ?: return
         scope.launch {
             pagerState.animateScrollToPage(
-                page = tab.ordinal,
+                page = page,
                 animationSpec = spring(dampingRatio = 0.85f, stiffness = Spring.StiffnessMediumLow),
             )
         }
@@ -122,30 +136,30 @@ private fun MainScaffold() {
     val openRequest by container.openRequests.collectAsStateWithLifecycle()
     LaunchedEffect(openRequest) {
         val target = openRequest ?: return@LaunchedEffect
-        val tab = when (target) {
-            OpenTarget.Day, OpenTarget.Sleep -> TopLevelTab.Today
-            is OpenTarget.Calendar -> TopLevelTab.Calendar
-            is OpenTarget.Task -> TopLevelTab.Tasks
-            is OpenTarget.Workout -> TopLevelTab.More
+        val section = when (target) {
+            OpenTarget.Day, OpenTarget.Sleep -> Destination.Today
+            is OpenTarget.Calendar -> Destination.Calendar
+            is OpenTarget.Task -> Destination.Tasks
+            is OpenTarget.Workout -> Destination.Gym
         }
+        // Раздел во вкладке — открываем вкладку; иначе — «Ещё» и раздел поверх, чтобы «назад» вёл в «Ещё»
+        val tab = section.takeIf { it in tabs } ?: Destination.More
         val stack = backStacks.getValue(tab)
         while (stack.size > 1) stack.removeLastOrNull()
-        pagerState.scrollToPage(tab.ordinal)
+        if (tab == Destination.More) stack.add(section.root)
+        pagerState.scrollToPage(tabs.indexOf(tab))
         when (target) {
             is OpenTarget.Task -> stack.add(TaskEditorRoute(target.taskId))
-            // Зал живёт в «Ещё»: открываем его и тренировку поверх, чтобы «назад» вёл в список
-            is OpenTarget.Workout -> {
-                stack.add(GymRoute)
-                stack.add(WorkoutRoute(target.workoutId, target.finish))
-            }
+            is OpenTarget.Workout -> stack.add(WorkoutRoute(target.workoutId, target.finish))
+            // День, сон и дату календаря выставит сам экран и обнулит запрос
             else -> return@LaunchedEffect
         }
         container.openRequests.value = null
     }
 
-    // «Назад» на корне любой вкладки, кроме «Сегодня», возвращает на «Сегодня»
-    BackHandler(enabled = pagerState.currentPage != TopLevelTab.Today.ordinal && currentStack.size == 1) {
-        goTo(TopLevelTab.Today)
+    // «Назад» на корне любой вкладки, кроме первой, возвращает на первую
+    BackHandler(enabled = pagerState.currentPage != 0 && currentStack.size == 1) {
+        goTo(tabs.first())
     }
 
     val navBarPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
@@ -157,13 +171,13 @@ private fun MainScaffold() {
                 state = pagerState,
                 // Во вложенной странице горизонтальный свайп отдан жесту «назад»
                 userScrollEnabled = currentStack.size == 1,
-                key = { tabs[it].name },
+                key = { tabs.getOrNull(it)?.name ?: it },
                 // Соседние вкладки держим готовыми: иначе после паузы страница строилась заново
                 // прямо во время свайпа, и первые кадры анимации подтормаживали
                 beyondViewportPageCount = 1,
                 modifier = Modifier.fillMaxSize(),
             ) { page ->
-                TabContent(backStacks.getValue(tabs[page]))
+                tabs.getOrNull(page)?.let { TabContent(backStacks.getValue(it)) }
             }
         }
 
@@ -179,10 +193,10 @@ private fun MainScaffold() {
         ) {
             FloatingIsland(
                 tabs = tabs,
-                selected = tabs[pagerState.currentPage],
+                selected = currentTab,
                 indicatorPosition = { pagerState.position },
                 onSelect = { tab ->
-                    if (tab.ordinal == pagerState.currentPage) {
+                    if (tab == currentTab) {
                         // Повторный тап по вкладке — вернуться к её корню
                         while (currentStack.size > 1) currentStack.removeLastOrNull()
                     } else {
@@ -197,6 +211,7 @@ private fun MainScaffold() {
 /** Стек экранов одной вкладки. */
 @Composable
 private fun TabContent(backStack: NavBackStack<NavKey>) {
+    val leftToRight = LocalAppSettings.current.backSwipe == BackSwipe.LEFT_TO_RIGHT
     SwipeBackHost(enabled = backStack.size > 1) {
         NavDisplay(
             backStack = backStack,
@@ -207,8 +222,8 @@ private fun TabContent(backStack: NavBackStack<NavKey>) {
                 rememberViewModelStoreNavEntryDecorator(),
             ),
             transitionSpec = { pushTransition() },
-            popTransitionSpec = { popTransition() },
-            predictivePopTransitionSpec = { popTransition() },
+            popTransitionSpec = { popTransition(leftToRight) },
+            predictivePopTransitionSpec = { popTransition(leftToRight) },
             entryProvider = appEntryProvider(backStack),
         )
     }

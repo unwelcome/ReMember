@@ -25,6 +25,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import dev.chaik.remember.R
 import dev.chaik.remember.core.model.Repeat
+import dev.chaik.remember.core.settings.LocalAppSettings
+import dev.chaik.remember.core.settings.weekDays
 import java.time.DayOfWeek
 import java.time.format.TextStyle
 import java.util.Locale
@@ -90,7 +92,7 @@ fun RepeatPicker(
         }
         if (repeat is Repeat.Weekdays) {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(top = 8.dp)) {
-                DayOfWeek.entries.forEach { day ->
+                weekDays(LocalAppSettings.current.firstDayOfWeek).forEach { day ->
                     val selected = day in repeat.days
                     FilterChip(
                         selected = selected,

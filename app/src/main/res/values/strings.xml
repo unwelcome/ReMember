@@ -13,6 +13,10 @@
 
     <!-- Разделы из «Ещё» -->
     <string name="section_feed">Лента</string>
+    <string name="section_today_hint">Запись дня, сон и траты</string>
+    <string name="section_notes_hint">Заметки с папками и тегами</string>
+    <string name="section_tasks_hint">Список дел со сроками</string>
+    <string name="section_calendar_hint">События и дни рождения</string>
     <string name="section_feed_hint">Все записи дней и «В этот день»</string>
     <string name="section_search">Поиск</string>
     <string name="section_search_hint">По всем записям, заметкам и тратам</string>
@@ -85,7 +89,7 @@
     <!-- Траты -->
     <string name="money_expense">Расход</string>
     <string name="money_income">Доход</string>
-    <string name="money_amount">Сумма, ₽</string>
+    <string name="money_amount">Сумма, %1$s</string>
     <string name="money_amount_error">Введите сумму больше нуля</string>
     <string name="money_comment">Комментарий</string>
     <string name="money_add">Добавить</string>
@@ -315,6 +319,23 @@
     <string name="gym_import">Импорт из файла (JSON)</string>
     <string name="gym_import_title">Импорт тренировок</string>
     <string name="gym_import_reading">Читаю файл…</string>
+    <string name="gym_import_not_file">Это не файл тренировок</string>
+    <string name="gym_import_bad_version">Неизвестная версия файла: %1$d</string>
+    <string name="gym_import_bad_date">дата «%1$s» — нужен вид ГГГГ-ММ-ДД</string>
+    <string name="gym_import_bad_start">время начала «%1$s» — нужен вид ЧЧ:ММ</string>
+    <string name="gym_import_bad_end">время конца «%1$s» — нужен вид ЧЧ:ММ</string>
+    <string name="gym_import_no_name">упражнение без названия</string>
+    <string name="gym_import_bad_duration">«%1$s»: время «%2$s» — нужен вид м:сс</string>
+    <string name="gym_import_bad_kind">«%1$s»: вид «%2$s» — бывает weight_reps, reps, time или speed_time</string>
+    <string name="gym_import_in_workout">Тренировка %1$d (%2$s): %3$s</string>
+    <string name="gym_import_more_errors">…и ещё %1$d</string>
+    <string name="gym_weight_change">%1$s → %2$s кг</string>
+    <string name="gym_weight_after_only">→ %1$s кг</string>
+    <string name="unit_kg_value">%1$s кг</string>
+    <string name="unit_kmh">км/ч</string>
+    <string name="date_today_lower">сегодня</string>
+    <string name="date_yesterday_lower">вчера</string>
+    <string name="date_time_pair">%1$s, %2$s</string>
     <string name="gym_import_failed">Не удалось прочитать файл.\n\n%1$s</string>
     <string name="gym_import_nothing">Новых тренировок в файле нет.</string>
     <string name="gym_import_confirm">Импортировать</string>
@@ -429,4 +450,65 @@
     <string name="health_update">Health Connect нужно обновить.</string>
     <string name="health_update_button">Обновить</string>
     <string name="health_error">Не удалось прочитать данные: %1$s</string>
+
+    <!-- Настройки: список разделов -->
+    <string name="settings_profile">Профиль</string>
+    <string name="settings_profile_hint">Имя, пол, язык, валюта, начало недели</string>
+    <string name="settings_personalization">Персонализация</string>
+    <string name="settings_personalization_hint">Тема, цвет, режим левши, жесты, выбор времени</string>
+    <string name="settings_pages">Страницы</string>
+    <string name="settings_pages_hint">Вкладки островка и плитки «Ещё»</string>
+    <string name="settings_security">Безопасность</string>
+    <string name="settings_security_hint">PIN-код, отпечаток, автоблокировка</string>
+    <string name="settings_data">Данные и резервные копии</string>
+    <string name="settings_data_hint">Экспорт, импорт, место на телефоне</string>
+    <string name="settings_about">О приложении</string>
+    <string name="settings_about_hint">Что умеет Re:Member</string>
+    <string name="settings_soon">Скоро</string>
+
+    <!-- Профиль -->
+    <string name="profile_nickname">Никнейм</string>
+    <string name="profile_gender">Пол</string>
+    <string name="profile_gender_unset">Не указан</string>
+    <string name="profile_gender_male">Мужской</string>
+    <string name="profile_gender_female">Женский</string>
+    <string name="profile_language">Язык</string>
+    <string name="profile_language_system">Как в системе</string>
+    <string name="profile_language_ru">Русский</string>
+    <string name="profile_language_en">English</string>
+    <string name="profile_language_soon">Перевод готовится</string>
+    <string name="profile_currency">Валюта</string>
+    <string name="profile_currency_hint">Меняется знак у всех сумм; суммы по курсу не пересчитываются</string>
+    <string name="profile_first_day">Первый день недели</string>
+
+    <!-- Страницы -->
+    <string name="pages_island">Вкладки островка</string>
+    <string name="pages_island_hint">От 2 до 4 разделов плюс «Ещё». Убранные разделы появятся плитками в «Ещё».</string>
+    <string name="pages_add_tab">Добавить вкладку</string>
+    <string name="pages_add_title">Какой раздел поставить?</string>
+    <string name="pages_more_tiles">Плитки «Ещё»</string>
+    <string name="pages_reset">Вернуть как было</string>
+    <string name="pages_move_up">Выше</string>
+    <string name="pages_move_down">Ниже</string>
+    <string name="pages_remove">Убрать из островка</string>
+    <string name="pages_fixed">Место не меняется</string>
+
+    <!-- Персонализация -->
+    <string name="appearance_theme">Тема</string>
+    <string name="appearance_theme_system">Как в системе</string>
+    <string name="appearance_theme_light">Светлая</string>
+    <string name="appearance_theme_dark">Тёмная</string>
+    <string name="appearance_theme_amoled">AMOLED</string>
+    <string name="appearance_theme_amoled_hint">Чисто чёрный фон — экран тратит меньше энергии</string>
+    <string name="appearance_accent">Акцентный цвет</string>
+    <string name="appearance_accent_wallpaper">Из обоев</string>
+    <string name="appearance_hands">Удобство</string>
+    <string name="appearance_left_handed">Режим левши</string>
+    <string name="appearance_left_handed_hint">Кнопки в нижних углах — слева, меню мастеркнопки раскрывается вправо</string>
+    <string name="appearance_back_swipe">Свайп «назад»</string>
+    <string name="appearance_back_rtl">Справа налево</string>
+    <string name="appearance_back_ltr">Слева направо</string>
+    <string name="appearance_time_picker">Выбор времени</string>
+    <string name="appearance_time_dial">Циферблат</string>
+    <string name="appearance_time_input">Ввод цифрами</string>
 </resources>

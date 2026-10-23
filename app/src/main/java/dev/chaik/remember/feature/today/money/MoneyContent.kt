@@ -50,6 +50,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.chaik.remember.R
+import dev.chaik.remember.core.settings.LocalAppSettings
+import dev.chaik.remember.core.settings.currencySymbol
 import dev.chaik.remember.core.data.FAVORITE_EXPENSE_CATEGORIES
 import dev.chaik.remember.core.model.MoneyCategory
 import dev.chaik.remember.core.model.MoneyTransaction
@@ -116,9 +118,10 @@ fun MoneyContent(controller: MoneyController, modifier: Modifier = Modifier) {
 private fun DayTotals(transactions: List<MoneyTransaction>) {
     val expense = transactions.filter { it.type == MoneyType.EXPENSE }.sumOf { it.amountMinor }
     val income = transactions.filter { it.type == MoneyType.INCOME }.sumOf { it.amountMinor }
+    val currency = LocalAppSettings.current.currency
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        TotalCard(stringResource(R.string.money_day_expense), MoneyFormat.format(expense), MaterialTheme.colorScheme.error, Modifier.weight(1f))
-        TotalCard(stringResource(R.string.money_day_income), MoneyFormat.format(income), IncomeColor, Modifier.weight(1f))
+        TotalCard(stringResource(R.string.money_day_expense), MoneyFormat.format(expense, currency), MaterialTheme.colorScheme.error, Modifier.weight(1f))
+        TotalCard(stringResource(R.string.money_day_income), MoneyFormat.format(income, currency), IncomeColor, Modifier.weight(1f))
     }
 }
 
@@ -172,7 +175,7 @@ private fun MoneyForm(controller: MoneyController, categories: List<MoneyCategor
             OutlinedTextField(
                 value = controller.amount,
                 onValueChange = controller::onAmountChange,
-                label = { Text(stringResource(R.string.money_amount)) },
+                label = { Text(stringResource(R.string.money_amount, currencySymbol(LocalAppSettings.current.currency))) },
                 isError = controller.amountError,
                 supportingText = if (controller.amountError) {
                     { Text(stringResource(R.string.money_amount_error)) }
@@ -309,7 +312,7 @@ private fun TransactionRow(
                 }
             }
             Text(
-                text = MoneyFormat.format(transaction.amountMinor, withSign = true, sign = if (isIncome) '+' else '−'),
+                text = MoneyFormat.format(transaction.amountMinor, transaction.currency, withSign = true, sign = if (isIncome) '+' else '−'),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = if (isIncome) IncomeColor else MaterialTheme.colorScheme.onSurface,

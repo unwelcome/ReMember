@@ -1,5 +1,6 @@
 package dev.chaik.remember.core.ui.format
 
+import dev.chaik.remember.core.settings.currencySymbol
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.text.DecimalFormat
@@ -7,7 +8,7 @@ import java.text.DecimalFormatSymbols
 import java.util.Locale
 import kotlin.math.abs
 
-/** Суммы: копейки ↔ текст. Пока валюта одна — рубли. */
+/** Суммы: копейки ↔ текст. Знак валюты — по коду (RUB → ₽), см. Профиль. */
 object MoneyFormat {
     private val symbols = DecimalFormatSymbols(Locale.forLanguageTag("ru")).apply {
         groupingSeparator = ' ' // узкий неразрывный пробел: «1 234»
@@ -15,11 +16,11 @@ object MoneyFormat {
     }
 
     /** 123450 → «1 234,50 ₽», 45000 → «450 ₽». */
-    fun format(amountMinor: Long, withSign: Boolean = false, sign: Char = '−'): String {
-        val rubles = BigDecimal.valueOf(abs(amountMinor), 2)
+    fun format(amountMinor: Long, currency: String, withSign: Boolean = false, sign: Char = '−'): String {
+        val units = BigDecimal.valueOf(abs(amountMinor), 2)
         val pattern = if (amountMinor % 100 == 0L) "#,##0" else "#,##0.00"
-        val number = DecimalFormat(pattern, symbols).format(rubles)
-        return (if (withSign) "$sign" else "") + "$number ₽"
+        val number = DecimalFormat(pattern, symbols).format(units)
+        return (if (withSign) "$sign" else "") + "$number ${currencySymbol(currency)}"
     }
 
     /** «450», «450,5», «1 234.50» → копейки; null — не число или не больше нуля. */

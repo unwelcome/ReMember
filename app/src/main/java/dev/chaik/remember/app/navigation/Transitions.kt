@@ -22,7 +22,10 @@ fun pushTransition(): ContentTransform =
     slideInHorizontally(slideSpec) { it } togetherWith
         slideOutHorizontally(slideSpec) { -it / 4 }
 
-fun popTransition(): ContentTransform =
-    (slideInHorizontally(slideSpec) { it / 4 } togetherWith
-        slideOutHorizontally(slideSpec) { -it })
+/** [leftToRight] — свайп «назад» слева направо: страница уезжает вправо, предыдущая выходит слева. */
+fun popTransition(leftToRight: Boolean = false): ContentTransform {
+    val sign = if (leftToRight) -1 else 1
+    return (slideInHorizontally(slideSpec) { sign * it / 4 } togetherWith
+        slideOutHorizontally(slideSpec) { -sign * it })
         .apply { targetContentZIndex = -1f } // уходящая страница рисуется поверх
+}

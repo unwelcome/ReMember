@@ -63,14 +63,15 @@ import dev.chaik.remember.R
 import dev.chaik.remember.appContainer
 import dev.chaik.remember.core.health.DayActivity
 import dev.chaik.remember.core.health.HealthGoals
+import dev.chaik.remember.core.settings.LocalAppSettings
 import dev.chaik.remember.core.ui.components.ScreenScaffold
-import kotlinx.serialization.Serializable
 import java.text.NumberFormat
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.time.temporal.ChronoUnit
 import java.util.Locale
+import kotlinx.serialization.Serializable
 
 @Serializable
 data object HealthRoute : NavKey
@@ -83,7 +84,7 @@ private const val WEEK_PAGES = 520
  * выбранного дня — шаги, активность, калории, — под ними цифры. В «⋮» — цели.
  */
 @Composable
-fun HealthScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
+fun HealthScreen(onBack: (() -> Unit)?, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val container = context.appContainer
     val viewModel = viewModel { HealthViewModel(container) }
@@ -173,8 +174,9 @@ fun HealthScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
 @Composable
 private fun WeekStrip(viewModel: HealthViewModel, goals: HealthGoals) {
     val today = LocalDate.now()
-    val currentMonday = remember(today) { weekStart(today) }
-    val pager = rememberPagerState(initialPage = WEEK_PAGES - 1 - weeksBetween(weekStart(viewModel.selected), currentMonday)) { WEEK_PAGES }
+    val firstDay = LocalAppSettings.current.firstDayOfWeek
+    val currentMonday = remember(today, firstDay) { weekStart(today, firstDay) }
+    val pager = rememberPagerState(initialPage = WEEK_PAGES - 1 - weeksBetween(weekStart(viewModel.selected, firstDay), currentMonday)) { WEEK_PAGES }
     val mondayOf = { page: Int -> currentMonday.minusWeeks((WEEK_PAGES - 1 - page).toLong()) }
 
     LaunchedEffect(pager) {

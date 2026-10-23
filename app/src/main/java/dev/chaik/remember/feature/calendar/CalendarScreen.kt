@@ -51,16 +51,17 @@ import dev.chaik.remember.appContainer
 import dev.chaik.remember.core.model.Event
 import dev.chaik.remember.core.model.Repeat
 import dev.chaik.remember.core.reminders.OpenTarget
+import dev.chaik.remember.core.settings.LocalAppSettings
 import dev.chaik.remember.core.ui.components.ScreenScaffold
 import dev.chaik.remember.core.ui.components.label
-import kotlinx.coroutines.launch
-import kotlinx.serialization.Serializable
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.time.temporal.WeekFields
 import java.util.Locale
+import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
 
 @Serializable
 data object CalendarRoute : NavKey
@@ -75,6 +76,7 @@ private const val CURRENT_PAGE = MONTH_PAGES / 2
  */
 @Composable
 fun CalendarScreen(
+    onBack: (() -> Unit)?,
     onOpen: (eventId: Long) -> Unit,
     onCreate: (date: LocalDate) -> Unit,
     modifier: Modifier = Modifier,
@@ -85,7 +87,7 @@ fun CalendarScreen(
 
     val today = LocalDate.now()
     val currentMonth = remember { YearMonth.from(today) }
-    val firstDayOfWeek = remember { WeekFields.of(Locale.getDefault()).firstDayOfWeek }
+    val firstDayOfWeek = LocalAppSettings.current.firstDayOfWeek
     var selectedDay by rememberSaveable { mutableLongStateOf(today.toEpochDay()) }
     val selected = LocalDate.ofEpochDay(selectedDay)
 
@@ -125,6 +127,7 @@ fun CalendarScreen(
     ScreenScaffold(
         title = stringResource(R.string.tab_calendar),
         modifier = modifier,
+        onBack = onBack,
         actions = {
             if (selected != today || pager.currentPage != CURRENT_PAGE) {
                 IconButton(onClick = { select(today) }) {

@@ -334,7 +334,7 @@ private fun ExerciseCard(
         }
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(end = 12.dp)) {
             entry.sets.forEach { set ->
-                AssistChip(onClick = { onEditSet(set) }, label = { Text(set.format(entry.exercise.kind)) })
+                AssistChip(onClick = { onEditSet(set) }, label = { Text(set.format(entry.exercise.kind, stringResource(R.string.unit_kmh))) })
             }
             AssistChip(
                 onClick = onAddSet,

@@ -78,7 +78,7 @@ class WorkoutImportTest {
             {"name": "Бег трусцой", "sets": [{"speed": 8, "time": "5:00"}]}
         ]}]}"""
         val exercises = WorkoutImport.parse(json).single().exercises
-        assertEquals("9,4 км/ч × 10:00", exercises[0].sets.single().format(ExerciseKind.SPEED_TIME))
+        assertEquals("9,4 км/ч × 10:00", exercises[0].sets.single().format(ExerciseKind.SPEED_TIME, "км/ч"))
         assertEquals(ExerciseKind.SPEED_TIME, exercises[1].exercise.kind)
     }
 
@@ -87,12 +87,12 @@ class WorkoutImportTest {
         val badDate = assertThrows(WorkoutImportException::class.java) {
             WorkoutImport.parse("""{"workouts": [{"date": "28.09.2026"}]}""")
         }
-        assertTrue(badDate.message!!.contains("ГГГГ-ММ-ДД"))
+        assertEquals(ImportProblem.InWorkout(1, "28.09.2026", ImportProblem.BadDate("28.09.2026")), badDate.problems.single())
 
         val badTime = assertThrows(WorkoutImportException::class.java) {
             WorkoutImport.parse("""{"workouts": [{"date": "2026-09-28", "exercises": [{"name": "Планка", "sets": [{"time": "полторы"}]}]}]}""")
         }
-        assertTrue(badTime.message!!.contains("Планка"))
+        assertTrue((badTime.problems.single() as ImportProblem.InWorkout).problem is ImportProblem.BadDuration)
 
         assertThrows(WorkoutImportException::class.java) { WorkoutImport.parse("просто текст") }
     }

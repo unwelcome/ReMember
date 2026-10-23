@@ -54,8 +54,24 @@ private data class ExerciseJson(val name: String, val kind: String? = null, val 
 @Serializable
 private data class SetJson(val weight: Double? = null, val reps: Int? = null, val time: String? = null, val speed: Double? = null)
 
-/** Файл не читается; [message] — что именно не так, по-русски. */
-class WorkoutImportException(message: String) : Exception(message)
+/** Что не так с файлом импорта. Текст для человека — в strings.xml (см. GymScreen). */
+sealed interface ImportProblem {
+    data object NotWorkoutFile : ImportProblem
+    data class UnknownVersion(val version: Int) : ImportProblem
+    data class BadDate(val value: String) : ImportProblem
+    data class BadTime(val value: String, val isStart: Boolean) : ImportProblem
+    data object NoName : ImportProblem
+    data class BadDuration(val exercise: String, val value: String) : ImportProblem
+    data class BadKind(val exercise: String, val value: String) : ImportProblem
+
+    /** Ошибка внутри тренировки [index] (с единицы) от [date]. */
+    data class InWorkout(val index: Int, val date: String, val problem: ImportProblem) : ImportProblem
+}
+
+/** Файл не читается: [problems] — что именно не так (первые несколько), [more] — сколько ещё. */
+class WorkoutImportException(val problems: List<ImportProblem>, val more: Int = 0) : Exception(problems.toString()) {
+    constructor(problem: ImportProblem) : this(listOf(problem))
+}
 
 object WorkoutImport {
     private val json = Json { ignoreUnknownKeys = true }
@@ -64,24 +80,24 @@ object WorkoutImport {
     fun parse(text: String): List<Workout> {
         val file = try {
             json.decodeFromString<WorkoutFileJson>(text)
-        } catch (e: SerializationException) {
-            throw WorkoutImportException("Это не файл тренировок: ${e.message?.lineSequence()?.firstOrNull().orEmpty()}")
-        } catch (e: IllegalArgumentException) {
-            throw WorkoutImportException("Это не файл тренировок: ${e.message?.lineSequence()?.firstOrNull().orEmpty()}")
+        } catch (_: SerializationException) {
+            throw WorkoutImportException(ImportProblem.NotWorkoutFile)
+        } catch (_: IllegalArgumentException) {
+            throw WorkoutImportException(ImportProblem.NotWorkoutFile)
         }
-        if (file.version != 1) throw WorkoutImportException("Неизвестная версия файла: ${file.version}")
+        if (file.version != 1) throw WorkoutImportException(ImportProblem.UnknownVersion(file.version))
 
-        val errors = mutableListOf<String>()
+        val errors = mutableListOf<ImportProblem>()
         val workouts = file.workouts.mapIndexedNotNull { i, w ->
             try {
                 w.toModel()
             } catch (e: WorkoutImportException) {
-                errors += "Тренировка ${i + 1} (${w.date}): ${e.message}"
+                errors += e.problems.map { ImportProblem.InWorkout(i + 1, w.date, it) }
                 null
             }
         }
         if (errors.isNotEmpty()) {
-            throw WorkoutImportException(errors.take(MAX_ERRORS).joinToString("\n") + if (errors.size > MAX_ERRORS) "\n…и ещё ${errors.size - MAX_ERRORS}" else "")
+            throw WorkoutImportException(errors.take(MAX_ERRORS), more = (errors.size - MAX_ERRORS).coerceAtLeast(0))
         }
         return workouts.sortedWith(compareBy<Workout> { it.date }.thenBy { it.start ?: LocalTime.MIN })
     }
@@ -90,10 +106,10 @@ object WorkoutImport {
         date = try {
             LocalDate.parse(date.trim())
         } catch (_: DateTimeParseException) {
-            throw WorkoutImportException("дата «$date» — нужен вид ГГГГ-ММ-ДД")
+            throw WorkoutImportException(ImportProblem.BadDate(date))
         },
-        start = start?.let { time(it, "начала") },
-        end = end?.let { time(it, "конца") },
+        start = start?.let { time(it, isStart = true) },
+        end = end?.let { time(it, isStart = false) },
         weightBefore = weightBefore,
         weightAfter = weightAfter,
         note = note.trim(),
@@ -102,12 +118,12 @@ object WorkoutImport {
     )
 
     private fun ExerciseJson.toModel(): WorkoutExercise {
-        if (name.isBlank()) throw WorkoutImportException("упражнение без названия")
+        if (name.isBlank()) throw WorkoutImportException(ImportProblem.NoName)
         val sets = sets.map { set ->
             WorkoutSet(
                 weight = set.weight,
                 reps = set.reps,
-                seconds = set.time?.let { parseDuration(it) ?: throw WorkoutImportException("«$name»: время «$it» — нужен вид м:сс") },
+                seconds = set.time?.let { parseDuration(it) ?: throw WorkoutImportException(ImportProblem.BadDuration(name, it)) },
                 speed = set.speed,
             )
         }
@@ -117,7 +133,7 @@ object WorkoutImport {
             "reps" -> ExerciseKind.REPS
             "time" -> ExerciseKind.TIME
             "speed_time" -> ExerciseKind.SPEED_TIME
-            else -> throw WorkoutImportException("«$name»: вид «$kind» — бывает weight_reps, reps, time или speed_time")
+            else -> throw WorkoutImportException(ImportProblem.BadKind(name, kind))
         }
         return WorkoutExercise(exercise = Exercise(name = name.trim(), kind = kind), sets = sets)
     }
@@ -129,10 +145,10 @@ object WorkoutImport {
         else -> ExerciseKind.REPS
     }
 
-    private fun time(value: String, what: String): LocalTime = try {
+    private fun time(value: String, isStart: Boolean): LocalTime = try {
         LocalTime.parse(value.trim().padStart(5, '0'))
     } catch (_: DateTimeParseException) {
-        throw WorkoutImportException("время $what «$value» — нужен вид ЧЧ:ММ")
+        throw WorkoutImportException(ImportProblem.BadTime(value, isStart))
     }
 
     private const val MAX_ERRORS = 5

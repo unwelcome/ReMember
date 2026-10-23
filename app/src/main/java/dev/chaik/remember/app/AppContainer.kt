@@ -19,6 +19,7 @@ import dev.chaik.remember.core.reminders.OpenTarget
 import dev.chaik.remember.core.reminders.ReminderScheduler
 import dev.chaik.remember.core.reminders.ReminderSettingsStore
 import dev.chaik.remember.core.security.AppLock
+import dev.chaik.remember.core.settings.AppSettingsStore
 import dev.chaik.remember.core.security.DatabaseKeyManager
 import dev.chaik.remember.core.security.PrefsLockStore
 import kotlinx.coroutines.CoroutineScope
@@ -47,9 +48,12 @@ class AppContainer(context: Context) {
 
     val appLock by lazy { AppLock(PrefsLockStore(appContext)) }
 
+    /** Профиль и персонализация. */
+    val settings by lazy { AppSettingsStore(appContext) }
+
     val dayRepository by lazy { DayRepository(database) }
     val sleepRepository by lazy { SleepRepository(database) }
-    val moneyRepository by lazy { MoneyRepository(database) }
+    val moneyRepository by lazy { MoneyRepository(database) { settings.settings.value.currency } }
     val noteRepository by lazy { NoteRepository(database) }
     val tagRepository by lazy { TagRepository(database) }
     val taskRepository by lazy { TaskRepository(database) }

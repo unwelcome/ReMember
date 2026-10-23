@@ -13,7 +13,7 @@ import java.time.Instant
 import java.time.LocalDate
 
 /** Траты, доходы и их категории. */
-class MoneyRepository(private val db: ReMemberDatabase) {
+class MoneyRepository(private val db: ReMemberDatabase, private val currency: () -> String = { DEFAULT_CURRENCY }) {
     private val dao = db.moneyDao()
 
     /**
@@ -63,19 +63,22 @@ class MoneyRepository(private val db: ReMemberDatabase) {
     fun observeRange(from: LocalDate, to: LocalDate): Flow<List<MoneyTransaction>> =
         dao.observeRange(from, to).map { list -> list.map { it.toModel() } }
 
-    fun observeTotals(from: LocalDate, to: LocalDate, currency: String = DEFAULT_CURRENCY): Flow<MoneyTotals> =
+    fun observeTotals(from: LocalDate, to: LocalDate, currency: String = this.currency()): Flow<MoneyTotals> =
         dao.observeTotals(from, to, currency).map { MoneyTotals(it.expenseMinor, it.incomeMinor) }
 
-    /** Создаёт операцию (id = 0) или обновляет существующую. Возвращает id. */
+    /** Создаёт операцию (id = 0, в валюте из Профиля) или обновляет существующую. Возвращает id. */
     suspend fun save(transaction: MoneyTransaction): Long =
         if (transaction.id == 0L) {
-            dao.insert(transaction.toEntity(createdAt = Instant.now()))
+            dao.insert(transaction.copy(currency = currency()).toEntity(createdAt = Instant.now()))
         } else {
             dao.update(transaction.toEntity(createdAt = transaction.createdAt ?: Instant.now()))
             transaction.id
         }
 
     suspend fun delete(id: Long) = dao.delete(id)
+
+    /** Траты ведутся в одной валюте: сменили её в Профиле — меняется знак у всех записей, суммы те же. */
+    suspend fun changeCurrency(code: String) = dao.setCurrency(code)
 }
 
 /** Версия стандартного набора категорий. Поднять, если [DefaultCategories] поменялись. */
