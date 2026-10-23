@@ -27,6 +27,26 @@
     <string name="section_settings">Настройки</string>
     <string name="section_settings_hint">Темы, шрифты, блокировка, уведомления</string>
 
+    <!-- Редактор -->
+    <string name="editor_add_photo">Добавить фото</string>
+    <string name="editor_bold">Жирный</string>
+    <string name="editor_italic">Курсив</string>
+    <string name="editor_strike">Зачёркнутый</string>
+    <string name="editor_heading">Заголовок</string>
+    <string name="editor_bullets">Список</string>
+    <string name="editor_numbers">Нумерованный список</string>
+    <string name="editor_checklist">Чек-лист</string>
+    <string name="editor_hide_keyboard">Скрыть клавиатуру</string>
+    <string name="editor_photo_up">Фото выше</string>
+    <string name="editor_photo_down">Фото ниже</string>
+    <string name="editor_photo_open">На весь экран</string>
+    <string name="editor_photo_delete">Удалить фото</string>
+    <string name="editor_close">Закрыть</string>
+    <string name="editor_photo_import_failed">Не удалось добавить фото</string>
+
+    <!-- Сегодня -->
+    <string name="today_placeholder">Как прошёл день?</string>
+
     <!-- Заглушки -->
     <string name="placeholder_title">Раздел в разработке</string>
     <string name="placeholder_today">Запись о том, как прошёл день: текст, фото, сон и траты</string>

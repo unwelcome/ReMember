@@ -40,6 +40,10 @@ class PhotoStorage(
 
     fun thumbnailFile(photoId: String): File = File(thumbsDir, "$photoId.webp")
 
+    /** Сведения о фото (размеры) по id; отсутствующих в ответе нет. */
+    suspend fun photos(ids: Collection<String>): Map<String, Photo> =
+        if (ids.isEmpty()) emptyMap() else photoDao.getMany(ids).associate { it.id to Photo(it.id, it.width, it.height) }
+
     /** Скопировать фото (из галереи, камеры и т. п.) к себе. */
     suspend fun import(source: Uri): Photo = withContext(Dispatchers.IO) {
         val bitmap = decodeScaled(source)

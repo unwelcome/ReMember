@@ -34,7 +34,9 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
+import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import dev.chaik.remember.app.navigation.TopLevelTab
 import dev.chaik.remember.app.navigation.appEntryProvider
@@ -147,6 +149,11 @@ private fun TabContent(backStack: NavBackStack<NavKey>) {
         NavDisplay(
             backStack = backStack,
             onBack = { backStack.removeLastOrNull() },
+            // Свои ViewModel и сохранённое состояние у каждой страницы стека
+            entryDecorators = listOf(
+                rememberSaveableStateHolderNavEntryDecorator(),
+                rememberViewModelStoreNavEntryDecorator(),
+            ),
             transitionSpec = { pushTransition() },
             popTransitionSpec = { popTransition() },
             predictivePopTransitionSpec = { popTransition() },
