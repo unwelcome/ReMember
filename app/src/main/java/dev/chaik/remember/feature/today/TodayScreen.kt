@@ -92,7 +92,7 @@ fun TodayScreen(modifier: Modifier = Modifier) {
         }
     }
 
-    var openedPhoto by remember { mutableStateOf<String?>(null) }
+    var openedPhotos by remember { mutableStateOf<OpenedPhotos?>(null) }
     val keyboardVisible = WindowInsets.isImeVisible
     val keyboard = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
@@ -116,7 +116,7 @@ fun TodayScreen(modifier: Modifier = Modifier) {
                     RichEditor(
                         state = editor,
                         photoFile = container.photoStorage::file,
-                        onOpenPhoto = { openedPhoto = it },
+                        onOpenPhotos = { ids, index -> openedPhotos = OpenedPhotos(ids, index) },
                         placeholder = stringResource(R.string.today_placeholder),
                         modifier = Modifier.fillMaxWidth(),
                     )
@@ -168,10 +168,17 @@ fun TodayScreen(modifier: Modifier = Modifier) {
         }
     }
 
-    openedPhoto?.let { id ->
-        PhotoViewer(file = container.photoStorage.file(id), onDismiss = { openedPhoto = null })
+    openedPhotos?.let { opened ->
+        PhotoViewer(
+            files = opened.ids.map(container.photoStorage::file),
+            initialIndex = opened.index,
+            onDismiss = { openedPhotos = null },
+        )
     }
 }
+
+/** Какие фото открыты на весь экран и с какого начать. */
+private data class OpenedPhotos(val ids: List<String>, val index: Int)
 
 /** Курсор в конец последнего текстового блока. */
 private fun EditorState.focusEnd() {

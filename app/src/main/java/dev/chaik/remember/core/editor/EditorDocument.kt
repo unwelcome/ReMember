@@ -1,16 +1,40 @@
 package dev.chaik.remember.core.editor
 
+/** Положение фото по горизонтали, когда оно уже экрана. */
+enum class PhotoAlign(val code: String) {
+    Start("left"),
+    Center("center"),
+    End("right"),
+    ;
+
+    companion object {
+        fun fromCode(code: String?): PhotoAlign = entries.firstOrNull { it.code == code } ?: Center
+    }
+}
+
 /**
  * Документ редактора — чередование текста и фото:
  * `текст, фото, текст, фото, …, текст`. Текстовый блок может быть пустым,
  * поэтому между двумя фото всегда есть место, куда поставить курсор.
  *
- * В базе документ хранится как Markdown. Фото — отдельная строка
- * `![](photo:<id>)` или `![](photo:<id>?w=50)`, где `w` — ширина в процентах.
+ * Фото-блок — одно фото или сетка из нескольких (если выбрали несколько сразу).
+ *
+ * В базе документ хранится как Markdown. Фото-блок — отдельная строка из картинок:
+ * `![](photo:<id>?w=75&a=left) ![](photo:<id2>)`. Параметры — у первой картинки:
+ * `w` — ширина в процентах, `a` — положение (left / center / right).
  */
 sealed interface DocumentBlock {
     data class Text(val text: String) : DocumentBlock
-    data class Photo(val photoId: String, val widthPercent: Int = FULL_WIDTH) : DocumentBlock
+
+    data class Photos(
+        val photoIds: List<String>,
+        val widthPercent: Int = FULL_WIDTH,
+        val align: PhotoAlign = PhotoAlign.Center,
+    ) : DocumentBlock {
+        init {
+            require(photoIds.isNotEmpty()) { "Фото-блок без фото" }
+        }
+    }
 
     companion object {
         const val FULL_WIDTH = 100
@@ -19,9 +43,10 @@ sealed interface DocumentBlock {
 }
 
 object EditorDocument {
-    private val photoLine = Regex(
-        """(?m)^!\[]\(photo:([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:\?w=(\d{1,3}))?\)$""",
-    )
+    private const val UUID = """[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"""
+    private const val IMAGE = """!\[]\(photo:$UUID(?:\?[^)\s]*)?\)"""
+    private val photoLine = Regex("""(?m)^$IMAGE(?: $IMAGE)*$""")
+    private val image = Regex("""!\[]\(photo:($UUID)(?:\?([^)\s]*))?\)""")
 
     /** Markdown → блоки. Результат всегда начинается и заканчивается текстом. */
     fun parse(markdown: String): List<DocumentBlock> {
@@ -29,10 +54,7 @@ object EditorDocument {
         var cursor = 0
         for (match in photoLine.findAll(markdown)) {
             blocks += DocumentBlock.Text(markdown.substring(cursor, match.range.first).dropTrailingNewline())
-            val width = match.groupValues[2].toIntOrNull()
-                ?.coerceIn(DocumentBlock.MIN_WIDTH, DocumentBlock.FULL_WIDTH)
-                ?: DocumentBlock.FULL_WIDTH
-            blocks += DocumentBlock.Photo(match.groupValues[1], width)
+            blocks += parsePhotos(match.value)
             cursor = match.range.last + 1
             // Отрезаем перевод строки после фото — он принадлежит разметке, а не тексту
             if (markdown.startsWith("\n", cursor)) cursor++
@@ -46,12 +68,15 @@ object EditorDocument {
         blocks.forEachIndexed { index, block ->
             when (block) {
                 is DocumentBlock.Text -> append(block.text)
-                is DocumentBlock.Photo -> {
+                is DocumentBlock.Photos -> {
                     // Фото всегда на своей строке
                     if (index > 0) append('\n')
-                    append("![](photo:").append(block.photoId)
-                    if (block.widthPercent != DocumentBlock.FULL_WIDTH) append("?w=").append(block.widthPercent)
-                    append(')')
+                    block.photoIds.forEachIndexed { i, id ->
+                        if (i > 0) append(' ')
+                        append("![](photo:").append(id)
+                        if (i == 0) append(params(block))
+                        append(')')
+                    }
                     if (index < blocks.lastIndex) append('\n')
                 }
             }
@@ -69,7 +94,7 @@ object EditorDocument {
             when {
                 block is DocumentBlock.Text && last is DocumentBlock.Text ->
                     result[result.lastIndex] = DocumentBlock.Text(joinParagraphs(last.text, block.text))
-                block is DocumentBlock.Photo && last !is DocumentBlock.Text ->
+                block is DocumentBlock.Photos && last !is DocumentBlock.Text ->
                     result += listOf(DocumentBlock.Text(""), block)
                 else -> result += block
             }
@@ -83,6 +108,29 @@ object EditorDocument {
         first.isEmpty() -> second
         second.isEmpty() -> first
         else -> first + "\n" + second
+    }
+
+    private fun parsePhotos(line: String): DocumentBlock.Photos {
+        val images = image.findAll(line).toList()
+        val params = images.first().groupValues[2]
+            .split('&')
+            .mapNotNull { it.split('=', limit = 2).takeIf { kv -> kv.size == 2 } }
+            .associate { (k, v) -> k to v }
+        return DocumentBlock.Photos(
+            photoIds = images.map { it.groupValues[1] },
+            widthPercent = params["w"]?.toIntOrNull()
+                ?.coerceIn(DocumentBlock.MIN_WIDTH, DocumentBlock.FULL_WIDTH)
+                ?: DocumentBlock.FULL_WIDTH,
+            align = PhotoAlign.fromCode(params["a"]),
+        )
+    }
+
+    private fun params(block: DocumentBlock.Photos): String {
+        val list = buildList {
+            if (block.widthPercent != DocumentBlock.FULL_WIDTH) add("w=${block.widthPercent}")
+            if (block.align != PhotoAlign.Center) add("a=${block.align.code}")
+        }
+        return if (list.isEmpty()) "" else list.joinToString("&", prefix = "?")
     }
 
     /** Перевод строки перед фото тоже принадлежит разметке. */

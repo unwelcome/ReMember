@@ -42,6 +42,10 @@
     <string name="editor_photo_open">На весь экран</string>
     <string name="editor_photo_delete">Удалить фото</string>
     <string name="editor_close">Закрыть</string>
+    <string name="editor_align_left">Слева</string>
+    <string name="editor_align_center">По центру</string>
+    <string name="editor_align_right">Справа</string>
+    <string name="editor_photo_counter">%1$d из %2$d</string>
     <string name="editor_photo_import_failed">Не удалось добавить фото</string>
 
     <!-- Сегодня -->

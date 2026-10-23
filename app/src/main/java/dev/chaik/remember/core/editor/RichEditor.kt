@@ -12,15 +12,19 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.FormatAlignLeft
+import androidx.compose.material.icons.automirrored.outlined.FormatAlignRight
 import androidx.compose.material.icons.outlined.ArrowDownward
 import androidx.compose.material.icons.outlined.ArrowUpward
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.FormatAlignCenter
 import androidx.compose.material.icons.outlined.Fullscreen
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
@@ -33,18 +37,19 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.withFrameNanos
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -60,17 +65,21 @@ import kotlin.math.roundToInt
 /** Размеры фото на кнопках панели. */
 private val WidthPresets = listOf(50, 75, 100)
 
+private val GridSpacing = 4.dp
+private val PhotoShape = RoundedCornerShape(16.dp)
+private val CellShape = RoundedCornerShape(8.dp)
+
 /**
  * Редактор «текст + фото». Сам не прокручивается — кладётся в прокручиваемый контейнер экрана.
  *
- * @param photoFile файл фото по id (полноразмерный — Coil сам уменьшит под ширину экрана)
- * @param onOpenPhoto открыть фото на весь экран
+ * @param photoFile файл фото по id (полноразмерный — Coil сам уменьшит под размер на экране)
+ * @param onOpenPhotos открыть фото на весь экран: все фото блока и с какого начать
  */
 @Composable
 fun RichEditor(
     state: EditorState,
     photoFile: (String) -> File,
-    onOpenPhoto: (String) -> Unit,
+    onOpenPhotos: (photoIds: List<String>, index: Int) -> Unit,
     placeholder: String,
     modifier: Modifier = Modifier,
     textStyle: TextStyle = MaterialTheme.typography.bodyLarge,
@@ -98,7 +107,7 @@ fun RichEditor(
     Column(modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         state.blocks.forEachIndexed { index, block ->
             // key — чтобы при вставке фото поля ввода не путали своё состояние (курсор, фокус)
-            androidx.compose.runtime.key(block.key) {
+            key(block.key) {
                 when (block) {
                     is EditorState.TextBlock -> TextBlockField(
                         block = block,
@@ -111,8 +120,8 @@ fun RichEditor(
                     is EditorState.PhotoBlock -> PhotoBlockView(
                         block = block,
                         state = state,
-                        file = photoFile(block.photoId),
-                        onOpen = { onOpenPhoto(block.photoId) },
+                        photoFile = photoFile,
+                        onOpen = { i -> onOpenPhotos(block.photoIds, i) },
                     )
                 }
             }
@@ -149,71 +158,155 @@ private fun TextBlockField(
     )
 }
 
+/** Фото-блок: одно фото или сетка, с выравниванием, щипком и панелью действий. */
 @Composable
 private fun PhotoBlockView(
     block: EditorState.PhotoBlock,
     state: EditorState,
-    file: File,
-    onOpen: () -> Unit,
+    photoFile: (String) -> File,
+    onOpen: (index: Int) -> Unit,
 ) {
     val selected = state.selectedPhotoKey == block.key
-    val haptics = LocalHapticFeedback.current
     val colors = MaterialTheme.colorScheme
 
     // Ширина во время щипка — плавная; в документ записывается при отпускании
     var pinchWidth by remember { mutableFloatStateOf(-1f) }
-    val width = if (pinchWidth > 0) pinchWidth else block.widthPercent.toFloat()
-    val animatedWidth by animateFloatAsState(width, label = "photoWidth")
+    val animatedWidth by animateFloatAsState(block.widthPercent.toFloat(), label = "photoWidth")
+    val width = if (pinchWidth > 0) pinchWidth else animatedWidth
 
     Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(
-            Modifier
-                .fillMaxWidth((if (pinchWidth > 0) width else animatedWidth) / 100f)
-                .aspectRatio(block.aspectRatio)
-                .clip(PhotoShape)
-                .then(if (selected) Modifier.border(3.dp, colors.primary, PhotoShape) else Modifier)
-                .pointerInput(block.key) {
-                    detectTapGestures(
-                        onTap = { state.selectPhoto(if (selected) null else block.key) },
-                        onDoubleTap = { onOpen() },
-                        onLongPress = {
-                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                            state.selectPhoto(block.key)
-                        },
+        Box(Modifier.fillMaxWidth(), contentAlignment = block.align.toAlignment()) {
+            Box(
+                Modifier
+                    .fillMaxWidth(width / 100f)
+                    .then(if (selected) Modifier.border(3.dp, colors.primary, PhotoShape) else Modifier)
+                    .padding(if (selected) 3.dp else 0.dp)
+                    .pinchToResize(block, state) { pinchWidth = it },
+            ) {
+                if (block.isGrid) {
+                    PhotoGrid(block, state, photoFile, onOpen)
+                } else {
+                    PhotoCell(
+                        file = photoFile(block.photoIds.first()),
+                        shape = PhotoShape,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(state.aspectOf(block.photoIds.first()))
+                            .photoTaps(block, 0, state, onOpen),
                     )
                 }
-                .pointerInput(block.key) {
-                    // Щипок двумя пальцами меняет размер; одним пальцем — обычная прокрутка
-                    awaitEachGesture {
-                        awaitFirstDown(requireUnconsumed = false)
-                        var current = block.widthPercent.toFloat()
-                        do {
-                            val event = awaitPointerEvent()
-                            if (event.changes.count { it.pressed } >= 2) {
-                                current = (current * event.calculateZoom())
-                                    .coerceIn(DocumentBlock.MIN_WIDTH.toFloat(), DocumentBlock.FULL_WIDTH.toFloat())
-                                pinchWidth = current
-                                event.changes.forEach { it.consume() }
-                            }
-                        } while (event.changes.any { it.pressed })
-                        if (pinchWidth > 0) {
-                            // Округляем до 5 %, чтобы размеры не были «кривыми»
-                            state.setPhotoWidth(block.key, (current / 5).roundToInt() * 5)
-                            pinchWidth = -1f
-                        }
-                    }
-                },
-        ) {
-            AsyncImage(
-                model = file,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.matchParentSize(),
-            )
+            }
         }
 
         AnimatedVisibility(selected) {
-            PhotoActions(block, state, onOpen)
+            PhotoActions(block, state, onOpen = { onOpen(state.selectedPhotoIndex) })
+        }
+    }
+}
+
+/** Сетка: 2 фото — в ряд, 3 — в ряд, 4 — квадрат 2×2, больше — по 3 в ряд. */
+@Composable
+private fun PhotoGrid(
+    block: EditorState.PhotoBlock,
+    state: EditorState,
+    photoFile: (String) -> File,
+    onOpen: (index: Int) -> Unit,
+) {
+    val ids = block.photoIds
+    val columns = if (ids.size == 2 || ids.size == 4) 2 else 3
+    val markSelected = state.selectedPhotoKey == block.key
+
+    Column(verticalArrangement = Arrangement.spacedBy(GridSpacing)) {
+        ids.chunked(columns).forEachIndexed { row, rowIds ->
+            Row(horizontalArrangement = Arrangement.spacedBy(GridSpacing)) {
+                rowIds.forEachIndexed { column, id ->
+                    val index = row * columns + column
+                    PhotoCell(
+                        file = photoFile(id),
+                        shape = CellShape,
+                        modifier = Modifier
+                            .weight(1f)
+                            .aspectRatio(1f)
+                            .then(
+                                // В выделенной сетке отмечаем фото, к которому относятся «корзина» и «на весь экран»
+                                if (markSelected && state.selectedPhotoIndex == index) {
+                                    Modifier.border(2.dp, MaterialTheme.colorScheme.tertiary, CellShape)
+                                } else {
+                                    Modifier
+                                },
+                            )
+                            .photoTaps(block, index, state, onOpen),
+                    )
+                }
+                // Неполный последний ряд: пустые места, чтобы ячейки были того же размера
+                repeat(columns - rowIds.size) { Spacer(Modifier.weight(1f)) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PhotoCell(file: File, shape: RoundedCornerShape, modifier: Modifier) {
+    Box(modifier.clip(shape)) {
+        AsyncImage(
+            model = file,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.matchParentSize(),
+        )
+    }
+}
+
+/**
+ * Тап — открыть/закрыть панель (повторный тап по тому же фото закрывает),
+ * двойной тап — на весь экран, долгое нажатие — открыть панель.
+ */
+@Composable
+private fun Modifier.photoTaps(
+    block: EditorState.PhotoBlock,
+    index: Int,
+    state: EditorState,
+    onOpen: (Int) -> Unit,
+): Modifier {
+    val haptics = LocalHapticFeedback.current
+    return pointerInput(block.key, index) {
+        detectTapGestures(
+            // Состояние читается в момент тапа, а не при создании обработчика —
+            // иначе повторный тап «не видел» бы, что панель уже открыта
+            onTap = { state.togglePhoto(block.key, index) },
+            onDoubleTap = { onOpen(index) },
+            onLongPress = {
+                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                state.selectPhoto(block.key, index)
+            },
+        )
+    }
+}
+
+/** Щипок двумя пальцами меняет размер блока; одним пальцем — обычная прокрутка. */
+private fun Modifier.pinchToResize(
+    block: EditorState.PhotoBlock,
+    state: EditorState,
+    onPinch: (Float) -> Unit,
+): Modifier = pointerInput(block.key) {
+    awaitEachGesture {
+        awaitFirstDown(requireUnconsumed = false)
+        var current = block.widthPercent.toFloat()
+        var pinched = false
+        do {
+            val event = awaitPointerEvent()
+            if (event.changes.count { it.pressed } >= 2) {
+                current = (current * event.calculateZoom())
+                    .coerceIn(DocumentBlock.MIN_WIDTH.toFloat(), DocumentBlock.FULL_WIDTH.toFloat())
+                pinched = true
+                onPinch(current)
+                event.changes.forEach { it.consume() }
+            }
+        } while (event.changes.any { it.pressed })
+        if (pinched) {
+            // Округляем до 5 %, чтобы размеры не были «кривыми»
+            state.setPhotoWidth(block.key, (current / 5).roundToInt() * 5)
+            onPinch(-1f)
         }
     }
 }
@@ -229,10 +322,11 @@ private fun PhotoActions(
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
         modifier = Modifier.padding(top = 8.dp),
     ) {
-        // Две строки: в одну на узком экране всё не помещается
+        // Несколько строк: в одну на узком экране всё не помещается
         Column(
             Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             SingleChoiceSegmentedButtonRow {
                 WidthPresets.forEachIndexed { i, preset ->
@@ -242,6 +336,17 @@ private fun PhotoActions(
                         shape = SegmentedButtonDefaults.itemShape(i, WidthPresets.size),
                         icon = {},
                         label = { Text("$preset%") },
+                    )
+                }
+            }
+            SingleChoiceSegmentedButtonRow {
+                AlignOptions.forEachIndexed { i, (align, icon, label) ->
+                    SegmentedButton(
+                        selected = block.align == align,
+                        onClick = { state.setPhotoAlign(block.key, align) },
+                        shape = SegmentedButtonDefaults.itemShape(i, AlignOptions.size),
+                        icon = {},
+                        label = { Icon(icon, stringResource(label)) },
                     )
                 }
             }
@@ -261,7 +366,7 @@ private fun PhotoActions(
                 IconButton(onClick = onOpen) {
                     Icon(Icons.Outlined.Fullscreen, stringResource(R.string.editor_photo_open))
                 }
-                FilledTonalIconButton(onClick = { state.removePhoto(block.key) }) {
+                FilledTonalIconButton(onClick = { state.removePhotoAt(block.key, state.selectedPhotoIndex) }) {
                     Icon(Icons.Outlined.Delete, stringResource(R.string.editor_photo_delete))
                 }
             }
@@ -269,4 +374,16 @@ private fun PhotoActions(
     }
 }
 
-private val PhotoShape = RoundedCornerShape(16.dp)
+private data class AlignOption(val align: PhotoAlign, val icon: ImageVector, val label: Int)
+
+private val AlignOptions = listOf(
+    AlignOption(PhotoAlign.Start, Icons.AutoMirrored.Outlined.FormatAlignLeft, R.string.editor_align_left),
+    AlignOption(PhotoAlign.Center, Icons.Outlined.FormatAlignCenter, R.string.editor_align_center),
+    AlignOption(PhotoAlign.End, Icons.AutoMirrored.Outlined.FormatAlignRight, R.string.editor_align_right),
+)
+
+private fun PhotoAlign.toAlignment(): Alignment = when (this) {
+    PhotoAlign.Start -> Alignment.TopStart
+    PhotoAlign.Center -> Alignment.TopCenter
+    PhotoAlign.End -> Alignment.TopEnd
+}

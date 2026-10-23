@@ -2,9 +2,9 @@ package dev.chaik.remember.core.editor
 
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.focus.FocusRequester
@@ -32,21 +32,36 @@ class EditorState(markdown: String = "") {
         val focusRequester = FocusRequester()
     }
 
+    /** Одно фото или сетка из нескольких. */
     class PhotoBlock internal constructor(
         override val key: Long,
-        val photoId: String,
+        photoIds: List<String>,
         widthPercent: Int,
-        aspectRatio: Float,
+        align: PhotoAlign,
     ) : Block() {
+        var photoIds by mutableStateOf(photoIds)
+            internal set
+
         var widthPercent by mutableIntStateOf(widthPercent)
             internal set
 
-        /** Ширина / высота. Пока размеры не загружены — 4:3, чтобы место под фото не прыгало сильно. */
-        var aspectRatio by mutableFloatStateOf(aspectRatio)
+        var align by mutableStateOf(align)
             internal set
+
+        val isGrid: Boolean get() = photoIds.size > 1
     }
 
     private var nextKey = 0L
+
+    /**
+     * Пропорции (ширина / высота) каждого фото по id. Храним у фото, а не у блока:
+     * если из сетки удалить первое фото, оставшееся должно взять свои пропорции,
+     * а не чужие — иначе оно выглядит растянутым.
+     */
+    private val aspects = mutableStateMapOf<String, Float>()
+
+    /** Пропорции фото; пока размеры не загружены — 4:3, чтобы место под фото не прыгало сильно. */
+    fun aspectOf(photoId: String): Float = aspects[photoId] ?: DEFAULT_ASPECT
 
     val blocks = mutableStateListOf<Block>()
 
@@ -54,8 +69,12 @@ class EditorState(markdown: String = "") {
     var activeTextKey by mutableStateOf<Long?>(null)
         private set
 
-    /** Фото, у которого открыта панель действий. */
+    /** Фото-блок, у которого открыта панель действий. */
     var selectedPhotoKey by mutableStateOf<Long?>(null)
+        private set
+
+    /** Какое фото внутри выделенного блока выбрано (важно для сетки: его удалит «корзина»). */
+    var selectedPhotoIndex by mutableIntStateOf(0)
         private set
 
     init {
@@ -68,12 +87,12 @@ class EditorState(markdown: String = "") {
             blocks.map {
                 when (it) {
                     is TextBlock -> DocumentBlock.Text(it.value.text)
-                    is PhotoBlock -> DocumentBlock.Photo(it.photoId, it.widthPercent)
+                    is PhotoBlock -> DocumentBlock.Photos(it.photoIds, it.widthPercent, it.align)
                 }
             },
         )
 
-    val photoIds: List<String> get() = blocks.filterIsInstance<PhotoBlock>().map { it.photoId }
+    val photoIds: List<String> get() = blocks.filterIsInstance<PhotoBlock>().flatMap { it.photoIds }
 
     val isEmpty: Boolean get() = blocks.all { it is TextBlock && it.value.text.isBlank() }
 
@@ -83,7 +102,8 @@ class EditorState(markdown: String = "") {
         EditorDocument.parse(markdown).forEach { block ->
             blocks += when (block) {
                 is DocumentBlock.Text -> textBlock(block.text)
-                is DocumentBlock.Photo -> PhotoBlock(nextKey++, block.photoId, block.widthPercent, DEFAULT_ASPECT)
+                is DocumentBlock.Photos ->
+                    PhotoBlock(nextKey++, block.photoIds, block.widthPercent, block.align)
             }
         }
         activeTextKey = null
@@ -92,9 +112,7 @@ class EditorState(markdown: String = "") {
 
     /** Подставить реальные пропорции фото, когда они загрузились из базы. */
     fun applyPhotoSizes(photos: Map<String, Photo>) {
-        blocks.filterIsInstance<PhotoBlock>().forEach { block ->
-            photos[block.photoId]?.let { block.aspectRatio = it.aspect }
-        }
+        photos.forEach { (id, photo) -> aspects[id] = photo.aspect }
     }
 
     // Текст
@@ -134,7 +152,7 @@ class EditorState(markdown: String = "") {
     /**
      * Вставить фото после строки с курсором (слово посередине не разрезается):
      * текст делится на «до» и «после», фото встают между ними,
-     * курсор — в начало текста после них.
+     * курсор — в начало текста после них. Несколько фото сразу — одной сеткой.
      */
     fun insertPhotos(photos: List<Photo>): TextBlock? {
         if (photos.isEmpty()) return null
@@ -147,14 +165,15 @@ class EditorState(markdown: String = "") {
         val after = value.text.substring(cut).removePrefix("\n")
 
         target.value = TextFieldValue(before, TextRange(before.length))
-        val inserted = buildList {
-            photos.forEachIndexed { i, photo ->
-                add(PhotoBlock(nextKey++, photo.id, DocumentBlock.FULL_WIDTH, photo.aspect))
-                add(textBlock(if (i == photos.lastIndex) after else ""))
-            }
-        }
-        blocks.addAll(index + 1, inserted)
-        val caret = inserted.last() as TextBlock
+        val photoBlock = PhotoBlock(
+            key = nextKey++,
+            photoIds = photos.map { it.id },
+            widthPercent = DocumentBlock.FULL_WIDTH,
+            align = PhotoAlign.Center,
+        )
+        photos.forEach { aspects[it.id] = it.aspect }
+        val caret = textBlock(after)
+        blocks.addAll(index + 1, listOf(photoBlock, caret))
         caret.value = caret.value.copy(selection = TextRange(0))
         activeTextKey = caret.key
         focusRequestKey = caret.key
@@ -169,15 +188,37 @@ class EditorState(markdown: String = "") {
         focusRequestKey = null
     }
 
-    fun selectPhoto(key: Long?) {
+    /** Тап по фото: открывает панель, повторный тап по тому же фото — закрывает. */
+    fun togglePhoto(key: Long, index: Int = 0) {
+        if (selectedPhotoKey == key && selectedPhotoIndex == index) {
+            selectedPhotoKey = null
+        } else {
+            selectPhoto(key, index)
+        }
+    }
+
+    fun selectPhoto(key: Long?, index: Int = 0) {
         selectedPhotoKey = key
+        selectedPhotoIndex = index
+    }
+
+    fun setPhotoAlign(key: Long, align: PhotoAlign) {
+        photo(key)?.align = align
     }
 
     fun setPhotoWidth(key: Long, percent: Int) {
         photo(key)?.widthPercent = percent.coerceIn(DocumentBlock.MIN_WIDTH, DocumentBlock.FULL_WIDTH)
     }
 
-    /** Удалить фото; текст до и после него склеивается в один абзац-блок. */
+    /** Удалить одно фото из блока; если оно было последним — весь блок. */
+    fun removePhotoAt(key: Long, index: Int) {
+        val block = photo(key) ?: return
+        if (block.photoIds.size <= 1) return removePhoto(key)
+        block.photoIds = block.photoIds.filterIndexed { i, _ -> i != index }
+        selectedPhotoIndex = selectedPhotoIndex.coerceAtMost(block.photoIds.lastIndex)
+    }
+
+    /** Удалить фото-блок целиком; текст до и после него склеивается в один абзац-блок. */
     fun removePhoto(key: Long) {
         val index = blocks.indexOfFirst { it.key == key }
         if (index <= 0) return
