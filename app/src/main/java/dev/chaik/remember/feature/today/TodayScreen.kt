@@ -35,7 +35,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AddPhotoAlternate
 import androidx.compose.material.icons.outlined.Today
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -70,6 +69,8 @@ import dev.chaik.remember.core.editor.EditorToolbar
 import dev.chaik.remember.core.editor.EditorToolbarHeight
 import dev.chaik.remember.core.editor.PhotoViewer
 import dev.chaik.remember.core.editor.RichEditor
+import dev.chaik.remember.core.ui.components.MasterButton
+import dev.chaik.remember.core.ui.components.MasterButtonItem
 import dev.chaik.remember.core.ui.components.ScreenScaffold
 import dev.chaik.remember.feature.today.calendar.DayPickerPage
 import dev.chaik.remember.feature.today.day.DayController
@@ -175,18 +176,27 @@ fun TodayScreen(modifier: Modifier = Modifier) {
                 }
             }
 
-            BottomButtons(
-                visible = !keyboardVisible,
-                mode = mode,
-                showPhoto = mode == TodayMode.Day,
+            val buttonsPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = padding.calculateBottomPadding())
+            PhotoButton(
+                visible = !keyboardVisible && mode == TodayMode.Day,
                 isImporting = day.isImporting,
-                onMode = {
-                    haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
-                    focusManager.clearFocus()
-                    viewModel.nextMode()
+                onClick = { if (!day.isImporting) launchPicker() },
+                padding = buttonsPadding,
+            )
+            MasterButton(
+                icon = mode.icon,
+                contentDescription = stringResource(R.string.today_switch_mode, stringResource(mode.label)),
+                // По дуге слева направо-вверх: Траты (180°) → Сон → День (90°)
+                items = listOf(TodayMode.Money, TodayMode.Sleep, TodayMode.Day).map { item ->
+                    // Текущий раздел — тёмный и неактивный
+                    MasterButtonItem(item, item.icon, stringResource(item.label), enabled = item != mode)
                 },
-                onPhoto = { if (!day.isImporting) launchPicker() },
-                padding = PaddingValues(start = 20.dp, end = 20.dp, bottom = padding.calculateBottomPadding()),
+                onSelect = {
+                    focusManager.clearFocus()
+                    viewModel.selectMode(it)
+                },
+                visible = !keyboardVisible,
+                padding = buttonsPadding,
             )
 
             // Панель форматирования — только когда печатаем в записи дня
@@ -262,15 +272,12 @@ private fun DayModeContent(
     )
 }
 
-/** Слева — переключатель режимов, справа — добавить фото (только в режиме «День»). */
+/** Кнопка «добавить фото» слева снизу — только в режиме «День». */
 @Composable
-private fun BoxScope.BottomButtons(
+private fun BoxScope.PhotoButton(
     visible: Boolean,
-    mode: TodayMode,
-    showPhoto: Boolean,
     isImporting: Boolean,
-    onMode: () -> Unit,
-    onPhoto: () -> Unit,
+    onClick: () -> Unit,
     padding: PaddingValues,
 ) {
     AnimatedVisibility(
@@ -281,24 +288,7 @@ private fun BoxScope.BottomButtons(
             .align(Alignment.BottomStart)
             .padding(padding),
     ) {
-        val label = stringResource(mode.label)
-        ExtendedFloatingActionButton(
-            onClick = onMode,
-            icon = { Icon(mode.icon, stringResource(R.string.today_switch_mode, label)) },
-            text = {
-                AnimatedContent(targetState = label, label = "modeLabel") { Text(it) }
-            },
-        )
-    }
-    AnimatedVisibility(
-        visible = visible && showPhoto,
-        enter = scaleIn() + fadeIn(),
-        exit = scaleOut() + fadeOut(),
-        modifier = Modifier
-            .align(Alignment.BottomEnd)
-            .padding(padding),
-    ) {
-        FloatingActionButton(onClick = onPhoto) {
+        FloatingActionButton(onClick = onClick) {
             if (isImporting) {
                 CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
             } else {

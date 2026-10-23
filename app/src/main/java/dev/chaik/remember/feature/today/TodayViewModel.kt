@@ -70,8 +70,8 @@ class TodayViewModel(container: AppContainer) : ViewModel() {
         load(date)
     }
 
-    fun nextMode() {
-        mode = mode.next()
+    fun selectMode(mode: TodayMode) {
+        this.mode = mode
     }
 
     /** Сохранить всё сейчас (приложение уходит в фон). */
