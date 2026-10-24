@@ -562,6 +562,7 @@
     <string name="appearance_theme_amoled">AMOLED</string>
     <string name="appearance_accent">Accent color</string>
     <string name="appearance_accent_wallpaper_hint">From wallpaper — Android picks colors from your wallpaper (Material You) and changes them with it. On Samsung you can choose the palette in wallpaper settings: “Color palette”.</string>
+    <string name="appearance_accent_palette_hint">With this theme the first circle is its own accent; the others change the main color, while background and cards stay from the theme.</string>
     <string name="appearance_custom_color">Custom color</string>
     <string name="appearance_color_code">Color code</string>
     <string name="appearance_font">Font</string>

@@ -82,6 +82,8 @@ fun PersonalizationScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                     ThemeMode.LIGHT to R.string.appearance_theme_light,
                     ThemeMode.DARK to R.string.appearance_theme_dark,
                     ThemeMode.AMOLED to R.string.appearance_theme_amoled,
+                    ThemeMode.ONE_DARK to R.string.appearance_theme_one_dark,
+                    ThemeMode.NIGHT_OWL to R.string.appearance_theme_night_owl,
                 ).forEach { (mode, label) ->
                     SettingsRadioRow(
                         label = stringResource(label),
@@ -99,7 +101,14 @@ fun PersonalizationScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 // Свой цвет: кружок этого цвета с пипеткой, тап — палитра
                 CustomSwatch(Color(settings.customAccent), selected = settings.accent == AccentColor.CUSTOM) { pickingColor = true }
             }
-            if (settings.accent == AccentColor.WALLPAPER) {
+            if (settings.theme.isPalette) {
+                Text(
+                    text = stringResource(R.string.appearance_accent_palette_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = 4.dp),
+                )
+            } else if (settings.accent == AccentColor.WALLPAPER) {
                 Text(
                     text = stringResource(R.string.appearance_accent_wallpaper_hint),
                     style = MaterialTheme.typography.bodySmall,

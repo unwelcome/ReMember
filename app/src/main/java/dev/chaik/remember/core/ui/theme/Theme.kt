@@ -22,6 +22,7 @@ import androidx.core.graphics.ColorUtils
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.chaik.remember.appContainer
 import dev.chaik.remember.core.settings.AccentColor
+import dev.chaik.remember.core.settings.AppSettings
 import dev.chaik.remember.core.settings.LocalAppSettings
 import dev.chaik.remember.core.settings.ThemeMode
 
@@ -41,7 +42,12 @@ fun ReMemberTheme(content: @Composable () -> Unit) {
         preset == null -> if (dark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         else -> accentScheme(Color(preset), dark)
     }
-    val colorScheme = if (settings.theme == ThemeMode.AMOLED) base.amoled() else base
+    val colorScheme = when (settings.theme) {
+        ThemeMode.AMOLED -> base.amoled()
+        ThemeMode.ONE_DARK -> oneDarkScheme().withAccent(chosenAccent(settings))
+        ThemeMode.NIGHT_OWL -> nightOwlScheme().withAccent(chosenAccent(settings))
+        else -> base
+    }
 
     // Значки строки состояния и навигации — под тему приложения, а не системы
     val activity = LocalActivity.current as? ComponentActivity
@@ -62,7 +68,7 @@ fun ReMemberTheme(content: @Composable () -> Unit) {
 fun isDarkTheme(mode: ThemeMode): Boolean = when (mode) {
     ThemeMode.SYSTEM -> isSystemInDarkTheme()
     ThemeMode.LIGHT -> false
-    ThemeMode.DARK, ThemeMode.AMOLED -> true
+    ThemeMode.DARK, ThemeMode.AMOLED, ThemeMode.ONE_DARK, ThemeMode.NIGHT_OWL -> true
 }
 
 /** Образцы для выбора акцента в настройках. */
@@ -111,6 +117,29 @@ private fun accentScheme(seed: Color, dark: Boolean): ColorScheme {
 }
 
 /** AMOLED: фон чисто чёрный, карточки — чуть светлее, чтобы оставаться видимыми. */
+/** Акцент, выбранный вручную (свой или из готовых); «из обоев» — null. */
+private fun chosenAccent(settings: AppSettings): Color? = when {
+    settings.accent == AccentColor.CUSTOM -> Color(settings.customAccent)
+    else -> settings.accent.argb?.let(::Color)
+}
+
+/**
+ * Тема-палитра с выбранным акцентом: меняется только основной цвет (кнопки, выделение),
+ * фон, карточки и вторичные цвета остаются от темы. Без акцента — родной цвет темы.
+ */
+private fun ColorScheme.withAccent(accent: Color?): ColorScheme {
+    if (accent == null) return this
+    val tones = accentScheme(accent, dark = true)
+    return copy(
+        primary = tones.primary,
+        onPrimary = tones.onPrimary,
+        primaryContainer = tones.primaryContainer,
+        onPrimaryContainer = tones.onPrimaryContainer,
+        inversePrimary = tones.inversePrimary,
+        surfaceTint = tones.primary,
+    )
+}
+
 private fun ColorScheme.amoled(): ColorScheme = copy(
     background = Color.Black,
     surface = Color.Black,

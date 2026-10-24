@@ -31,7 +31,22 @@ data class AppSettings(
 
 enum class Gender { UNSET, MALE, FEMALE }
 
-enum class ThemeMode { SYSTEM, LIGHT, DARK, AMOLED }
+/**
+ * Тема. ONE_DARK и NIGHT_OWL — готовые палитры со своими цветами; выбранный акцент меняет у них только основной цвет.
+ * Имя константы хранится в настройках — переименовывать нельзя.
+ */
+enum class ThemeMode {
+    SYSTEM,
+    LIGHT,
+    DARK,
+    AMOLED,
+    ONE_DARK,
+    NIGHT_OWL,
+    ;
+
+    /** Палитра со своими цветами: «из обоев» для неё означает родной акцент темы. */
+    val isPalette: Boolean get() = this == ONE_DARK || this == NIGHT_OWL
+}
 
 /** Акцентный цвет: из обоев (Material You) или свой. */
 enum class AccentColor(val argb: Long?) {
