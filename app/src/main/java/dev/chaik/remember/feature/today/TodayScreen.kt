@@ -190,8 +190,10 @@ fun TodayScreen(modifier: Modifier = Modifier, onBack: (() -> Unit)? = null) {
                     Modifier
                         .fillMaxSize()
                         .imePadding()
-                        .verticalScroll(rememberScrollState())
+                        // Отступ под шапку — снаружи прокрутки: строка под шапкой считается невидимой,
+                        // и курсор, оказавшийся там, редактор подкрутит обратно
                         .padding(top = padding.calculateTopPadding())
+                        .verticalScroll(rememberScrollState())
                         .padding(horizontal = 20.dp),
                 ) {
                     when (shown) {
