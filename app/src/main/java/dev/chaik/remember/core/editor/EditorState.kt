@@ -30,6 +30,27 @@ class EditorState(markdown: String = "") {
         var value by mutableStateOf(value)
             internal set
         val focusRequester = FocusRequester()
+
+        /** Слова, заменённые Т9, — их можно вернуть как было. Проверять через [AutoCorrection.isValidIn]. */
+        var corrections by mutableStateOf<List<AutoCorrection>>(emptyList())
+            private set
+
+        /** Замена, о которой клавиатура сообщила, но слово ещё не попало в текст. */
+        internal var pendingCorrection: AutoCorrection? = null
+
+        /** Новое значение поля; замены сдвигаются вслед за правкой. */
+        internal fun edit(new: TextFieldValue) {
+            if (new.text != value.text) {
+                corrections = AutoCorrections.update(corrections, pendingCorrection, value.text, new)
+                pendingCorrection = null
+            }
+            value = new
+        }
+
+        internal fun revert(correction: AutoCorrection) {
+            corrections = corrections - correction
+            value = AutoCorrections.revert(value, correction)
+        }
     }
 
     /** Одно фото или сетка из нескольких. */
@@ -119,7 +140,17 @@ class EditorState(markdown: String = "") {
 
     /** Ввод в текстовом блоке. Enter в списке продолжает список. */
     fun onTextChange(block: TextBlock, value: TextFieldValue) {
-        block.value = MarkdownFormatting.continueList(block.value, value)
+        block.edit(MarkdownFormatting.continueList(block.value, value))
+    }
+
+    /** Клавиатура заменила слово (Т9) — запомнить, чтобы его можно было вернуть. */
+    fun onAutoCorrect(block: TextBlock, correction: AutoCorrection) {
+        block.pendingCorrection = correction
+    }
+
+    /** Вернуть слово, набранное до замены Т9. */
+    fun revertCorrection(block: TextBlock, correction: AutoCorrection) {
+        block.revert(correction)
     }
 
     /** Стоит ли сейчас курсор в каком-нибудь текстовом блоке. */
@@ -139,7 +170,7 @@ class EditorState(markdown: String = "") {
     /** Применить действие панели форматирования к блоку с курсором. */
     fun format(transform: (TextFieldValue) -> TextFieldValue) {
         val block = activeTextBlock() ?: return
-        block.value = transform(block.value)
+        block.edit(transform(block.value))
     }
 
     /** Поставить курсор в конец последнего текстового блока (тап по пустому месту под текстом). */

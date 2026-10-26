@@ -33,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -68,6 +69,7 @@ import dev.chaik.remember.core.ui.LocalIslandPadding
 import dev.chaik.remember.core.ui.components.SwipeBackHost
 import dev.chaik.remember.core.ui.theme.ReMemberTheme
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 
 private val IslandBottomMargin = 12.dp
@@ -128,6 +130,7 @@ private fun MainScaffold() {
     val currentStack = backStacks.getValue(currentTab)
     val scope = rememberCoroutineScope()
     val haptics = LocalHapticFeedback.current
+    val focusManager = LocalFocusManager.current
 
     // Поменяли состав островка (обычно из «Ещё → Настройки») — остаёмся на той же вкладке
     var shownTab by remember { mutableStateOf(currentTab) }
@@ -149,7 +152,13 @@ private fun MainScaffold() {
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.currentPage }.drop(1).collect {
             haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
+            focusManager.clearFocus()
         }
+    }
+    // Начали листать вкладки — курсор и клавиатура остаются на старой странице, убираем их сразу:
+    // иначе ввод вернул бы на страницу с курсором
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.isScrollInProgress }.filter { it }.collect { focusManager.clearFocus() }
     }
 
     // Тап по уведомлению: нужная вкладка с её корня. День и сон «Сегодня» и дату календаря

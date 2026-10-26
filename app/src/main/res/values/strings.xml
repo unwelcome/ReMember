@@ -33,6 +33,7 @@
 
     <!-- Редактор -->
     <string name="editor_add_photo">Добавить фото</string>
+    <string name="editor_revert_correction">Вернуть набранное слово</string>
     <string name="editor_bold">Жирный</string>
     <string name="editor_italic">Курсив</string>
     <string name="editor_strike">Зачёркнутый</string>

@@ -33,6 +33,7 @@
 
     <!-- Editor -->
     <string name="editor_add_photo">Add photo</string>
+    <string name="editor_revert_correction">Restore the typed word</string>
     <string name="editor_bold">Bold</string>
     <string name="editor_italic">Italic</string>
     <string name="editor_strike">Strikethrough</string>

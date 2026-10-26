@@ -67,6 +67,29 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.automirrored.outlined.Undo
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntRect
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupPositionProvider
+import androidx.compose.ui.window.PopupProperties
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.isImeVisible
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import dev.chaik.remember.R
 import java.io.File
 import kotlin.math.roundToInt
@@ -87,6 +110,7 @@ private val CursorClearance = EditorToolbarHeight + 24.dp
  * @param photoFile файл фото по id (полноразмерный — Coil сам уменьшит под размер на экране)
  * @param onOpenPhotos открыть фото на весь экран: все фото блока и с какого начать
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun RichEditor(
     state: EditorState,
@@ -111,6 +135,23 @@ fun RichEditor(
             block.focusRequester.requestFocus()
         }
         state.consumeFocusRequest()
+    }
+
+    // «Назад» прячет клавиатуру — курсор уходит вместе с ней, а не мигает дальше.
+    // Если клавиатура пропала, потому что открылось окно выбора фото, курсор не трогаем:
+    // после вставки он перейдёт под фото
+    val keyboardVisible = WindowInsets.isImeVisible
+    val focusManager = LocalFocusManager.current
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    var keyboardWasShown by remember { mutableStateOf(false) }
+    LaunchedEffect(keyboardVisible) {
+        when {
+            keyboardVisible -> keyboardWasShown = true
+            keyboardWasShown -> {
+                keyboardWasShown = false
+                if (state.hasFocus && lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) focusManager.clearFocus()
+            }
+        }
     }
 
     // «Назад» сначала снимает выделение с фото, а не закрывает экран
@@ -165,7 +206,15 @@ private fun TextBlockField(
         bringIntoView.bringIntoView(cursor.copy(top = cursor.top - below / 4, bottom = cursor.bottom + below))
     }
 
-    SmartTextInput {
+    // Слова, заменённые Т9: подчёркнуты, тап по такому слову — окошко «вернуть как было»
+    val corrections by remember(block) {
+        derivedStateOf { block.corrections.filter { it.isValidIn(block.value.text) } }
+    }
+    var shownCorrection by remember { mutableStateOf<AutoCorrection?>(null) }
+    LaunchedEffect(block.value.text) { shownCorrection = null }
+    val underline = MaterialTheme.colorScheme.primary.copy(alpha = 0.55f)
+
+    SmartTextInput(onAutoCorrect = { state.onAutoCorrect(block, it) }) {
         BasicTextField(
             value = block.value,
             onValueChange = { state.onTextChange(block, it) },
@@ -181,7 +230,15 @@ private fun TextBlockField(
                 .focusRequester(block.focusRequester)
                 .onFocusChanged {
                     focused = it.isFocused
+                    if (!it.isFocused) shownCorrection = null
                     state.onTextFocusChanged(block, it.isFocused)
+                }
+                .drawBehind {
+                    val result = layout ?: return@drawBehind
+                    corrections.forEach { drawCorrectionUnderline(result, it, underline) }
+                }
+                .onCorrectionTap(layout = { layout }) { offset ->
+                    shownCorrection = corrections.firstOrNull { offset in it.start..it.end }
                 },
             decorationBox = { inner ->
                 Box {
@@ -189,9 +246,111 @@ private fun TextBlockField(
                         Text(placeholder, style = style.copy(color = MaterialTheme.colorScheme.outline))
                     }
                     inner()
+                    val shown = shownCorrection
+                    val result = layout
+                    if (shown != null && result != null) {
+                        CorrectionPopup(
+                            correction = shown,
+                            layout = result,
+                            onRevert = {
+                                shownCorrection = null
+                                state.revertCorrection(block, shown)
+                            },
+                            onDismiss = { shownCorrection = null },
+                        )
+                    }
                 }
             },
         )
+    }
+}
+
+/** Тонкая линия под словом, заменённым Т9 (слово может переноситься на следующую строку). */
+private fun DrawScope.drawCorrectionUnderline(layout: TextLayoutResult, correction: AutoCorrection, color: Color) {
+    val stroke = 1.5.dp.toPx()
+    val gap = 2.dp.toPx()
+    for (line in layout.getLineForOffset(correction.start)..layout.getLineForOffset(correction.end - 1)) {
+        val from = maxOf(correction.start, layout.getLineStart(line))
+        val to = minOf(correction.end, layout.getLineEnd(line, visibleEnd = true))
+        if (from >= to) continue
+        val left = layout.getBoundingBox(from).left
+        val right = layout.getBoundingBox(to - 1).right
+        val y = layout.getLineBaseline(line) + gap + stroke / 2
+        drawLine(color, Offset(minOf(left, right), y), Offset(maxOf(left, right), y), strokeWidth = stroke, cap = StrokeCap.Round)
+    }
+}
+
+/**
+ * Короткий тап по тексту: [onTap] получает позицию в тексте. Касание не забирает —
+ * поле само ставит курсор, как обычно. Прокрутка и долгое нажатие не считаются.
+ */
+private fun Modifier.onCorrectionTap(layout: () -> TextLayoutResult?, onTap: (offset: Int) -> Unit): Modifier =
+    pointerInput(Unit) {
+        awaitEachGesture {
+            val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+            val up = waitForUpOrCancellation(PointerEventPass.Initial) ?: return@awaitEachGesture
+            val moved = (up.position - down.position).getDistance() > viewConfiguration.touchSlop
+            val long = up.uptimeMillis - down.uptimeMillis > viewConfiguration.longPressTimeoutMillis
+            if (moved || long) return@awaitEachGesture
+            val result = layout() ?: return@awaitEachGesture
+            onTap(result.getOffsetForPosition(up.position))
+        }
+    }
+
+/** Окошко над заменённым словом: набранное слово, тап — вернуть его. Клавиатуру не закрывает. */
+@Composable
+private fun CorrectionPopup(
+    correction: AutoCorrection,
+    layout: TextLayoutResult,
+    onRevert: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val colors = MaterialTheme.colorScheme
+    val gap = with(LocalDensity.current) { 6.dp.roundToPx() }
+    val line = layout.getLineForOffset(correction.start)
+    val word = IntRect(
+        left = layout.getBoundingBox(correction.start).left.roundToInt(),
+        top = layout.getLineTop(line).roundToInt(),
+        right = layout.getBoundingBox(correction.start).right.roundToInt(),
+        bottom = layout.getLineBottom(line).roundToInt(),
+    )
+    Popup(
+        popupPositionProvider = remember(word, gap) { AboveWordPosition(word, gap) },
+        onDismissRequest = onDismiss,
+        properties = PopupProperties(focusable = false),
+    ) {
+        Surface(shape = RoundedCornerShape(12.dp), color = colors.surfaceContainerHighest, shadowElevation = 6.dp) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier
+                    .clickable(onClick = onRevert)
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Outlined.Undo,
+                    contentDescription = stringResource(R.string.editor_revert_correction),
+                    tint = colors.primary,
+                    modifier = Modifier.size(18.dp),
+                )
+                Text(correction.original, style = MaterialTheme.typography.bodyLarge)
+            }
+        }
+    }
+}
+
+/** Над словом, а если сверху нет места — под строкой; не вылезая за края экрана. */
+private class AboveWordPosition(private val word: IntRect, private val gap: Int) : PopupPositionProvider {
+    override fun calculatePosition(
+        anchorBounds: IntRect,
+        windowSize: IntSize,
+        layoutDirection: LayoutDirection,
+        popupContentSize: IntSize,
+    ): IntOffset {
+        val x = (anchorBounds.left + word.left).coerceIn(0, maxOf(0, windowSize.width - popupContentSize.width))
+        val above = anchorBounds.top + word.top - popupContentSize.height - gap
+        val y = if (above >= 0) above else anchorBounds.top + word.bottom + gap
+        return IntOffset(x, y)
     }
 }
 

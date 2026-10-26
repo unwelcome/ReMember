@@ -1,11 +1,17 @@
 package dev.chaik.remember.core.editor
 
+import android.text.Spanned
 import android.text.TextUtils
+import android.text.style.SuggestionSpan
 import android.view.KeyEvent
+import android.view.inputmethod.CorrectionInfo
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
 import android.view.inputmethod.InputConnectionWrapper
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.platform.InterceptPlatformTextInput
 import androidx.compose.ui.platform.PlatformTextInputInterceptor
@@ -13,17 +19,19 @@ import androidx.compose.ui.platform.PlatformTextInputMethodRequest
 import androidx.compose.ui.platform.PlatformTextInputSession
 
 /**
- * Связь поля записи с клавиатурой: Enter по порядку с остальными правками и подсказка
- * о заглавной букве в начале пункта списка — для клавиатур, которые о ней спрашивают
- * (Samsung не спрашивает и решает сама — у неё после «- » и «# » строчная).
+ * Связь поля записи с клавиатурой: Enter по порядку с остальными правками, сообщения
+ * об автозаменах Т9 ([onAutoCorrect]) и подсказка о заглавной букве в начале пункта списка —
+ * для клавиатур, которые о ней спрашивают (Samsung не спрашивает и решает сама).
  */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-internal fun SmartTextInput(content: @Composable () -> Unit) {
-    InterceptPlatformTextInput(SmartTextInputInterceptor, content)
+internal fun SmartTextInput(onAutoCorrect: (AutoCorrection) -> Unit, content: @Composable () -> Unit) {
+    val callback by rememberUpdatedState(onAutoCorrect)
+    val interceptor = remember { SmartTextInputInterceptor { callback(it) } }
+    InterceptPlatformTextInput(interceptor, content)
 }
 
-private object SmartTextInputInterceptor : PlatformTextInputInterceptor {
+private class SmartTextInputInterceptor(private val onAutoCorrect: (AutoCorrection) -> Unit) : PlatformTextInputInterceptor {
     override suspend fun interceptStartInputMethod(
         request: PlatformTextInputMethodRequest,
         nextHandler: PlatformTextInputSession,
@@ -31,13 +39,39 @@ private object SmartTextInputInterceptor : PlatformTextInputInterceptor {
         nextHandler.startInputMethod(
             object : PlatformTextInputMethodRequest {
                 override fun createInputConnection(outAttributes: EditorInfo): InputConnection =
-                    SmartInputConnection(request.createInputConnection(outAttributes))
+                    SmartInputConnection(request.createInputConnection(outAttributes), onAutoCorrect)
             },
         )
     }
 }
 
-private class SmartInputConnection(target: InputConnection) : InputConnectionWrapper(target, false) {
+private class SmartInputConnection(
+    target: InputConnection,
+    private val onAutoCorrect: (AutoCorrection) -> Unit,
+) : InputConnectionWrapper(target, false) {
+    /** Последнее «где и что заменено» — клавиатура присылает его прямо перед самим словом. */
+    private var lastCorrection: CorrectionInfo? = null
+
+    override fun commitCorrection(correctionInfo: CorrectionInfo?): Boolean {
+        lastCorrection = correctionInfo
+        return super.commitCorrection(correctionInfo)
+    }
+
+    // Автозамену клавиатура присылает словом с пометкой: в подсказках — то, что было набрано
+    override fun commitText(text: CharSequence?, newCursorPosition: Int): Boolean {
+        if (text is Spanned && text.isNotEmpty()) {
+            val corrected = text.toString()
+            val original = text.getSpans(0, text.length, SuggestionSpan::class.java)
+                .filter { it.flags and CORRECTION_FLAGS != 0 }
+                .firstNotNullOfOrNull { span -> span.suggestions.firstOrNull { it.isNotBlank() && it != corrected } }
+            if (original != null) {
+                val info = lastCorrection?.takeIf { it.newText?.toString() == corrected }
+                onAutoCorrect(AutoCorrection(start = info?.offset ?: -1, corrected = corrected, original = original))
+            }
+        }
+        lastCorrection = null
+        return super.commitText(text, newCursorPosition)
+    }
     override fun getCursorCapsMode(reqModes: Int): Int {
         val before = getTextBeforeCursor(CAPS_LOOKBEHIND, 0) ?: return super.getCursorCapsMode(reqModes)
         return capsMode(before, reqModes)
@@ -61,6 +95,7 @@ private class SmartInputConnection(target: InputConnection) : InputConnectionWra
 
     private companion object {
         const val CAPS_LOOKBEHIND = 200
+        const val CORRECTION_FLAGS = SuggestionSpan.FLAG_EASY_CORRECT or SuggestionSpan.FLAG_AUTO_CORRECTION
     }
 }
 
