@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.runtime.mutableStateOf
@@ -63,6 +64,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import dev.chaik.remember.R
@@ -163,30 +165,34 @@ private fun TextBlockField(
         bringIntoView.bringIntoView(cursor.copy(top = cursor.top - below / 4, bottom = cursor.bottom + below))
     }
 
-    BasicTextField(
-        value = block.value,
-        onValueChange = { state.onTextChange(block, it) },
-        textStyle = style,
-        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-        visualTransformation = highlighter,
-        onTextLayout = { layout = it },
-        modifier = Modifier
-            .fillMaxWidth()
-            .bringIntoViewRequester(bringIntoView)
-            .focusRequester(block.focusRequester)
-            .onFocusChanged {
-                focused = it.isFocused
-                state.onTextFocusChanged(block, it.isFocused)
-            },
-        decorationBox = { inner ->
-            Box {
-                if (placeholder != null && block.value.text.isEmpty()) {
-                    Text(placeholder, style = style.copy(color = MaterialTheme.colorScheme.outline))
+    SmartTextInput {
+        BasicTextField(
+            value = block.value,
+            onValueChange = { state.onTextChange(block, it) },
+            textStyle = style,
+            // Заглавные в начале предложения и пункта списка (см. SmartTextInput), исправление опечаток
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, autoCorrectEnabled = true),
+            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+            visualTransformation = highlighter,
+            onTextLayout = { layout = it },
+            modifier = Modifier
+                .fillMaxWidth()
+                .bringIntoViewRequester(bringIntoView)
+                .focusRequester(block.focusRequester)
+                .onFocusChanged {
+                    focused = it.isFocused
+                    state.onTextFocusChanged(block, it.isFocused)
+                },
+            decorationBox = { inner ->
+                Box {
+                    if (placeholder != null && block.value.text.isEmpty()) {
+                        Text(placeholder, style = style.copy(color = MaterialTheme.colorScheme.outline))
+                    }
+                    inner()
                 }
-                inner()
-            }
-        },
-    )
+            },
+        )
+    }
 }
 
 /** Фото-блок: одно фото или сетка, с выравниванием, щипком и панелью действий. */

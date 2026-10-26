@@ -69,15 +69,19 @@ object MarkdownFormatting {
     /**
      * Продолжение списка по Enter: если в строке со списком нажали Enter,
      * новая строка тоже начинается с маркера. Enter на пустом пункте — выход из списка.
-     * Если изменение — не одиночный Enter, возвращает [new] как есть.
+     * Клавиатура часто присылает дописанное (или исправленное Т9) слово и Enter одной правкой —
+     * это тоже Enter, если вставка заканчивается переносом строки и он в ней один.
+     * Если изменение — не Enter, возвращает [new] как есть.
      */
     fun continueList(old: TextFieldValue, new: TextFieldValue): TextFieldValue {
         val cursor = new.selection.start
-        val isSingleEnter = new.selection.collapsed &&
-            new.text.length == old.text.length + 1 &&
-            cursor > 0 && new.text[cursor - 1] == '\n' &&
-            new.text.removeRange(cursor - 1, cursor) == old.text
-        if (!isSingleEnter) return new
+        if (!new.selection.collapsed || cursor == 0 || new.text[cursor - 1] != '\n') return new
+        val after = new.text.substring(cursor)
+        if (!old.text.endsWith(after)) return new
+        val oldBefore = old.text.substring(0, old.text.length - after.length)
+        // Перенос перед курсором должен быть новым (а не старым, к которому подвинулись удалением)
+        val common = new.text.commonPrefixWith(oldBefore).length
+        if (common > cursor - 1 || new.text.substring(common, cursor - 1).contains('\n')) return new
 
         val lineStart = new.text.lastIndexOf('\n', cursor - 2) + 1
         val line = new.text.substring(lineStart, cursor - 1)

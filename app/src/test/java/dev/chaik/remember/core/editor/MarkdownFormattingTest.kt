@@ -69,10 +69,24 @@ class MarkdownFormattingTest {
     }
 
     @Test
+    fun `слово и Enter одной правкой тоже продолжают список`() {
+        // Клавиатура дописала слово (или исправила его Т9) и сразу отдала Enter
+        assertValue("- хлеб\n- |", MarkdownFormatting.continueList(v("- хле|"), v("- хлеб\n|")))
+        assertValue("- молоко\n- |", MarkdownFormatting.continueList(v("- малако|"), v("- молоко\n|")))
+        assertValue("- хлеб\n- |\n- сыр", MarkdownFormatting.continueList(v("- хле|\n- сыр"), v("- хлеб\n|\n- сыр")))
+    }
+
+    @Test
     fun `обычный ввод не трогается`() {
         val new = v("привет\n|")
         assertEquals(new, MarkdownFormatting.continueList(v("привет|"), new))
         val typed = v("- хлеба|")
         assertEquals(typed, MarkdownFormatting.continueList(v("- хлеб|"), typed))
+        // Стёрли букву сразу за переносом — это не Enter
+        val erased = v("- хлеб\n|ыр")
+        assertEquals(erased, MarkdownFormatting.continueList(v("- хлеб\nс|ыр"), erased))
+        // Вставили несколько строк — тоже не Enter
+        val pasted = v("- хлеб\nсыр\n|")
+        assertEquals(pasted, MarkdownFormatting.continueList(v("- хлеб|"), pasted))
     }
 }
