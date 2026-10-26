@@ -62,6 +62,8 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.navigation3)
     implementation(libs.coil.compose)
     implementation(libs.androidx.biometric)
+    // biometric тянет старый Fragment, с которым запросы разрешений работают неправильно
+    implementation(libs.androidx.fragment)
     // Шаги, калории и тренировки из Samsung Health
     implementation(libs.androidx.health.connect)
     implementation(libs.androidx.lifecycle.process)

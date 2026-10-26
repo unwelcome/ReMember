@@ -1,7 +1,9 @@
 package dev.chaik.remember.core.ui.components
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsets
@@ -47,6 +49,8 @@ fun ScreenScaffold(
     onBack: (() -> Unit)? = null,
     /** Если задано — заголовок нажимается (например, чтобы выбрать дату). */
     onTitleClick: (() -> Unit)? = null,
+    /** Модификатор всей полосы заголовка — например, жесты по ней. */
+    titleModifier: Modifier = Modifier,
     actions: @Composable RowScope.() -> Unit = {},
     navigationIcon: (@Composable () -> Unit)? = null,
     content: @Composable (PaddingValues) -> Unit,
@@ -61,17 +65,19 @@ fun ScreenScaffold(
         topBar = {
             TopAppBar(
                 title = {
-                    if (onTitleClick == null) {
-                        Text(title)
-                    } else {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(12.dp))
-                                .clickable(onClick = onTitleClick),
-                        ) {
-                            Text(title, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
-                            Icon(Icons.Outlined.ArrowDropDown, contentDescription = null)
+                    Box(titleModifier.fillMaxWidth(), contentAlignment = Alignment.CenterStart) {
+                        if (onTitleClick == null) {
+                            Text(title)
+                        } else {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .clickable(onClick = onTitleClick),
+                            ) {
+                                Text(title, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                                Icon(Icons.Outlined.ArrowDropDown, contentDescription = null)
+                            }
                         }
                     }
                 },
