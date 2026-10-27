@@ -34,6 +34,8 @@ import dev.chaik.remember.feature.settings.about.AboutRoute
 import dev.chaik.remember.feature.settings.about.AboutScreen
 import dev.chaik.remember.feature.settings.data.DataRoute
 import dev.chaik.remember.feature.settings.data.DataScreen
+import dev.chaik.remember.feature.settings.data.gallery.GalleryRoute
+import dev.chaik.remember.feature.settings.data.gallery.GalleryScreen
 import dev.chaik.remember.feature.settings.pages.PagesRoute
 import dev.chaik.remember.feature.settings.pages.PagesScreen
 import dev.chaik.remember.feature.settings.profile.ProfileRoute
@@ -96,7 +98,8 @@ fun appEntryProvider(backStack: NavBackStack<NavKey>): (NavKey) -> NavEntry<NavK
         entry<ProfileRoute> { ProfileScreen(onBack = back) }
         entry<PagesRoute> { PagesScreen(onBack = back) }
         entry<SecurityRoute> { SecurityScreen(onBack = back) }
-        entry<DataRoute> { DataScreen(onBack = back) }
+        entry<DataRoute> { DataScreen(onBack = back, onOpenGallery = { backStack.add(GalleryRoute) }) }
+        entry<GalleryRoute> { GalleryScreen(onBack = back, onOpenNote = { backStack.add(NoteEditorRoute(noteId = it)) }) }
         entry<AboutRoute> { AboutScreen(onBack = back) }
         entry<PersonalizationRoute> { PersonalizationScreen(onBack = back) }
     }

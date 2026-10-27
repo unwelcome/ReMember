@@ -168,7 +168,7 @@ private fun MainScaffold() {
     LaunchedEffect(openRequest) {
         val target = openRequest ?: return@LaunchedEffect
         val section = when (target) {
-            OpenTarget.Day, OpenTarget.Sleep -> Destination.Today
+            OpenTarget.Day, OpenTarget.Sleep, is OpenTarget.DayAt -> Destination.Today
             is OpenTarget.Calendar -> Destination.Calendar
             is OpenTarget.Task -> Destination.Tasks
             is OpenTarget.Workout -> Destination.Gym

@@ -14,6 +14,7 @@ import dev.chaik.remember.core.database.DatabaseFactory
 import dev.chaik.remember.core.database.ReMemberDatabase
 import dev.chaik.remember.core.health.HealthConnectSource
 import dev.chaik.remember.core.health.HealthGoalsStore
+import dev.chaik.remember.core.photos.PhotoLibrary
 import dev.chaik.remember.core.photos.PhotoStorage
 import dev.chaik.remember.core.reminders.Notifier
 import dev.chaik.remember.core.reminders.OpenTarget
@@ -52,6 +53,9 @@ class AppContainer(context: Context) {
     }
 
     val photoStorage by lazy { PhotoStorage(appContext, database.photoDao()) }
+
+    /** Галерея всех фото: список, удаление, копия в галерею телефона. */
+    val photoLibrary by lazy { PhotoLibrary(database, photoStorage, dayRepository, noteRepository) }
 
     val appLock by lazy { AppLock(PrefsLockStore(appContext)) }
 

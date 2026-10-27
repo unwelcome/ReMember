@@ -9,6 +9,7 @@ import dev.chaik.remember.core.database.entity.PhotoEntity
 import dev.chaik.remember.core.database.entity.PhotoRefEntity
 import dev.chaik.remember.core.model.PhotoOwner
 import java.time.Instant
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface PhotoDao {
@@ -23,6 +24,16 @@ interface PhotoDao {
 
     @Query("DELETE FROM photo WHERE id IN (:ids)")
     suspend fun delete(ids: Collection<String>)
+
+    /** Все фото, новые сверху — для галереи. */
+    @Query("SELECT * FROM photo ORDER BY created_at DESC")
+    fun observeAll(): Flow<List<PhotoEntity>>
+
+    @Query("SELECT * FROM photo_ref")
+    fun observeRefs(): Flow<List<PhotoRefEntity>>
+
+    @Query("SELECT * FROM photo_ref WHERE photo_id = :photoId")
+    suspend fun refsOf(photoId: String): List<PhotoRefEntity>
 
     /**
      * Фото без единой ссылки, созданные раньше [before].

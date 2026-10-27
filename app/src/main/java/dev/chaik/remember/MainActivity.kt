@@ -3,15 +3,16 @@ package dev.chaik.remember
 import android.Manifest
 import android.content.Intent
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.fragment.app.FragmentActivity
 import dev.chaik.remember.app.ReMemberApp
 import dev.chaik.remember.core.reminders.OpenTarget
 import dev.chaik.remember.feature.lock.LockActivity
 
-class MainActivity : ComponentActivity() {
+/** FragmentActivity — ради системного окна отпечатка (подтверждение в «Безопасности»). */
+class MainActivity : FragmentActivity() {
     private val lock get() = appContainer.appLock
 
     override fun onCreate(savedInstanceState: Bundle?) {

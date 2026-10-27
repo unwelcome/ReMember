@@ -72,6 +72,8 @@ class NoteEditorViewModel(
         notes.observeFolders().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     init {
+        // Фото удалили в галерее — убрать и из открытой заметки, чтобы она не вернула ссылку
+        viewModelScope.launch { container.photoLibrary.removed.collect(editor::removePhotos) }
         viewModelScope.launch {
             if (noteId != 0L) {
                 notes.get(noteId)?.let { note ->

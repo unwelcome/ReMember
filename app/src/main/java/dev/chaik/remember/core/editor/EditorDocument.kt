@@ -103,6 +103,21 @@ object EditorDocument {
         return result
     }
 
+    /**
+     * Убрать фото [photoIds] из текста. Из сетки уходят только они; опустевший фото-блок
+     * пропадает целиком, а текст до и после него склеивается.
+     */
+    fun removePhotos(markdown: String, photoIds: Set<String>): String {
+        val blocks = parse(markdown)
+        if (blocks.none { it is DocumentBlock.Photos && it.photoIds.any(photoIds::contains) }) return markdown
+        val kept = blocks.mapNotNull { block ->
+            if (block !is DocumentBlock.Photos) return@mapNotNull block
+            val left = block.photoIds.filterNot(photoIds::contains)
+            if (left.isEmpty()) null else block.copy(photoIds = left)
+        }
+        return serialize(normalize(kept))
+    }
+
     /** Склеить два куска текста, сохранив границу абзаца. */
     fun joinParagraphs(first: String, second: String): String = when {
         first.isEmpty() -> second

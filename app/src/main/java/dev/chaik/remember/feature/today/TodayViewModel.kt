@@ -56,6 +56,8 @@ class TodayViewModel(private val container: AppContainer) : ViewModel() {
 
     init {
         load(date)
+        // Фото удалили в галерее — убрать и из открытой записи, чтобы она не вернула ссылку
+        viewModelScope.launch { container.photoLibrary.removed.collect(day.editor::removePhotos) }
         viewModelScope.launch {
             container.dayRepository.firstDate()
                 ?.let(YearMonth::from)

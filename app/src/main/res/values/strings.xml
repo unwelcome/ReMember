@@ -529,6 +529,21 @@
         <item quantity="other">%1$d фото</item>
     </plurals>
     <string name="data_total">Всего</string>
+    <string name="data_gallery">Все фото</string>
+    <string name="data_gallery_hint">Галерея фото из записей и заметок</string>
+    <string name="gallery_empty">Фото пока нет — они появятся здесь, когда вы добавите их в запись или заметку</string>
+    <string name="gallery_added">Добавлено %1$s</string>
+    <string name="gallery_unused">Пока не стоит ни в одной записи</string>
+    <string name="gallery_day">Запись дня · %1$s</string>
+    <string name="gallery_note">Заметка · %1$s</string>
+    <string name="gallery_untitled">Без названия</string>
+    <string name="gallery_save">В галерею</string>
+    <string name="gallery_saved">Сохранено в галерею телефона (Pictures/ReMember)</string>
+    <string name="gallery_save_failed">Не удалось сохранить фото</string>
+    <string name="gallery_delete">Удалить</string>
+    <string name="gallery_delete_title">Удалить фото?</string>
+    <string name="gallery_delete_text">Фото удалится из приложения. Это нельзя отменить.</string>
+    <string name="gallery_delete_text_used">Фото пропадёт и из записей, где оно стоит. Это нельзя отменить.</string>
     <string name="data_backup">Резервная копия</string>
     <string name="data_backup_text">Все записи, заметки, задачи, события, тренировки и фото — одним файлом, зашифрованным вашим паролем. Из него данные можно вернуть на этот или другой телефон.</string>
     <string name="data_backup_hint">Храните копию не на этом телефоне: на компьютере, NAS или в облаке. Настройки приложения в копию не входят.</string>
@@ -569,6 +584,9 @@
     <string name="security_disable_title">Выключить блокировку</string>
     <string name="security_disable">Выключить</string>
     <string name="security_current_pin">Текущий PIN</string>
+    <string name="security_forgot_pin">Забыли PIN? Подтвердить отпечатком</string>
+    <string name="security_fingerprint_title">Подтвердите, что это вы</string>
+    <string name="security_fingerprint_ok">Подтверждено отпечатком — старый PIN не нужен</string>
     <string name="security_new_pin">Новый PIN</string>
     <string name="security_repeat_pin">Ещё раз</string>
     <string name="security_pin_hint">От %1$d до %2$d цифр</string>

@@ -1,5 +1,6 @@
 package dev.chaik.remember.feature.settings.security
 
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -12,6 +13,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
+import androidx.compose.material.icons.outlined.Fingerprint
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -36,6 +38,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
 import dev.chaik.remember.R
@@ -65,6 +68,22 @@ fun SecurityScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     val settings by lock.settings.collectAsStateWithLifecycle()
     val biometricAvailable = remember { BiometricUnlock.isAvailable(context) }
     var dialog by remember { mutableStateOf<PinDialogMode?>(null) }
+
+    // Подтверждение отпечатком вместо старого PIN — если PIN забыт. Отпечаток телефона
+    // подходит, даже если вход по отпечатку в приложении выключен
+    val activity = LocalActivity.current as? FragmentActivity
+    val fingerprintTitle = stringResource(R.string.security_fingerprint_title)
+    val fingerprintCancel = stringResource(R.string.action_cancel)
+    val confirmWithFingerprint: ((onSuccess: () -> Unit) -> Unit)? =
+        if (biometricAvailable && activity != null) {
+            { onSuccess ->
+                // Системное окно — не повод блокировать приложение
+                lock.allowExternal()
+                BiometricUnlock.prompt(activity, fingerprintTitle, fingerprintCancel, onSuccess)
+            }
+        } else {
+            null
+        }
 
     ScreenScaffold(title = stringResource(R.string.settings_security), modifier = modifier, onBack = onBack) { padding ->
         Column(
@@ -131,7 +150,7 @@ fun SecurityScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
         }
     }
 
-    dialog?.let { mode -> PinDialog(mode, lock, onDone = { dialog = null }) }
+    dialog?.let { mode -> PinDialog(mode, lock, confirmWithFingerprint, onDone = { dialog = null }) }
 }
 
 @Composable
@@ -148,20 +167,27 @@ private fun timeoutLabel(millis: Long): String {
 
 /**
  * Окно PIN-кода. Цифры скрыты. Старый PIN проверяется так же, как на экране блокировки:
- * пять ошибок подряд — пауза.
+ * пять ошибок подряд — пауза. Вместо старого PIN можно приложить палец ([confirmWithFingerprint]).
  */
 @Composable
-private fun PinDialog(mode: PinDialogMode, lock: AppLock, onDone: () -> Unit) {
+private fun PinDialog(
+    mode: PinDialogMode,
+    lock: AppLock,
+    confirmWithFingerprint: ((onSuccess: () -> Unit) -> Unit)?,
+    onDone: () -> Unit,
+) {
     val scope = rememberCoroutineScope()
     var current by remember { mutableStateOf("") }
     var new by remember { mutableStateOf("") }
     var repeat by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
     var busy by remember { mutableStateOf(false) }
+    /** Старый PIN подтверждён отпечатком — вводить его не нужно. */
+    var fingerprintOk by remember { mutableStateOf(false) }
     val focus = remember { FocusRequester() }
     LaunchedEffect(Unit) { focus.requestFocus() }
 
-    val needCurrent = mode != PinDialogMode.SET
+    val needCurrent = mode != PinDialogMode.SET && !fingerprintOk
     val needNew = mode != PinDialogMode.CONFIRM_DISABLE
     val lengthError = stringResource(R.string.security_pin_length, AppLock.MIN_PIN, AppLock.MAX_PIN)
     val mismatchError = stringResource(R.string.security_pin_mismatch)
@@ -217,12 +243,36 @@ private fun PinDialog(mode: PinDialogMode, lock: AppLock, onDone: () -> Unit) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (needCurrent) {
                     PinField(stringResource(R.string.security_current_pin), current, Modifier.focusRequester(focus)) { current = it; error = null }
+                    if (confirmWithFingerprint != null) {
+                        TextButton(
+                            onClick = {
+                                confirmWithFingerprint {
+                                    error = null
+                                    if (mode == PinDialogMode.CONFIRM_DISABLE) {
+                                        lock.disable()
+                                        onDone()
+                                    } else {
+                                        fingerprintOk = true
+                                    }
+                                }
+                            },
+                        ) {
+                            Icon(Icons.Outlined.Fingerprint, null, modifier = Modifier.padding(end = 8.dp))
+                            Text(stringResource(R.string.security_forgot_pin))
+                        }
+                    }
+                } else if (fingerprintOk) {
+                    Text(
+                        text = stringResource(R.string.security_fingerprint_ok),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
                 }
                 if (needNew) {
                     PinField(
                         label = stringResource(R.string.security_new_pin),
                         value = new,
-                        modifier = if (needCurrent) Modifier else Modifier.focusRequester(focus),
+                        modifier = if (mode != PinDialogMode.SET) Modifier else Modifier.focusRequester(focus),
                     ) { new = it; error = null }
                     PinField(stringResource(R.string.security_repeat_pin), repeat) { repeat = it; error = null }
                     Text(

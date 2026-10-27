@@ -7,6 +7,7 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.calculatePan
 import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -45,9 +46,15 @@ import java.io.File
 /**
  * Фото на весь экран. Если фото несколько (сетка) — листаются свайпом.
  * Щипок — масштаб, двойной тап — приблизить/отдалить, крестик или «назад» — закрыть.
+ * [overlay] — своё поверх фото (сведения и кнопки в галерее), получает номер открытого фото.
  */
 @Composable
-fun PhotoViewer(files: List<File>, initialIndex: Int, onDismiss: () -> Unit) {
+fun PhotoViewer(
+    files: List<File>,
+    initialIndex: Int,
+    onDismiss: () -> Unit,
+    overlay: @Composable BoxScope.(page: Int) -> Unit = {},
+) {
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
@@ -71,6 +78,8 @@ fun PhotoViewer(files: List<File>, initialIndex: Int, onDismiss: () -> Unit) {
                     onZoomChange = { if (page == pager.currentPage) zoomed = it },
                 )
             }
+
+            if (files.isNotEmpty()) overlay(pager.currentPage.coerceAtMost(files.lastIndex))
 
             if (files.size > 1) {
                 // Тёмная подложка — чтобы счётчик читался поверх светлого фото

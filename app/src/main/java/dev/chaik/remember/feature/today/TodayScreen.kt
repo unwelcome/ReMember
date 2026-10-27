@@ -116,15 +116,17 @@ fun TodayScreen(modifier: Modifier = Modifier, onBack: (() -> Unit)? = null) {
     val day = viewModel.day
     val haptics = LocalHapticFeedback.current
 
-    // Открыли из уведомления «Как прошёл день?» / «Как спалось?» — сегодняшний день в нужном режиме
+    // Открыли из уведомления «Как прошёл день?» / «Как спалось?» — сегодняшний день в нужном режиме;
+    // из галереи фото — запись нужного дня
     val openRequest by container.openRequests.collectAsStateWithLifecycle()
     LaunchedEffect(openRequest) {
-        val mode = when (openRequest) {
-            OpenTarget.Day -> TodayMode.Day
+        val request = openRequest
+        val mode = when (request) {
+            OpenTarget.Day, is OpenTarget.DayAt -> TodayMode.Day
             OpenTarget.Sleep -> TodayMode.Sleep
             else -> return@LaunchedEffect
         }
-        viewModel.selectDate(LocalDate.now())
+        viewModel.selectDate((request as? OpenTarget.DayAt)?.date ?: LocalDate.now())
         viewModel.selectMode(mode)
         container.openRequests.value = null
     }

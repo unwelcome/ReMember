@@ -1,9 +1,13 @@
 package dev.chaik.remember.core.photos
 
+import android.content.ContentValues
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
 import android.net.Uri
+import android.os.Environment
+import android.provider.MediaStore
 import android.util.Size
 import androidx.core.graphics.scale
 import dev.chaik.remember.core.database.dao.PhotoDao
@@ -88,6 +92,42 @@ class PhotoStorage(
         orphans.size
     }
 
+    /** Удалить фото совсем: строку в базе (ссылки уйдут каскадом) и файлы. */
+    suspend fun delete(photoId: String) = withContext(Dispatchers.IO) {
+        photoDao.delete(listOf(photoId))
+        deleteFiles(photoId)
+    }
+
+    /**
+     * Скопировать фото в общую галерею телефона (Pictures/ReMember) в JPEG — его открывает
+     * любое приложение. Разрешения не нужны: своё приложение пишет туда свободно.
+     */
+    suspend fun exportToGallery(photoId: String): Boolean = withContext(Dispatchers.IO) {
+        val bitmap = BitmapFactory.decodeFile(file(photoId).path) ?: return@withContext false
+        val resolver = context.contentResolver
+        val values = ContentValues().apply {
+            put(MediaStore.Images.Media.DISPLAY_NAME, "ReMember_${photoId.take(8)}.jpg")
+            put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+            put(MediaStore.Images.Media.RELATIVE_PATH, "${Environment.DIRECTORY_PICTURES}/ReMember")
+            put(MediaStore.Images.Media.IS_PENDING, 1)
+        }
+        val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values) ?: return@withContext false
+        try {
+            val written = resolver.openOutputStream(uri)?.use { bitmap.compress(Bitmap.CompressFormat.JPEG, EXPORT_QUALITY, it) } == true
+            if (!written) {
+                resolver.delete(uri, null, null)
+                return@withContext false
+            }
+            resolver.update(uri, ContentValues().apply { put(MediaStore.Images.Media.IS_PENDING, 0) }, null, null)
+            true
+        } catch (e: Exception) {
+            resolver.delete(uri, null, null)
+            false
+        } finally {
+            bitmap.recycle()
+        }
+    }
+
     private fun deleteFiles(photoId: String) {
         file(photoId).delete()
         thumbnailFile(photoId).delete()
@@ -119,6 +159,7 @@ class PhotoStorage(
         const val THUMB_SIDE = 480
         const val PHOTO_QUALITY = 85
         const val THUMB_QUALITY = 75
+        const val EXPORT_QUALITY = 95
     }
 }
 

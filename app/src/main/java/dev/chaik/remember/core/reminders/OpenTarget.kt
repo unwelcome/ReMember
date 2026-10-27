@@ -6,6 +6,9 @@ import java.time.LocalDate
 /** Куда открыть приложение по тапу на уведомление. */
 sealed interface OpenTarget {
     data object Day : OpenTarget
+
+    /** Запись дня за [date] (например, из галереи фото). */
+    data class DayAt(val date: LocalDate) : OpenTarget
     data object Sleep : OpenTarget
     data class Calendar(val date: LocalDate) : OpenTarget
     data class Task(val taskId: Long) : OpenTarget
@@ -20,6 +23,7 @@ sealed interface OpenTarget {
             EXTRA,
             when (target) {
                 Day -> "day"
+                is DayAt -> "dayat:${target.date.toEpochDay()}"
                 Sleep -> "sleep"
                 is Calendar -> "calendar:${target.date.toEpochDay()}"
                 is Task -> "task:${target.taskId}"
@@ -32,6 +36,7 @@ sealed interface OpenTarget {
             val arg = value.substringAfter(':', "").toLongOrNull()
             return when {
                 value == "day" -> Day
+                value.startsWith("dayat:") && arg != null -> DayAt(LocalDate.ofEpochDay(arg))
                 value == "sleep" -> Sleep
                 value.startsWith("calendar:") && arg != null -> Calendar(LocalDate.ofEpochDay(arg))
                 value.startsWith("task:") && arg != null -> Task(arg)

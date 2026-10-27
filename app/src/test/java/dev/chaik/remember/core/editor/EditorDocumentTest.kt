@@ -32,6 +32,22 @@ class EditorDocumentTest {
     }
 
     @Test
+    fun `удаление фото из текста`() {
+        // Одиночное фото — пропадает, абзацы вокруг склеиваются
+        assertEquals("Утром гулял.\nВечером кино.", EditorDocument.removePhotos("Утром гулял.\n![](photo:$p1)\nВечером кино.", setOf(p1)))
+        // Из сетки уходит только оно; параметры сетки остаются
+        assertEquals(
+            "Фото:\n![](photo:$p2?w=75) ![](photo:$p3)\n",
+            EditorDocument.removePhotos("Фото:\n![](photo:$p1?w=75) ![](photo:$p2) ![](photo:$p3)\n", setOf(p1)),
+        )
+        // Фото в начале и в конце
+        assertEquals("Текст", EditorDocument.removePhotos("![](photo:$p1)\nТекст\n![](photo:$p2)", setOf(p1, p2)))
+        // Чужого фото в тексте нет — текст не трогаем
+        val text = "Привет\n![](photo:$p2)\n"
+        assertEquals(text, EditorDocument.removePhotos(text, setOf(p1)))
+    }
+
+    @Test
     fun `ширина и положение фото`() {
         assertEquals(
             listOf(Text("a"), Photos(listOf(p1), 50, PhotoAlign.End), Text("b")),

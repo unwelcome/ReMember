@@ -6,6 +6,7 @@ import android.net.Uri
 import android.text.format.Formatter
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,7 +18,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.FileDownload
+import androidx.compose.material.icons.outlined.PhotoLibrary
 import androidx.compose.material.icons.outlined.FileUpload
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
@@ -70,7 +73,7 @@ private const val MIN_PASSWORD = 8
  * под паролем и восстановление из такого файла (на этом или другом телефоне).
  */
 @Composable
-fun DataScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
+fun DataScreen(onBack: () -> Unit, onOpenGallery: () -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val container = context.appContainer
     val viewModel = viewModel { DataViewModel(container) }
@@ -100,6 +103,26 @@ fun DataScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                     bytes = usage?.photoBytes,
                 )
                 UsageRow(stringResource(R.string.data_total), usage?.totalBytes, bold = true)
+            }
+            SettingsCard {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(onClick = onOpenGallery)
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                ) {
+                    Icon(Icons.Outlined.PhotoLibrary, null, tint = MaterialTheme.colorScheme.primary)
+                    Column(Modifier.weight(1f).padding(start = 16.dp)) {
+                        Text(stringResource(R.string.data_gallery), style = MaterialTheme.typography.bodyLarge)
+                        Text(
+                            text = stringResource(R.string.data_gallery_hint),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, null, tint = MaterialTheme.colorScheme.outline)
+                }
             }
 
             SettingsGroupTitle(stringResource(R.string.data_backup))

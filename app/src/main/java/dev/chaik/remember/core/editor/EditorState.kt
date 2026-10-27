@@ -270,6 +270,16 @@ class EditorState(markdown: String = "") {
         if (activeTextKey == after.key) activeTextKey = before.key
     }
 
+    /** Убрать фото [ids] из документа — их удалили из галереи. Опустевшие блоки пропадают. */
+    fun removePhotos(ids: Set<String>) {
+        blocks.filterIsInstance<PhotoBlock>()
+            .filter { block -> block.photoIds.any(ids::contains) }
+            .forEach { block ->
+                val left = block.photoIds.filterNot(ids::contains)
+                if (left.isEmpty()) removePhoto(block.key) else block.photoIds = left
+            }
+    }
+
     fun canMovePhoto(key: Long, up: Boolean): Boolean {
         val index = blocks.indexOfFirst { it.key == key }
         if (index <= 0) return false
