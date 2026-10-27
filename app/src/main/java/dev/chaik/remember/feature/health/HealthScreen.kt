@@ -65,6 +65,7 @@ import dev.chaik.remember.core.health.DayActivity
 import dev.chaik.remember.core.health.HealthGoals
 import dev.chaik.remember.core.settings.LocalAppSettings
 import dev.chaik.remember.core.ui.components.ScreenScaffold
+import dev.chaik.remember.core.ui.components.daySwipeModifier
 import java.text.NumberFormat
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -130,7 +131,19 @@ fun HealthScreen(onBack: (() -> Unit)?, modifier: Modifier = Modifier) {
                 HealthState.Loading -> Unit
                 HealthState.Ready -> {
                     WeekStrip(viewModel, goals)
-                    DayDetails(viewModel.selected, viewModel.days[viewModel.selected], goals)
+                    // Свайп вбок по дню (заголовок, кольца, цифры) — соседний день
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .then(
+                                daySwipeModifier(canGoForward = viewModel.selected.isBefore(LocalDate.now())) { days ->
+                                    viewModel.select(viewModel.selected.plusDays(days))
+                                },
+                            ),
+                    ) {
+                        DayDetails(viewModel.selected, viewModel.days[viewModel.selected], goals)
+                    }
                 }
                 HealthState.NoPermission -> Message(
                     title = stringResource(R.string.health_connect_title),
@@ -185,6 +198,11 @@ private fun WeekStrip(viewModel: HealthViewModel, goals: HealthGoals) {
 
     LaunchedEffect(pager) {
         snapshotFlow { pager.settledPage }.collect { page -> viewModel.loadWeek(mondayOf(page)) }
+    }
+    // Свайпом по кольцам ушли в другую неделю — полоска недели листается следом
+    LaunchedEffect(viewModel.selected) {
+        val page = WEEK_PAGES - 1 - weeksBetween(weekStart(viewModel.selected, firstDay), currentMonday)
+        if (page != pager.currentPage) pager.animateScrollToPage(page)
     }
 
     HorizontalPager(state = pager, modifier = Modifier.fillMaxWidth(), key = { it }) { page ->

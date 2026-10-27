@@ -14,13 +14,7 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
-import androidx.compose.animation.core.AnimationSpec
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animate
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
@@ -49,18 +43,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -81,6 +68,7 @@ import dev.chaik.remember.core.editor.PhotoViewer
 import dev.chaik.remember.core.editor.RichEditor
 import dev.chaik.remember.core.reminders.OpenTarget
 import dev.chaik.remember.core.ui.components.MasterButton
+import dev.chaik.remember.core.ui.components.daySwipeModifier
 import dev.chaik.remember.core.ui.components.MasterButtonItem
 import dev.chaik.remember.core.ui.components.ScreenScaffold
 import dev.chaik.remember.core.ui.secondaryCorner
@@ -93,8 +81,6 @@ import dev.chaik.remember.feature.today.sleep.SleepContent
 import java.io.File
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import kotlin.math.abs
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 
@@ -338,63 +324,6 @@ private fun BoxScope.PhotoButton(
             }
         }
     }
-}
-
-/** Сколько протянуть заголовок, чтобы сменился день. */
-private val DaySwipeThreshold = 56.dp
-
-/**
- * Свайп по шапке с датой: влево — следующий день, вправо — предыдущий. Заголовок едет за пальцем
- * и, сменив день, въезжает с другой стороны. В будущее нельзя — в ту сторону только туго тянется.
- * Жест забирает движение себе, поэтому вкладки под ним не перелистываются.
- */
-@Composable
-private fun daySwipeModifier(canGoForward: Boolean, onSwipe: (days: Long) -> Unit): Modifier {
-    val scope = rememberCoroutineScope()
-    val haptics = LocalHapticFeedback.current
-    val threshold = with(LocalDensity.current) { DaySwipeThreshold.toPx() }
-    val canGo by rememberUpdatedState(canGoForward)
-    val swipe by rememberUpdatedState(onSwipe)
-    var offset by remember { mutableFloatStateOf(0f) }
-    var settle by remember { mutableStateOf<Job?>(null) }
-
-    return Modifier
-        .pointerInput(Unit) {
-            suspend fun animateTo(target: Float, spec: AnimationSpec<Float>) =
-                animate(offset, target, animationSpec = spec) { value, _ -> offset = value }
-
-            detectHorizontalDragGestures(
-                onDragStart = { settle?.cancel() },
-                onDragEnd = {
-                    val days = when {
-                        offset <= -threshold && canGo -> 1L
-                        offset >= threshold -> -1L
-                        else -> 0L
-                    }
-                    settle = scope.launch {
-                        if (days == 0L) {
-                            animateTo(0f, spring())
-                            return@launch
-                        }
-                        val out = size.width / 3f * if (days > 0) -1 else 1
-                        animateTo(out, tween(110))
-                        haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
-                        swipe(days)
-                        offset = -out
-                        animateTo(0f, spring(dampingRatio = 0.85f, stiffness = Spring.StiffnessMediumLow))
-                    }
-                },
-                onDragCancel = { settle = scope.launch { animateTo(0f, spring()) } },
-            ) { change, dragAmount ->
-                change.consume()
-                val resist = if (offset + dragAmount < 0 && !canGo) 0.25f else 1f
-                offset += dragAmount * resist
-            }
-        }
-        .graphicsLayer {
-            translationX = offset
-            alpha = 1f - (abs(offset) / size.width * 1.5f).coerceIn(0f, 0.7f)
-        }
 }
 
 /** Какие фото открыты на весь экран и с какого начать. */
