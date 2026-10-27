@@ -7,6 +7,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -28,56 +29,74 @@ import kotlin.math.abs
 /** Сколько протянуть, чтобы сменился день. */
 private val DaySwipeThreshold = 56.dp
 
+/** Насколько сейчас сдвинуто то, что едет за пальцем при свайпе дня. */
+@Stable
+class DaySwipeState internal constructor() {
+    var offset by mutableFloatStateOf(0f)
+        internal set
+}
+
 /**
- * Свайп вбок по дню (шапка «Сегодня», кольца «Здоровья»): влево — следующий день, вправо — предыдущий.
- * Содержимое едет за пальцем и, сменив день, въезжает с другой стороны. В будущее нельзя —
- * в ту сторону только туго тянется. Жест забирает движение себе, поэтому вкладки под ним не перелистываются.
+ * Свайп вбок по дню: влево — следующий день, вправо — предыдущий. Жест ловит [Modifier] из
+ * [rememberDaySwipe], а едет за пальцем то, на что надет [daySwipeOffset] — можно ловить свайп
+ * по всему блоку, а двигать только дату. Сменив день, сдвинутое въезжает с другой стороны.
+ * В будущее нельзя — в ту сторону только туго тянется. Жест забирает движение себе,
+ * поэтому вкладки под ним не перелистываются.
  */
 @Composable
-fun daySwipeModifier(canGoForward: Boolean, onSwipe: (days: Long) -> Unit): Modifier {
+fun rememberDaySwipe(canGoForward: Boolean, onSwipe: (days: Long) -> Unit): Pair<DaySwipeState, Modifier> {
     val scope = rememberCoroutineScope()
     val haptics = LocalHapticFeedback.current
     val threshold = with(LocalDensity.current) { DaySwipeThreshold.toPx() }
     val canGo by rememberUpdatedState(canGoForward)
     val swipe by rememberUpdatedState(onSwipe)
-    var offset by remember { mutableFloatStateOf(0f) }
+    val state = remember { DaySwipeState() }
     var settle by remember { mutableStateOf<Job?>(null) }
 
-    return Modifier
-        .pointerInput(Unit) {
-            suspend fun animateTo(target: Float, spec: AnimationSpec<Float>) =
-                animate(offset, target, animationSpec = spec) { value, _ -> offset = value }
+    val gesture = Modifier.pointerInput(Unit) {
+        suspend fun animateTo(target: Float, spec: AnimationSpec<Float>) =
+            animate(state.offset, target, animationSpec = spec) { value, _ -> state.offset = value }
 
-            detectHorizontalDragGestures(
-                onDragStart = { settle?.cancel() },
-                onDragEnd = {
-                    val days = when {
-                        offset <= -threshold && canGo -> 1L
-                        offset >= threshold -> -1L
-                        else -> 0L
+        detectHorizontalDragGestures(
+            onDragStart = { settle?.cancel() },
+            onDragEnd = {
+                val days = when {
+                    state.offset <= -threshold && canGo -> 1L
+                    state.offset >= threshold -> -1L
+                    else -> 0L
+                }
+                settle = scope.launch {
+                    if (days == 0L) {
+                        animateTo(0f, spring())
+                        return@launch
                     }
-                    settle = scope.launch {
-                        if (days == 0L) {
-                            animateTo(0f, spring())
-                            return@launch
-                        }
-                        val out = size.width / 3f * if (days > 0) -1 else 1
-                        animateTo(out, tween(110))
-                        haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
-                        swipe(days)
-                        offset = -out
-                        animateTo(0f, spring(dampingRatio = 0.85f, stiffness = Spring.StiffnessMediumLow))
-                    }
-                },
-                onDragCancel = { settle = scope.launch { animateTo(0f, spring()) } },
-            ) { change, dragAmount ->
-                change.consume()
-                val resist = if (offset + dragAmount < 0 && !canGo) 0.25f else 1f
-                offset += dragAmount * resist
-            }
+                    val out = size.width / 3f * if (days > 0) -1 else 1
+                    animateTo(out, tween(110))
+                    haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
+                    swipe(days)
+                    state.offset = -out
+                    animateTo(0f, spring(dampingRatio = 0.85f, stiffness = Spring.StiffnessMediumLow))
+                }
+            },
+            onDragCancel = { settle = scope.launch { animateTo(0f, spring()) } },
+        ) { change, dragAmount ->
+            change.consume()
+            val resist = if (state.offset + dragAmount < 0 && !canGo) 0.25f else 1f
+            state.offset += dragAmount * resist
         }
-        .graphicsLayer {
-            translationX = offset
-            alpha = 1f - (abs(offset) / size.width * 1.5f).coerceIn(0f, 0.7f)
-        }
+    }
+    return state to gesture
+}
+
+/** Сдвиг за пальцем при свайпе дня: едет вбок и бледнеет. */
+fun Modifier.daySwipeOffset(state: DaySwipeState): Modifier = graphicsLayer {
+    translationX = state.offset
+    alpha = 1f - (abs(state.offset) / size.width * 1.5f).coerceIn(0f, 0.7f)
+}
+
+/** Свайп дня, когда ловит и едет одно и то же (шапка «Сегодня»). */
+@Composable
+fun daySwipeModifier(canGoForward: Boolean, onSwipe: (days: Long) -> Unit): Modifier {
+    val (state, gesture) = rememberDaySwipe(canGoForward, onSwipe)
+    return gesture.daySwipeOffset(state)
 }

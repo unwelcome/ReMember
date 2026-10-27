@@ -65,7 +65,8 @@ import dev.chaik.remember.core.health.DayActivity
 import dev.chaik.remember.core.health.HealthGoals
 import dev.chaik.remember.core.settings.LocalAppSettings
 import dev.chaik.remember.core.ui.components.ScreenScaffold
-import dev.chaik.remember.core.ui.components.daySwipeModifier
+import dev.chaik.remember.core.ui.components.daySwipeOffset
+import dev.chaik.remember.core.ui.components.rememberDaySwipe
 import java.text.NumberFormat
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -131,18 +132,22 @@ fun HealthScreen(onBack: (() -> Unit)?, modifier: Modifier = Modifier) {
                 HealthState.Loading -> Unit
                 HealthState.Ready -> {
                     WeekStrip(viewModel, goals)
-                    // Свайп вбок по дню (заголовок, кольца, цифры) — соседний день
+                    // Свайп вбок по дню (заголовок, кольца, цифры) — соседний день; едет только дата
+                    val (swipe, swipeGesture) = rememberDaySwipe(canGoForward = viewModel.selected.isBefore(LocalDate.now())) { days ->
+                        viewModel.select(viewModel.selected.plusDays(days))
+                    }
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .then(
-                                daySwipeModifier(canGoForward = viewModel.selected.isBefore(LocalDate.now())) { days ->
-                                    viewModel.select(viewModel.selected.plusDays(days))
-                                },
-                            ),
+                            .then(swipeGesture),
                     ) {
-                        DayDetails(viewModel.selected, viewModel.days[viewModel.selected], goals)
+                        DayDetails(
+                            day = viewModel.selected,
+                            activity = viewModel.days[viewModel.selected],
+                            goals = goals,
+                            titleModifier = Modifier.daySwipeOffset(swipe),
+                        )
                     }
                 }
                 HealthState.NoPermission -> Message(
@@ -272,7 +277,7 @@ private fun DayCell(
 
 /** Заголовок дня, большие кольца и три цифры под ними. */
 @Composable
-private fun DayDetails(day: LocalDate, activity: DayActivity?, goals: HealthGoals) {
+private fun DayDetails(day: LocalDate, activity: DayActivity?, goals: HealthGoals, titleModifier: Modifier = Modifier) {
     val today = LocalDate.now()
     val locale = Locale.getDefault()
     val title = if (day == today) {
@@ -285,7 +290,7 @@ private fun DayDetails(day: LocalDate, activity: DayActivity?, goals: HealthGoal
         text = title,
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.Bold,
-        modifier = Modifier.padding(top = 12.dp, bottom = 20.dp),
+        modifier = titleModifier.padding(top = 12.dp, bottom = 20.dp),
     )
     ActivityRings(
         progress = activity?.progress(goals) ?: listOf(0f, 0f, 0f),

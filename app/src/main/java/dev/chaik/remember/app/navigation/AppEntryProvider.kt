@@ -20,6 +20,8 @@ import dev.chaik.remember.feature.health.HealthRoute
 import dev.chaik.remember.feature.health.HealthScreen
 import dev.chaik.remember.feature.more.MoreRoute
 import dev.chaik.remember.feature.more.MoreScreen
+import dev.chaik.remember.feature.network.NetworkRoute
+import dev.chaik.remember.feature.network.NetworkScreen
 import dev.chaik.remember.feature.notes.NotesRoute
 import dev.chaik.remember.feature.notes.NotesScreen
 import dev.chaik.remember.feature.notes.editor.NoteEditorRoute
@@ -93,6 +95,7 @@ fun appEntryProvider(backStack: NavBackStack<NavKey>): (NavKey) -> NavEntry<NavK
         entry<HealthRoute> { HealthScreen(onBack = backFor(it)) }
         entry<GymRoute> { GymScreen(onBack = backFor(it), onOpen = { backStack.add(WorkoutRoute(it)) }) }
         entry<WorkoutRoute> { WorkoutScreen(route = it, onBack = back) }
+        entry<NetworkRoute> { NetworkScreen(onBack = backFor(it)) }
         entry<SettingsRoute> { SettingsScreen(onBack = back, onOpen = { backStack.add(it) }) }
         entry<RemindersRoute> { RemindersScreen(onBack = back) }
         entry<ProfileRoute> { ProfileScreen(onBack = back) }

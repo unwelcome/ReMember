@@ -41,6 +41,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.health.connect.client.PermissionController
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
 import dev.chaik.remember.R
 import dev.chaik.remember.app.navigation.Destination
@@ -48,6 +49,8 @@ import dev.chaik.remember.app.navigation.islandTabs
 import dev.chaik.remember.app.navigation.moreTiles
 import dev.chaik.remember.app.ui.FloatingIsland
 import dev.chaik.remember.appContainer
+import dev.chaik.remember.core.network.MobileLimitOptions
+import dev.chaik.remember.core.network.TestSecondsOptions
 import dev.chaik.remember.core.settings.LocalAppSettings
 import dev.chaik.remember.core.settings.StepsCheckOptions
 import dev.chaik.remember.core.settings.WELCOME_MAX
@@ -182,6 +185,9 @@ fun PagesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
 
             SettingsGroupTitle(stringResource(R.string.section_health))
             SettingsCard { StepsGoalSettings() }
+
+            SettingsGroupTitle(stringResource(R.string.section_network))
+            SettingsCard { NetworkTestSettings() }
 
             TextButton(
                 onClick = { store.update { it.copy(islandTabs = emptyList(), moreOrder = emptyList()) } },
@@ -349,5 +355,48 @@ private fun StepsGoalSettings() {
             }
         }
     }
+}
+
+/** Замер скорости на странице «Сеть»: сколько длится и сколько мобильного трафика можно потратить. */
+@Composable
+private fun NetworkTestSettings() {
+    val store = LocalContext.current.appContainer.networkSettings
+    val settings by store.settings.collectAsStateWithLifecycle()
+
+    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(stringResource(R.string.pages_network_seconds), style = MaterialTheme.typography.bodyLarge)
+        Text(
+            text = stringResource(R.string.pages_network_seconds_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        SettingsDropdown(
+            selected = settings.testSeconds,
+            options = TestSecondsOptions.map { it to stringResource(R.string.pages_network_seconds_value, it) },
+            onSelect = { seconds -> store.update { it.copy(testSeconds = seconds) } },
+        )
+        Text(
+            text = stringResource(R.string.pages_network_limit),
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.padding(top = 8.dp),
+        )
+        Text(
+            text = stringResource(R.string.pages_network_limit_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        SettingsDropdown(
+            selected = settings.mobileLimitMb,
+            options = MobileLimitOptions.map { mb ->
+                mb to if (mb == 0) stringResource(R.string.pages_network_limit_off) else stringResource(R.string.pages_network_limit_value, mb)
+            },
+            onSelect = { mb -> store.update { it.copy(mobileLimitMb = mb) } },
+        )
+    }
+    SettingsSwitchRow(
+        title = stringResource(R.string.pages_network_ask),
+        checked = settings.askOnMobile,
+        onChange = { on -> store.update { it.copy(askOnMobile = on) } },
+    )
 }
 

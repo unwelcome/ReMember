@@ -15,6 +15,8 @@ import dev.chaik.remember.core.database.ReMemberDatabase
 import dev.chaik.remember.core.health.HealthConnectSource
 import dev.chaik.remember.core.health.HealthGoalsStore
 import dev.chaik.remember.core.health.StepsGoalWatcher
+import dev.chaik.remember.core.network.NetworkMonitor
+import dev.chaik.remember.core.network.NetworkSettingsStore
 import dev.chaik.remember.core.photos.PhotoLibrary
 import dev.chaik.remember.core.photos.PhotoStorage
 import dev.chaik.remember.core.reminders.Notifier
@@ -79,6 +81,10 @@ class AppContainer(context: Context) {
     val workoutRepository by lazy { WorkoutRepository(database) }
 
     val health by lazy { HealthConnectSource(appContext) }
+
+    /** Страница «Сеть»: настройки замера и текущая сеть. */
+    val networkSettings by lazy { NetworkSettingsStore(appContext) }
+    val networkMonitor by lazy { NetworkMonitor(appContext) }
     val healthGoals by lazy { HealthGoalsStore(appContext) }
 
     val reminderSettings by lazy { ReminderSettingsStore(appContext) }

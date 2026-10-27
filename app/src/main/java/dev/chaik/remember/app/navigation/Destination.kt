@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MonitorHeart
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.TaskAlt
 import androidx.compose.material.icons.filled.ViewAgenda
 import androidx.compose.material.icons.filled.WbSunny
@@ -23,6 +24,7 @@ import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.material.icons.outlined.MonitorHeart
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Speed
 import androidx.compose.material.icons.outlined.TaskAlt
 import androidx.compose.material.icons.outlined.ViewAgenda
 import androidx.compose.material.icons.outlined.WbSunny
@@ -36,6 +38,7 @@ import dev.chaik.remember.feature.finance.FinanceRoute
 import dev.chaik.remember.feature.gym.GymRoute
 import dev.chaik.remember.feature.health.HealthRoute
 import dev.chaik.remember.feature.more.MoreRoute
+import dev.chaik.remember.feature.network.NetworkRoute
 import dev.chaik.remember.feature.notes.NotesRoute
 import dev.chaik.remember.feature.search.SearchRoute
 import dev.chaik.remember.feature.settings.SettingsRoute
@@ -65,6 +68,7 @@ enum class Destination(
     Finance(R.string.section_finance, R.string.section_finance_hint, Icons.Outlined.AccountBalanceWallet, Icons.Filled.AccountBalanceWallet, FinanceRoute),
     Health(R.string.section_health, R.string.section_health_hint, Icons.Outlined.MonitorHeart, Icons.Filled.MonitorHeart, HealthRoute),
     Gym(R.string.section_gym, R.string.section_gym_hint, Icons.Outlined.FitnessCenter, Icons.Filled.FitnessCenter, GymRoute),
+    Network(R.string.section_network, R.string.section_network_hint, Icons.Outlined.Speed, Icons.Filled.Speed, NetworkRoute),
 
     /** Всегда последняя плитка «Ещё», во вкладки не ставится. */
     Settings(R.string.section_settings, R.string.section_settings_hint, Icons.Outlined.Settings, Icons.Filled.Settings, SettingsRoute),
@@ -84,7 +88,7 @@ enum class Destination(
         val DefaultTabs = listOf(Today, Notes, Tasks, Calendar)
 
         /** Порядок плиток «Ещё» по умолчанию; разделы из островка в «Ещё» не показываются. */
-        val DefaultMoreOrder = listOf(Feed, Search, Stats, Finance, Health, Gym, Today, Notes, Tasks, Calendar)
+        val DefaultMoreOrder = listOf(Feed, Search, Stats, Finance, Health, Gym, Network, Today, Notes, Tasks, Calendar)
     }
 }
 
