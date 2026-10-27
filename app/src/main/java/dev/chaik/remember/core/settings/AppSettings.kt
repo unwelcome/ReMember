@@ -27,6 +27,8 @@ data class AppSettings(
     val islandTabs: List<String> = emptyList(),
     /** Порядок плиток «Ещё» (имена разделов); пусто — по умолчанию. */
     val moreOrder: List<String> = emptyList(),
+    /** На «Сне» — кнопка подставить время по истории использования телефона. */
+    val sleepGuess: Boolean = true,
     /** Как часто проверять шаги ради уведомления о цели, минут; 0 — не проверять. */
     val stepsGoalCheckMinutes: Int = 30,
     /** «Сегодня» при открытии: утром — сон, в остальное время — день; выключено — всегда день. */

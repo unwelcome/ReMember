@@ -40,6 +40,7 @@ class AppSettingsStore(context: Context) {
             islandTabs = list("island_tabs"),
             moreOrder = list("more_order"),
             todayAutoMode = prefs.getBoolean("today_auto_mode", d.todayAutoMode),
+            sleepGuess = prefs.getBoolean("sleep_guess", d.sleepGuess),
             stepsGoalCheckMinutes = prefs.getInt("steps_goal_check", d.stepsGoalCheckMinutes).takeIf { it in StepsCheckOptions } ?: d.stepsGoalCheckMinutes,
             t9Undo = prefs.getBoolean("t9_undo", d.t9Undo),
             t9Line = enumOr(prefs.getString("t9_line", null), d.t9Line),
@@ -65,6 +66,7 @@ class AppSettingsStore(context: Context) {
         putString("island_tabs", s.islandTabs.joinToString(","))
         putString("more_order", s.moreOrder.joinToString(","))
         putBoolean("today_auto_mode", s.todayAutoMode)
+        putBoolean("sleep_guess", s.sleepGuess)
         putInt("steps_goal_check", s.stepsGoalCheckMinutes)
         putBoolean("t9_undo", s.t9Undo)
         putString("t9_line", s.t9Line.name)

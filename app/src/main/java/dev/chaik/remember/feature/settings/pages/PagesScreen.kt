@@ -181,6 +181,12 @@ fun PagesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                     checked = settings.todayAutoMode,
                     onChange = { on -> store.update { it.copy(todayAutoMode = on) } },
                 )
+                SettingsSwitchRow(
+                    title = stringResource(R.string.pages_sleep_guess),
+                    hint = stringResource(R.string.pages_sleep_guess_hint),
+                    checked = settings.sleepGuess,
+                    onChange = { on -> store.update { it.copy(sleepGuess = on) } },
+                )
             }
 
             SettingsGroupTitle(stringResource(R.string.section_health))

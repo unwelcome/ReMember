@@ -16,6 +16,7 @@ import dev.chaik.remember.core.health.HealthConnectSource
 import dev.chaik.remember.core.health.HealthGoalsStore
 import dev.chaik.remember.core.health.StepsGoalWatcher
 import dev.chaik.remember.core.network.NetworkMonitor
+import dev.chaik.remember.core.sleep.PhoneUsageHistory
 import dev.chaik.remember.core.network.NetworkSettingsStore
 import dev.chaik.remember.core.photos.PhotoLibrary
 import dev.chaik.remember.core.photos.PhotoStorage
@@ -81,6 +82,9 @@ class AppContainer(context: Context) {
     val workoutRepository by lazy { WorkoutRepository(database) }
 
     val health by lazy { HealthConnectSource(appContext) }
+
+    /** История использования телефона — подсказка времени сна. */
+    val phoneUsage by lazy { PhoneUsageHistory(appContext) }
 
     /** Страница «Сеть»: настройки замера и текущая сеть. */
     val networkSettings by lazy { NetworkSettingsStore(appContext) }

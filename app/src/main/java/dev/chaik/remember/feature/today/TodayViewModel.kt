@@ -36,7 +36,9 @@ class TodayViewModel(private val container: AppContainer) : ViewModel() {
     val mode: TodayMode get() = container.todaySession.mode
 
     val day = DayController(viewModelScope, container.dayRepository, container.tagRepository, container.photoStorage)
-    val sleep = SleepController(viewModelScope, container.sleepRepository)
+    val sleep = SleepController(viewModelScope, container.sleepRepository, container.phoneUsage) {
+        container.settings.settings.value.sleepGuess
+    }
     val money = MoneyController(viewModelScope, container.moneyRepository)
 
     val isToday: Boolean get() = date == LocalDate.now()

@@ -137,6 +137,10 @@
     <!-- Сон -->
     <string name="sleep_bed">Лёг</string>
     <string name="sleep_wake">Встал</string>
+    <string name="sleep_guess_apply">По телефону: %1$s – %2$s</string>
+    <string name="sleep_guess_allow">Определять время сна по телефону</string>
+    <string name="sleep_guess_allow_hint">Нужен «Доступ к истории использования»: по нему видно, когда вы отложили телефон и когда взяли утром. История не сохраняется и никуда не отправляется</string>
+    <string name="sleep_guess_none">Ночью не нашлось перерыва в использовании телефона дольше 3 часов</string>
     <string name="sleep_not_set">—:—</string>
     <string name="sleep_duration">Спал %1$d ч %2$02d мин</string>
     <string name="sleep_quality">Качество сна</string>
@@ -560,6 +564,8 @@
     <string name="pages_welcome_hint">«Доброе утро» и ваш никнейм на мгновение после входа</string>
     <string name="pages_today_auto">Вкладка по времени суток</string>
     <string name="pages_today_auto_hint">При открытии утром (4:00–11:59) — «Сон», в остальное время — «День». Если выключить — всегда «День»</string>
+    <string name="pages_sleep_guess">Время сна по телефону</string>
+    <string name="pages_sleep_guess_hint">На «Сне» — кнопка подставить, когда вы отложили телефон вечером и взяли утром</string>
     <string name="pages_steps_title">Уведомление о цели по шагам</string>
     <string name="pages_steps_hint">Приложение время от времени смотрит шаги в Health Connect и поздравит, когда дневная цель выполнена. Тихие часы — как у напоминаний</string>
     <string name="pages_steps_off">Выключено</string>

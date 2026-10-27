@@ -137,6 +137,10 @@
     <!-- Sleep -->
     <string name="sleep_bed">Bedtime</string>
     <string name="sleep_wake">Woke up</string>
+    <string name="sleep_guess_apply">From phone: %1$s – %2$s</string>
+    <string name="sleep_guess_allow">Detect sleep time from the phone</string>
+    <string name="sleep_guess_allow_hint">Needs “Usage access”: it shows when you put the phone down and picked it up in the morning. The history isn’t stored or sent anywhere</string>
+    <string name="sleep_guess_none">No break in phone use longer than 3 hours found last night</string>
     <string name="sleep_not_set">—:—</string>
     <string name="sleep_duration">Slept %1$d h %2$02d min</string>
     <string name="sleep_quality">Sleep quality</string>
@@ -534,6 +538,8 @@
     <string name="pages_welcome_hint">“Good morning” and your nickname for a moment after unlocking</string>
     <string name="pages_today_auto">Tab by time of day</string>
     <string name="pages_today_auto_hint">Opens on “Sleep” in the morning (4:00–11:59) and on “Day” the rest of the time. When off — always “Day”</string>
+    <string name="pages_sleep_guess">Sleep time from phone</string>
+    <string name="pages_sleep_guess_hint">On “Sleep” — a button to fill in when you put the phone down at night and picked it up in the morning</string>
     <string name="pages_steps_title">Step goal notification</string>
     <string name="pages_steps_hint">The app checks your steps in Health Connect from time to time and congratulates you once the daily goal is reached. Quiet hours work as for reminders</string>
     <string name="pages_steps_off">Off</string>

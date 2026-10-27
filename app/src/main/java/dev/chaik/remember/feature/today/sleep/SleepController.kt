@@ -7,6 +7,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.text.input.TextFieldValue
 import dev.chaik.remember.core.data.SleepRepository
 import dev.chaik.remember.core.model.SleepEntry
+import dev.chaik.remember.core.sleep.PhoneUsageHistory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
@@ -28,6 +29,9 @@ import java.time.ZoneId
 class SleepController(
     private val scope: CoroutineScope,
     private val repository: SleepRepository,
+    private val usage: PhoneUsageHistory,
+    /** Включена ли подсказка времени сна (Настройки → Страницы). */
+    private val guessEnabled: () -> Boolean,
 ) {
     var bedTime by mutableStateOf<LocalTime?>(null)
     var wakeTime by mutableStateOf<LocalTime?>(null)
@@ -37,6 +41,10 @@ class SleepController(
     var dream by mutableStateOf(TextFieldValue(""))
 
     var isLoaded by mutableStateOf(false)
+        private set
+
+    /** Подсказка времени сна по истории телефона для открытого дня. */
+    var guess by mutableStateOf<SleepGuessState>(SleepGuessState.Off)
         private set
 
     /** Сколько спал; null — не указано время. */
@@ -71,6 +79,32 @@ class SleepController(
             isLoaded = true
         }
         autosaveJob = scope.launch { autosave() }
+        refreshGuess()
+    }
+
+    /** Пересчитать подсказку: при открытии дня и при возвращении в приложение (могли дать доступ). */
+    fun refreshGuess() {
+        val date = date ?: return
+        scope.launch {
+            guess = when {
+                !guessEnabled() -> SleepGuessState.Off
+                !usage.hasAccess() -> SleepGuessState.NoAccess
+                else -> usage.guessSleep(date, zone)?.let { found ->
+                    // До минуты: секунды в поле времени всё равно не видны
+                    SleepGuessState.Found(
+                        bed = found.bed.atZone(zone).toLocalTime().withSecond(0).withNano(0),
+                        wake = found.wake.atZone(zone).toLocalTime().withSecond(0).withNano(0),
+                    )
+                } ?: SleepGuessState.NotFound
+            }
+        }
+    }
+
+    /** Подставить найденное время в поля. */
+    fun applyGuess() {
+        val found = guess as? SleepGuessState.Found ?: return
+        bedTime = found.bed
+        wakeTime = found.wake
     }
 
     @OptIn(FlowPreview::class)
@@ -126,4 +160,18 @@ class SleepController(
     private companion object {
         const val AUTOSAVE_DELAY_MS = 700L
     }
+}
+
+/** Что с подсказкой времени сна. */
+sealed interface SleepGuessState {
+    /** Выключена в настройках. */
+    data object Off : SleepGuessState
+
+    /** Нет доступа к истории использования — предлагаем дать. */
+    data object NoAccess : SleepGuessState
+
+    /** Ночью не нашлось перерыва, похожего на сон. */
+    data object NotFound : SleepGuessState
+
+    data class Found(val bed: LocalTime, val wake: LocalTime) : SleepGuessState
 }

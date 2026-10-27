@@ -7,14 +7,18 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.Bedtime
 import androidx.compose.material.icons.outlined.WbTwilight
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,10 +29,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.chaik.remember.R
+import dev.chaik.remember.appContainer
 import dev.chaik.remember.core.model.Rating
 import dev.chaik.remember.core.ui.components.StarColor
 import dev.chaik.remember.core.ui.components.StarRating
@@ -74,6 +81,7 @@ fun SleepContent(controller: SleepController, modifier: Modifier = Modifier) {
                         modifier = Modifier.align(Alignment.CenterHorizontally),
                     )
                 }
+                SleepGuessRow(controller)
             }
         }
 
@@ -140,6 +148,65 @@ fun SleepContent(controller: SleepController, modifier: Modifier = Modifier) {
 }
 
 private enum class TimeField { Bed, Wake }
+
+/**
+ * Подсказка под полями времени: подставить сон, найденный по истории телефона, или
+ * предложить дать доступ к истории. Если время уже такое же — кнопка не нужна.
+ */
+@Composable
+private fun SleepGuessRow(controller: SleepController) {
+    val context = LocalContext.current
+    val container = context.appContainer
+    // Вернулись из настроек Android (могли дать доступ) или в приложение утром — пересчитать
+    LifecycleResumeEffect(Unit) {
+        controller.refreshGuess()
+        onPauseOrDispose { }
+    }
+    when (val guess = controller.guess) {
+        is SleepGuessState.Found -> if (controller.bedTime != guess.bed || controller.wakeTime != guess.wake) {
+            FilledTonalButton(
+                onClick = controller::applyGuess,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp),
+            ) {
+                Icon(Icons.Outlined.AutoAwesome, null, modifier = Modifier.size(18.dp))
+                Text(
+                    text = stringResource(R.string.sleep_guess_apply, guess.bed.format(TimeFormat), guess.wake.format(TimeFormat)),
+                    modifier = Modifier.padding(start = 8.dp),
+                )
+            }
+        }
+        SleepGuessState.NoAccess -> Column(Modifier.padding(top = 12.dp)) {
+            OutlinedButton(
+                onClick = {
+                    // Экран настроек Android — не повод блокировать приложение
+                    container.appLock.allowExternal()
+                    context.startActivity(container.phoneUsage.accessSettingsIntent())
+                },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Icon(Icons.Outlined.AutoAwesome, null, modifier = Modifier.size(18.dp))
+                Text(stringResource(R.string.sleep_guess_allow), modifier = Modifier.padding(start = 8.dp))
+            }
+            Text(
+                text = stringResource(R.string.sleep_guess_allow_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp),
+            )
+        }
+        SleepGuessState.NotFound -> if (controller.bedTime == null && controller.wakeTime == null) {
+            Text(
+                text = stringResource(R.string.sleep_guess_none),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 12.dp),
+            )
+        }
+        SleepGuessState.Off -> Unit
+    }
+}
 
 @Composable
 private fun TimeButton(
