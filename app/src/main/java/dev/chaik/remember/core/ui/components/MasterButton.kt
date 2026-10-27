@@ -42,6 +42,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.material3.ColorScheme
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.TransformOrigin
@@ -83,10 +85,28 @@ private val ItemSize = 47.dp
 private val HoverGrow = 12.dp
 private val DividerWidth = 2.dp
 
-/** Цвета веера: очень тёмный синий, сектор под пальцем — чуть светлее, разделители — синие. */
-private val FanColor = Color(0xFF0A1330)
-private val FanHoverColor = Color(0xFF1B2B5E)
-private val DividerColor = Color(0xFF2E4596)
+/**
+ * Цвета веера — от фона темы, без акцента: веер темнее фона, а в AMOLED (фон чисто чёрный,
+ * темнее некуда) — светлее. Сектор под пальцем — чуть ближе к цвету текста, разделители — бледный текст.
+ */
+private class FanColors(val ring: Color, val hover: Color, val divider: Color)
+
+private fun fanColors(scheme: ColorScheme): FanColors {
+    val background = scheme.surface
+    val ring = when {
+        background.luminance() < AMOLED_LUMINANCE -> lerp(background, scheme.onSurface, 0.12f)
+        background.luminance() < 0.5f -> lerp(background, Color.Black, 0.35f)
+        else -> lerp(background, Color.Black, 0.10f)
+    }
+    return FanColors(
+        ring = ring.copy(alpha = 0.96f),
+        hover = lerp(ring, scheme.onSurface, 0.14f).copy(alpha = 0.98f),
+        divider = scheme.onSurface.copy(alpha = 0.18f),
+    )
+}
+
+/** Фон темнее этого — чисто чёрный (AMOLED). */
+private const val AMOLED_LUMINANCE = 0.01f
 
 /** Пункты стоят на 180°…90°; сектора выступают на полшага за края — как на макете. */
 private const val FIRST_DEGREES = 180.0
@@ -172,9 +192,10 @@ fun <T> BoxScope.MasterButton(
 
     // Меню поверх содержимого: только пока открыто или анимируется
     if (progress.value > 0f || open) {
-        val ringColor = FanColor.copy(alpha = 0.94f)
-        val hoverColor = FanHoverColor.copy(alpha = 0.97f)
-        val dividerColor = DividerColor
+        val fan = fanColors(MaterialTheme.colorScheme)
+        val ringColor = fan.ring
+        val hoverColor = fan.hover
+        val dividerColor = fan.divider
         val growth = currentItems.indices.map { index ->
             animateFloatAsState(
                 targetValue = if (hovered == index && currentItems[index].enabled) 1f else 0f,
@@ -414,7 +435,8 @@ private fun <T> FanItem(
             text = item.label,
             fontSize = 9.sp,
             lineHeight = 10.sp,
-            color = if (item.enabled) Color.White else Color.White.copy(alpha = 0.45f),
+            // Подпись лежит на веере — цвет текста темы, на светлой теме тёмный
+            color = if (item.enabled) colors.onSurface else colors.onSurface.copy(alpha = 0.45f),
             maxLines = 1,
             // Подпись вплотную к кружку
             modifier = Modifier.offset(y = (-1).dp),
