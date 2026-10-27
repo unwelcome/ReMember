@@ -398,6 +398,9 @@
     <string name="gym_time_range">Time: %1$s – %2$s</string>
     <string name="gym_weight_range">Weight: %1$s – %2$s</string>
     <string name="channel_workout">Gym workout</string>
+    <string name="channel_health">Step goal</string>
+    <string name="notify_steps_title">Step goal reached!</string>
+    <string name="notify_steps_text">%1$s steps today, goal %2$s</string>
     <string name="channel_workout_live">Workout in progress</string>
     <string name="notify_workout_running">Workout #%1$d</string>
     <string name="notify_workout_running_text">Tap to log exercises</string>
@@ -473,6 +476,20 @@
     <string name="pages_welcome_hint">“Good morning” and your nickname for a moment after unlocking</string>
     <string name="pages_today_auto">Tab by time of day</string>
     <string name="pages_today_auto_hint">Opens on “Sleep” in the morning (4:00–11:59) and on “Day” the rest of the time. When off — always “Day”</string>
+    <string name="pages_steps_title">Step goal notification</string>
+    <string name="pages_steps_hint">The app checks your steps in Health Connect from time to time and congratulates you once the daily goal is reached. Quiet hours work as for reminders</string>
+    <string name="pages_steps_off">Off</string>
+    <string name="pages_steps_permission">Health Connect needs to allow reading steps in the background — otherwise the check sees nothing</string>
+    <string name="pages_steps_allow">Allow</string>
+    <string name="pages_steps_unsupported">Health Connect on this phone can’t share data in the background — the notification won’t come</string>
+    <plurals name="pages_steps_every_minutes">
+        <item quantity="one">Every %1$d minute</item>
+        <item quantity="other">Every %1$d minutes</item>
+    </plurals>
+    <plurals name="pages_steps_every_hours">
+        <item quantity="one">Every hour</item>
+        <item quantity="other">Every %1$d hours</item>
+    </plurals>
     <string name="pages_welcome_duration">Duration</string>
     <string name="pages_welcome_seconds">%1$.1f s</string>
     <string name="welcome_morning">Good morning</string>

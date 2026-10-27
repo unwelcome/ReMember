@@ -27,6 +27,8 @@ data class AppSettings(
     val islandTabs: List<String> = emptyList(),
     /** Порядок плиток «Ещё» (имена разделов); пусто — по умолчанию. */
     val moreOrder: List<String> = emptyList(),
+    /** Как часто проверять шаги ради уведомления о цели, минут; 0 — не проверять. */
+    val stepsGoalCheckMinutes: Int = 30,
     /** «Сегодня» при открытии: утром — сон, в остальное время — день; выключено — всегда день. */
     val todayAutoMode: Boolean = true,
     /** Слово, заменённое Т9, можно вернуть тапом по нему. */
@@ -82,6 +84,9 @@ enum class BackSwipe { RIGHT_TO_LEFT, LEFT_TO_RIGHT, BOTH }
 const val WELCOME_MIN = 300
 const val WELCOME_MAX = 2000
 const val WELCOME_STEP = 100
+
+/** Варианты частоты проверки шагов, минут; 0 — выключено. */
+val StepsCheckOptions = listOf(0, 15, 30, 60, 120)
 
 /** Вид линии под словом, заменённым Т9. Имя хранится в настройках. */
 enum class UnderlineStyle { NONE, SOLID, DASHED, DOTTED }

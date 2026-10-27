@@ -172,6 +172,7 @@ private fun MainScaffold() {
             is OpenTarget.Calendar -> Destination.Calendar
             is OpenTarget.Task -> Destination.Tasks
             is OpenTarget.Workout -> Destination.Gym
+            OpenTarget.Health -> Destination.Health
         }
         // Раздел во вкладке — открываем вкладку; иначе — «Ещё» и раздел поверх, чтобы «назад» вёл в «Ещё»
         val tab = section.takeIf { it in tabs } ?: Destination.More
@@ -182,6 +183,8 @@ private fun MainScaffold() {
         when (target) {
             is OpenTarget.Task -> stack.add(TaskEditorRoute(target.taskId))
             is OpenTarget.Workout -> stack.add(WorkoutRoute(target.workoutId, target.finish))
+            // Достаточно открыть сам раздел
+            OpenTarget.Health -> Unit
             // День, сон и дату календаря выставит сам экран и обнулит запрос
             else -> return@LaunchedEffect
         }

@@ -422,6 +422,9 @@
     <string name="gym_time_range">Время: %1$s – %2$s</string>
     <string name="gym_weight_range">Вес: %1$s – %2$s</string>
     <string name="channel_workout">Тренировка в зале</string>
+    <string name="channel_health">Цель по шагам</string>
+    <string name="notify_steps_title">Цель по шагам выполнена!</string>
+    <string name="notify_steps_text">Сегодня уже %1$s шагов при цели %2$s</string>
     <string name="channel_workout_live">Идущая тренировка</string>
     <string name="notify_workout_running">Тренировка №%1$d</string>
     <string name="notify_workout_running_text">Нажмите, чтобы записать упражнения</string>
@@ -499,6 +502,24 @@
     <string name="pages_welcome_hint">«Доброе утро» и ваш никнейм на мгновение после входа</string>
     <string name="pages_today_auto">Вкладка по времени суток</string>
     <string name="pages_today_auto_hint">При открытии утром (4:00–11:59) — «Сон», в остальное время — «День». Если выключить — всегда «День»</string>
+    <string name="pages_steps_title">Уведомление о цели по шагам</string>
+    <string name="pages_steps_hint">Приложение время от времени смотрит шаги в Health Connect и поздравит, когда дневная цель выполнена. Тихие часы — как у напоминаний</string>
+    <string name="pages_steps_off">Выключено</string>
+    <string name="pages_steps_permission">Нужно разрешение Health Connect читать шаги в фоне — без него проверка ничего не увидит</string>
+    <string name="pages_steps_allow">Разрешить</string>
+    <string name="pages_steps_unsupported">Health Connect на этом телефоне не отдаёт данные в фоне — уведомление приходить не будет</string>
+    <plurals name="pages_steps_every_minutes">
+        <item quantity="one">Раз в %1$d минуту</item>
+        <item quantity="few">Раз в %1$d минуты</item>
+        <item quantity="many">Раз в %1$d минут</item>
+        <item quantity="other">Раз в %1$d минуты</item>
+    </plurals>
+    <plurals name="pages_steps_every_hours">
+        <item quantity="one">Раз в %1$d час</item>
+        <item quantity="few">Раз в %1$d часа</item>
+        <item quantity="many">Раз в %1$d часов</item>
+        <item quantity="other">Раз в %1$d часа</item>
+    </plurals>
     <string name="pages_welcome_duration">Длительность</string>
     <string name="pages_welcome_seconds">%1$.1f с</string>
     <string name="welcome_morning">Доброе утро</string>

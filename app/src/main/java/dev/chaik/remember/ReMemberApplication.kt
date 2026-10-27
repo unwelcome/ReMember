@@ -11,6 +11,8 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 class ReMemberApplication : Application() {
@@ -64,6 +66,13 @@ class ReMemberApplication : Application() {
                     runCatching { container.reminderScheduler.check() }
                         .onFailure { Log.w(TAG, "Не удалось пересчитать напоминания", it) }
                 }
+        }
+        container.appScope.launch {
+            // Проверка шагов ради поздравления с целью: ставим при запуске и при смене частоты в настройках
+            container.settings.settings
+                .map { it.stepsGoalCheckMinutes }
+                .distinctUntilChanged()
+                .collect { container.stepsGoalWatcher.schedule() }
         }
         container.appScope.launch {
             // Не мешаем запуску: уборка — через пару секунд после старта

@@ -25,6 +25,7 @@ enum class NotificationType(val id: String, @param:StringRes val title: Int) {
     TASKS("tasks", R.string.channel_tasks),
     SUMMARY("summary", R.string.channel_summary),
     WORKOUT("workout", R.string.channel_workout),
+    HEALTH("health", R.string.channel_health),
 }
 
 /** Готовое к показу уведомление. */

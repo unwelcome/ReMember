@@ -3,6 +3,7 @@ package dev.chaik.remember.core.health
 import android.content.Context
 import android.util.Log
 import androidx.health.connect.client.HealthConnectClient
+import androidx.health.connect.client.HealthConnectFeatures
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
 import androidx.health.connect.client.records.ExerciseSessionRecord
@@ -41,6 +42,30 @@ class HealthConnectSource(private val context: Context) {
     private val client by lazy { HealthConnectClient.getOrCreate(context) }
 
     suspend fun hasPermissions(): Boolean = client.permissionController.getGrantedPermissions().containsAll(permissions)
+
+    /** Разрешение читать, пока приложение закрыто, — для уведомления о цели по шагам. */
+    val backgroundPermissions: Set<String> = setOf(
+        HealthPermission.getReadPermission(StepsRecord::class),
+        HealthPermission.PERMISSION_READ_HEALTH_DATA_IN_BACKGROUND,
+    )
+
+    /** Умеет ли Health Connect на этом телефоне отдавать данные в фоне. */
+    fun backgroundReadSupported(): Boolean =
+        availability == HealthAvailability.AVAILABLE &&
+            client.features.getFeatureStatus(HealthConnectFeatures.FEATURE_READ_HEALTH_DATA_IN_BACKGROUND) ==
+            HealthConnectFeatures.FEATURE_STATUS_AVAILABLE
+
+    suspend fun hasBackgroundPermission(): Boolean =
+        client.permissionController.getGrantedPermissions().containsAll(backgroundPermissions)
+
+    /** Шаги за сегодня до текущего момента — только сводка, без разбора записей. */
+    suspend fun stepsToday(zone: ZoneId = ZoneId.systemDefault()): Long {
+        val start = LocalDate.now(zone).atStartOfDay(zone).toInstant()
+        val totals = client.aggregate(
+            AggregateRequest(metrics = setOf(StepsRecord.COUNT_TOTAL), timeRangeFilter = TimeRangeFilter.between(start, Instant.now())),
+        )
+        return totals[StepsRecord.COUNT_TOTAL] ?: 0
+    }
 
     /** Активность за [date]; сегодняшний день — до текущего момента. */
     /** [weightKg] — для оценки калорий, если Health Connect не знает активных калорий. */

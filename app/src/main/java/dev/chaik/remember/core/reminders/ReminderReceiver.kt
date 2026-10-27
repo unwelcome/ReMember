@@ -17,7 +17,13 @@ class ReminderReceiver : BroadcastReceiver() {
         val container = context.appContainer
         container.appScope.launch {
             try {
-                container.reminderScheduler.check()
+                if (intent.action == ACTION_STEPS) {
+                    container.stepsGoalWatcher.check()
+                } else {
+                    container.reminderScheduler.check()
+                    // После перезагрузки и обновления будильник проверки шагов тоже надо поставить заново
+                    container.stepsGoalWatcher.schedule()
+                }
             } catch (e: Exception) {
                 Log.w(TAG, "Не удалось проверить напоминания (${intent.action})", e)
             } finally {
@@ -28,6 +34,7 @@ class ReminderReceiver : BroadcastReceiver() {
 
     companion object {
         const val ACTION_CHECK = "dev.chaik.remember.CHECK_REMINDERS"
+        const val ACTION_STEPS = "dev.chaik.remember.CHECK_STEPS"
         private const val TAG = "Reminders"
     }
 }
