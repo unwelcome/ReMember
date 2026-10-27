@@ -22,7 +22,6 @@ import androidx.compose.material.icons.outlined.Colorize
 import androidx.compose.material.icons.outlined.Wallpaper
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -63,6 +62,7 @@ import dev.chaik.remember.core.ui.components.ScreenScaffold
 import dev.chaik.remember.core.ui.theme.fontFamilyOf
 import dev.chaik.remember.core.ui.theme.preview
 import dev.chaik.remember.feature.settings.SettingsCard
+import dev.chaik.remember.feature.settings.SettingsDropdown
 import dev.chaik.remember.feature.settings.SettingsGroupTitle
 import dev.chaik.remember.feature.settings.SettingsRadioRow
 import dev.chaik.remember.feature.settings.SettingsSwitchRow
@@ -90,22 +90,18 @@ fun PersonalizationScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 .padding(horizontal = 16.dp),
         ) {
             SettingsGroupTitle(stringResource(R.string.appearance_theme))
-            SettingsCard {
-                listOf(
-                    ThemeMode.SYSTEM to R.string.appearance_theme_system,
-                    ThemeMode.LIGHT to R.string.appearance_theme_light,
-                    ThemeMode.DARK to R.string.appearance_theme_dark,
-                    ThemeMode.AMOLED to R.string.appearance_theme_amoled,
-                    ThemeMode.ONE_DARK to R.string.appearance_theme_one_dark,
-                    ThemeMode.NIGHT_OWL to R.string.appearance_theme_night_owl,
-                ).forEach { (mode, label) ->
-                    SettingsRadioRow(
-                        label = stringResource(label),
-                        selected = settings.theme == mode,
-                        onClick = { store.update { it.copy(theme = mode) } },
-                    )
-                }
-            }
+            SettingsDropdown(
+                selected = settings.theme,
+                options = listOf(
+                    ThemeMode.SYSTEM to stringResource(R.string.appearance_theme_system),
+                    ThemeMode.LIGHT to stringResource(R.string.appearance_theme_light),
+                    ThemeMode.DARK to stringResource(R.string.appearance_theme_dark),
+                    ThemeMode.AMOLED to stringResource(R.string.appearance_theme_amoled),
+                    ThemeMode.ONE_DARK to stringResource(R.string.appearance_theme_one_dark),
+                    ThemeMode.NIGHT_OWL to stringResource(R.string.appearance_theme_night_owl),
+                ),
+                onSelect = { mode -> store.update { it.copy(theme = mode) } },
+            )
 
             SettingsGroupTitle(stringResource(R.string.appearance_accent))
             FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -132,32 +128,20 @@ fun PersonalizationScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             }
 
             SettingsGroupTitle(stringResource(R.string.appearance_font))
-            SettingsCard {
-                listOf(
-                    AppFont.SYSTEM to R.string.appearance_font_system,
-                    AppFont.INTER to R.string.appearance_font_inter,
-                    AppFont.NUNITO to R.string.appearance_font_nunito,
-                ).forEach { (font, label) ->
-                    // Название каждого шрифта — им же, чтобы сразу было видно, как он выглядит
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { store.update { it.copy(font = font) } }
-                            .padding(horizontal = 4.dp),
-                    ) {
-                        RadioButton(selected = settings.font == font, onClick = { store.update { it.copy(font = font) } })
-                        Column(Modifier.padding(vertical = 6.dp)) {
-                            Text(stringResource(label), style = MaterialTheme.typography.bodyLarge.copy(fontFamily = fontFamilyOf(font)))
-                            Text(
-                                text = stringResource(R.string.appearance_font_sample),
-                                style = MaterialTheme.typography.bodySmall.copy(fontFamily = fontFamilyOf(font)),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    }
-                }
-            }
+            // Каждый шрифт показан им самим — и в поле, и в списке
+            val fontStyle = MaterialTheme.typography.bodyLarge
+            val sample = stringResource(R.string.appearance_font_sample)
+            SettingsDropdown(
+                selected = settings.font,
+                options = listOf(
+                    AppFont.SYSTEM to stringResource(R.string.appearance_font_system),
+                    AppFont.INTER to stringResource(R.string.appearance_font_inter),
+                    AppFont.NUNITO to stringResource(R.string.appearance_font_nunito),
+                ),
+                onSelect = { font -> store.update { it.copy(font = font) } },
+                itemStyle = { font -> fontStyle.copy(fontFamily = fontFamilyOf(font)) },
+                itemHint = { sample },
+            )
 
             SettingsGroupTitle(stringResource(R.string.appearance_hands))
             SettingsCard {

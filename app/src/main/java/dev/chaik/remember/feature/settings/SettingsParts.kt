@@ -8,6 +8,21 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
@@ -89,3 +104,59 @@ fun SettingsRadioRow(
         }
     }
 }
+
+/**
+ * Выпадающий список настройки: поле с выбранным значением, тап — список вариантов.
+ * [itemStyle] — свой стиль текста для варианта (например, шрифт показывает сам себя),
+ * [itemHint] — вторая строка под названием варианта (тем же стилем, мельче и бледнее).
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun <T> SettingsDropdown(
+    selected: T,
+    options: List<Pair<T, String>>,
+    onSelect: (T) -> Unit,
+    itemStyle: (T) -> TextStyle? = { null },
+    itemHint: (T) -> String? = { null },
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val selectedLabel = options.firstOrNull { it.first == selected }?.second.orEmpty()
+    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
+        OutlinedTextField(
+            value = selectedLabel,
+            onValueChange = {},
+            readOnly = true,
+            textStyle = itemStyle(selected) ?: LocalTextStyle.current,
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            shape = RoundedCornerShape(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+        )
+        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            options.forEach { (value, label) ->
+                DropdownMenuItem(
+                    text = {
+                        val style = itemStyle(value) ?: LocalTextStyle.current
+                        Column(Modifier.padding(vertical = 4.dp)) {
+                            Text(label, style = style)
+                            itemHint(value)?.let { hint ->
+                                Text(
+                                    text = hint,
+                                    style = style.copy(fontSize = MaterialTheme.typography.bodySmall.fontSize),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+                    },
+                    trailingIcon = if (value == selected) ({ Icon(Icons.Outlined.Check, null, tint = MaterialTheme.colorScheme.primary) }) else null,
+                    onClick = {
+                        expanded = false
+                        onSelect(value)
+                    },
+                )
+            }
+        }
+    }
+}
+
