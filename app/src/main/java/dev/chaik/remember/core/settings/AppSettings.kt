@@ -27,6 +27,14 @@ data class AppSettings(
     val islandTabs: List<String> = emptyList(),
     /** Порядок плиток «Ещё» (имена разделов); пусто — по умолчанию. */
     val moreOrder: List<String> = emptyList(),
+    /** Слово, заменённое Т9, можно вернуть тапом по нему. */
+    val t9Undo: Boolean = true,
+    /** Линия под словом, заменённым Т9; [UnderlineStyle.NONE] — без линии (вернуть всё равно можно). */
+    val t9Line: UnderlineStyle = UnderlineStyle.SOLID,
+    /** Толщина линии в десятых долях dp ([T9_WIDTH_MIN]…[T9_WIDTH_MAX]). */
+    val t9LineWidth: Int = 15,
+    /** Непрозрачность линии, % ([T9_ALPHA_MIN]…100). */
+    val t9LineAlpha: Int = 55,
 )
 
 enum class Gender { UNSET, MALE, FEMALE }
@@ -72,6 +80,16 @@ enum class BackSwipe { RIGHT_TO_LEFT, LEFT_TO_RIGHT, BOTH }
 const val WELCOME_MIN = 300
 const val WELCOME_MAX = 2000
 const val WELCOME_STEP = 100
+
+/** Вид линии под словом, заменённым Т9. Имя хранится в настройках. */
+enum class UnderlineStyle { NONE, SOLID, DASHED, DOTTED }
+
+/** Границы толщины (десятые доли dp) и непрозрачности (%) линии под заменой Т9, с шагом ползунков. */
+const val T9_WIDTH_MIN = 10
+const val T9_WIDTH_MAX = 40
+const val T9_WIDTH_STEP = 5
+const val T9_ALPHA_MIN = 20
+const val T9_ALPHA_STEP = 5
 
 /** Шрифт приложения: системный или один из встроенных (res/font, лицензия OFL). */
 enum class AppFont { SYSTEM, INTER, NUNITO }

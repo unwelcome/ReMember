@@ -615,4 +615,18 @@
     <string name="appearance_time_picker">Выбор времени</string>
     <string name="appearance_time_dial">Циферблат</string>
     <string name="appearance_time_input">Ввод цифрами</string>
+    <string name="appearance_t9">Замены Т9</string>
+    <string name="appearance_t9_undo">Возвращать слово после Т9</string>
+    <string name="appearance_t9_undo_hint">Слово, которое заменила клавиатура, можно вернуть: тап по нему — и над ним появится набранный вариант</string>
+    <string name="appearance_t9_line">Линия под заменой</string>
+    <string name="appearance_t9_line_none">Нет</string>
+    <string name="appearance_t9_line_solid">Сплошная</string>
+    <string name="appearance_t9_line_dashed">Пунктир</string>
+    <string name="appearance_t9_line_dotted">Точки</string>
+    <string name="appearance_t9_width">Толщина</string>
+    <string name="appearance_t9_width_value">%1$.1f dp</string>
+    <string name="appearance_t9_alpha">Непрозрачность</string>
+    <string name="appearance_t9_alpha_value">%1$d %%</string>
+    <string name="appearance_t9_sample">Купил молоко и хлеб</string>
+    <string name="appearance_t9_sample_word">молоко</string>
 </resources>

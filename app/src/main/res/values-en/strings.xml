@@ -579,4 +579,18 @@
     <string name="appearance_time_picker">Time picker</string>
     <string name="appearance_time_dial">Clock dial</string>
     <string name="appearance_time_input">Type digits</string>
+    <string name="appearance_t9">Autocorrect</string>
+    <string name="appearance_t9_undo">Undo autocorrect</string>
+    <string name="appearance_t9_undo_hint">A word the keyboard replaced can be restored: tap it to see what you typed</string>
+    <string name="appearance_t9_line">Line under corrected words</string>
+    <string name="appearance_t9_line_none">None</string>
+    <string name="appearance_t9_line_solid">Solid</string>
+    <string name="appearance_t9_line_dashed">Dashed</string>
+    <string name="appearance_t9_line_dotted">Dotted</string>
+    <string name="appearance_t9_width">Thickness</string>
+    <string name="appearance_t9_width_value">%1$.1f dp</string>
+    <string name="appearance_t9_alpha">Opacity</string>
+    <string name="appearance_t9_alpha_value">%1$d%%</string>
+    <string name="appearance_t9_sample">Bought milk and bread</string>
+    <string name="appearance_t9_sample_word">milk</string>
 </resources>

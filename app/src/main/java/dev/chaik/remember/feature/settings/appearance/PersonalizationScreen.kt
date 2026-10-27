@@ -9,8 +9,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -23,9 +23,14 @@ import androidx.compose.material.icons.outlined.Wallpaper
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -40,12 +45,20 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavKey
 import dev.chaik.remember.R
 import dev.chaik.remember.appContainer
+import dev.chaik.remember.core.editor.CorrectionUnderlinePreview
+import dev.chaik.remember.core.editor.correctionLine
 import dev.chaik.remember.core.settings.AccentColor
 import dev.chaik.remember.core.settings.AppFont
 import dev.chaik.remember.core.settings.BackSwipe
 import dev.chaik.remember.core.settings.LocalAppSettings
+import dev.chaik.remember.core.settings.T9_ALPHA_MIN
+import dev.chaik.remember.core.settings.T9_ALPHA_STEP
+import dev.chaik.remember.core.settings.T9_WIDTH_MAX
+import dev.chaik.remember.core.settings.T9_WIDTH_MIN
+import dev.chaik.remember.core.settings.T9_WIDTH_STEP
 import dev.chaik.remember.core.settings.ThemeMode
 import dev.chaik.remember.core.settings.TimePickerStyle
+import dev.chaik.remember.core.settings.UnderlineStyle
 import dev.chaik.remember.core.ui.components.ScreenScaffold
 import dev.chaik.remember.core.ui.theme.fontFamilyOf
 import dev.chaik.remember.core.ui.theme.preview
@@ -53,6 +66,7 @@ import dev.chaik.remember.feature.settings.SettingsCard
 import dev.chaik.remember.feature.settings.SettingsGroupTitle
 import dev.chaik.remember.feature.settings.SettingsRadioRow
 import dev.chaik.remember.feature.settings.SettingsSwitchRow
+import kotlin.math.roundToInt
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -183,6 +197,17 @@ fun PersonalizationScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                     )
                 }
             }
+
+            SettingsGroupTitle(stringResource(R.string.appearance_t9))
+            SettingsCard {
+                SettingsSwitchRow(
+                    title = stringResource(R.string.appearance_t9_undo),
+                    hint = stringResource(R.string.appearance_t9_undo_hint),
+                    checked = settings.t9Undo,
+                    onChange = { on -> store.update { it.copy(t9Undo = on) } },
+                )
+                if (settings.t9Undo) T9LineSettings()
+            }
         }
     }
 
@@ -197,6 +222,71 @@ fun PersonalizationScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
         )
     }
 
+}
+
+/** Линия под заменой Т9: вид, толщина, непрозрачность и образец. Ползунки сохраняются по отпусканию. */
+@Composable
+private fun T9LineSettings() {
+    val store = LocalContext.current.appContainer.settings
+    val settings = LocalAppSettings.current
+    var width by remember(settings.t9LineWidth) { mutableFloatStateOf(settings.t9LineWidth.toFloat()) }
+    var alpha by remember(settings.t9LineAlpha) { mutableFloatStateOf(settings.t9LineAlpha.toFloat()) }
+    val styles = listOf(
+        UnderlineStyle.NONE to R.string.appearance_t9_line_none,
+        UnderlineStyle.SOLID to R.string.appearance_t9_line_solid,
+        UnderlineStyle.DASHED to R.string.appearance_t9_line_dashed,
+        UnderlineStyle.DOTTED to R.string.appearance_t9_line_dotted,
+    )
+
+    Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(stringResource(R.string.appearance_t9_line), style = MaterialTheme.typography.bodyMedium)
+        SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().padding(top = 4.dp)) {
+            styles.forEachIndexed { index, (style, label) ->
+                SegmentedButton(
+                    selected = settings.t9Line == style,
+                    onClick = { store.update { it.copy(t9Line = style) } },
+                    shape = SegmentedButtonDefaults.itemShape(index, styles.size),
+                    icon = {},
+                ) { Text(stringResource(label), maxLines = 1, style = MaterialTheme.typography.labelMedium) }
+            }
+        }
+
+        if (settings.t9Line != UnderlineStyle.NONE) {
+            SliderHeader(stringResource(R.string.appearance_t9_width), stringResource(R.string.appearance_t9_width_value, width.roundToInt() / 10f))
+            Slider(
+                value = width,
+                onValueChange = { width = it },
+                onValueChangeFinished = { store.update { it.copy(t9LineWidth = width.roundToInt()) } },
+                valueRange = T9_WIDTH_MIN.toFloat()..T9_WIDTH_MAX.toFloat(),
+                steps = (T9_WIDTH_MAX - T9_WIDTH_MIN) / T9_WIDTH_STEP - 1,
+            )
+            SliderHeader(stringResource(R.string.appearance_t9_alpha), stringResource(R.string.appearance_t9_alpha_value, alpha.roundToInt()))
+            Slider(
+                value = alpha,
+                onValueChange = { alpha = it },
+                onValueChangeFinished = { store.update { it.copy(t9LineAlpha = alpha.roundToInt()) } },
+                valueRange = T9_ALPHA_MIN.toFloat()..100f,
+                steps = (100 - T9_ALPHA_MIN) / T9_ALPHA_STEP - 1,
+            )
+        }
+
+        // Образец — сразу с тем, что на ползунках, ещё до отпускания
+        CorrectionUnderlinePreview(
+            text = stringResource(R.string.appearance_t9_sample),
+            word = stringResource(R.string.appearance_t9_sample_word),
+            line = correctionLine(settings.copy(t9LineWidth = width.roundToInt(), t9LineAlpha = alpha.roundToInt())),
+            style = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
+            modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
+        )
+    }
+}
+
+@Composable
+private fun SliderHeader(title: String, value: String) {
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
+        Text(title, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+        Text(value, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+    }
 }
 
 @Composable

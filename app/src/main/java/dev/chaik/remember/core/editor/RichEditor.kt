@@ -73,10 +73,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.automirrored.outlined.Undo
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
@@ -91,6 +87,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import dev.chaik.remember.R
+import dev.chaik.remember.core.settings.LocalAppSettings
 import java.io.File
 import kotlin.math.roundToInt
 
@@ -206,15 +203,18 @@ private fun TextBlockField(
         bringIntoView.bringIntoView(cursor.copy(top = cursor.top - below / 4, bottom = cursor.bottom + below))
     }
 
-    // Слова, заменённые Т9: подчёркнуты, тап по такому слову — окошко «вернуть как было»
+    // Слова, заменённые Т9: подчёркнуты, тап по такому слову — окошко «вернуть как было».
+    // Вид линии и сама возможность — в «Персонализации»
+    val settings = LocalAppSettings.current
+    val undoEnabled = settings.t9Undo
     val corrections by remember(block) {
         derivedStateOf { block.corrections.filter { it.isValidIn(block.value.text) } }
     }
     var shownCorrection by remember { mutableStateOf<AutoCorrection?>(null) }
-    LaunchedEffect(block.value.text) { shownCorrection = null }
-    val underline = MaterialTheme.colorScheme.primary.copy(alpha = 0.55f)
+    LaunchedEffect(block.value.text, undoEnabled) { shownCorrection = null }
+    val underline = correctionLine(settings)
 
-    SmartTextInput(onAutoCorrect = { state.onAutoCorrect(block, it) }) {
+    SmartTextInput(onAutoCorrect = { if (undoEnabled) state.onAutoCorrect(block, it) }) {
         BasicTextField(
             value = block.value,
             onValueChange = { state.onTextChange(block, it) },
@@ -235,10 +235,11 @@ private fun TextBlockField(
                 }
                 .drawBehind {
                     val result = layout ?: return@drawBehind
-                    corrections.forEach { drawCorrectionUnderline(result, it, underline) }
+                    if (!undoEnabled || underline == null) return@drawBehind
+                    corrections.forEach { drawCorrectionUnderline(result, it.start, it.end, underline) }
                 }
                 .onCorrectionTap(layout = { layout }) { offset ->
-                    shownCorrection = corrections.firstOrNull { offset in it.start..it.end }
+                    if (undoEnabled) shownCorrection = corrections.firstOrNull { offset in it.start..it.end }
                 },
             decorationBox = { inner ->
                 Box {
@@ -262,21 +263,6 @@ private fun TextBlockField(
                 }
             },
         )
-    }
-}
-
-/** Тонкая линия под словом, заменённым Т9 (слово может переноситься на следующую строку). */
-private fun DrawScope.drawCorrectionUnderline(layout: TextLayoutResult, correction: AutoCorrection, color: Color) {
-    val stroke = 1.5.dp.toPx()
-    val gap = 2.dp.toPx()
-    for (line in layout.getLineForOffset(correction.start)..layout.getLineForOffset(correction.end - 1)) {
-        val from = maxOf(correction.start, layout.getLineStart(line))
-        val to = minOf(correction.end, layout.getLineEnd(line, visibleEnd = true))
-        if (from >= to) continue
-        val left = layout.getBoundingBox(from).left
-        val right = layout.getBoundingBox(to - 1).right
-        val y = layout.getLineBaseline(line) + gap + stroke / 2
-        drawLine(color, Offset(minOf(left, right), y), Offset(maxOf(left, right), y), strokeWidth = stroke, cap = StrokeCap.Round)
     }
 }
 

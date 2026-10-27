@@ -39,6 +39,10 @@ class AppSettingsStore(context: Context) {
             welcomeMillis = prefs.getInt("welcome_millis", d.welcomeMillis).coerceIn(WELCOME_MIN, WELCOME_MAX),
             islandTabs = list("island_tabs"),
             moreOrder = list("more_order"),
+            t9Undo = prefs.getBoolean("t9_undo", d.t9Undo),
+            t9Line = enumOr(prefs.getString("t9_line", null), d.t9Line),
+            t9LineWidth = prefs.getInt("t9_line_width", d.t9LineWidth).coerceIn(T9_WIDTH_MIN, T9_WIDTH_MAX),
+            t9LineAlpha = prefs.getInt("t9_line_alpha", d.t9LineAlpha).coerceIn(T9_ALPHA_MIN, 100),
         )
     }
 
@@ -58,6 +62,10 @@ class AppSettingsStore(context: Context) {
         putInt("welcome_millis", s.welcomeMillis)
         putString("island_tabs", s.islandTabs.joinToString(","))
         putString("more_order", s.moreOrder.joinToString(","))
+        putBoolean("t9_undo", s.t9Undo)
+        putString("t9_line", s.t9Line.name)
+        putInt("t9_line_width", s.t9LineWidth)
+        putInt("t9_line_alpha", s.t9LineAlpha)
     }
 
     private fun list(key: String): List<String> =
