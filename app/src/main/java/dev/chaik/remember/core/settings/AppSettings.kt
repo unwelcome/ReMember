@@ -27,6 +27,8 @@ data class AppSettings(
     val islandTabs: List<String> = emptyList(),
     /** Порядок плиток «Ещё» (имена разделов); пусто — по умолчанию. */
     val moreOrder: List<String> = emptyList(),
+    /** «Сегодня» при открытии: утром — сон, в остальное время — день; выключено — всегда день. */
+    val todayAutoMode: Boolean = true,
     /** Слово, заменённое Т9, можно вернуть тапом по нему. */
     val t9Undo: Boolean = true,
     /** Линия под словом, заменённым Т9; [UnderlineStyle.NONE] — без линии (вернуть всё равно можно). */

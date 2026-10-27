@@ -471,6 +471,8 @@
     <string name="pages_start">Launch</string>
     <string name="pages_welcome">Welcome screen</string>
     <string name="pages_welcome_hint">“Good morning” and your nickname for a moment after unlocking</string>
+    <string name="pages_today_auto">Tab by time of day</string>
+    <string name="pages_today_auto_hint">Opens on “Sleep” in the morning (4:00–11:59) and on “Day” the rest of the time. When off — always “Day”</string>
     <string name="pages_welcome_duration">Duration</string>
     <string name="pages_welcome_seconds">%1$.1f s</string>
     <string name="welcome_morning">Good morning</string>

@@ -497,6 +497,8 @@
     <string name="pages_start">Запуск</string>
     <string name="pages_welcome">Приветствие</string>
     <string name="pages_welcome_hint">«Доброе утро» и ваш никнейм на мгновение после входа</string>
+    <string name="pages_today_auto">Вкладка по времени суток</string>
+    <string name="pages_today_auto_hint">При открытии утром (4:00–11:59) — «Сон», в остальное время — «День». Если выключить — всегда «День»</string>
     <string name="pages_welcome_duration">Длительность</string>
     <string name="pages_welcome_seconds">%1$.1f с</string>
     <string name="welcome_morning">Доброе утро</string>

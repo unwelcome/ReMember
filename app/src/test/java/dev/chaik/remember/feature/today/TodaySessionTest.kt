@@ -16,7 +16,7 @@ class TodaySessionTest {
     @Test
     fun `выбранный режим держится, пока не было долгой паузы`() {
         var time = LocalTime.of(8, 0)
-        val session = TodaySession { time }
+        val session = TodaySession(clock = { time })
         assertEquals(TodayMode.Sleep, session.mode)
 
         session.mode = TodayMode.Money
@@ -30,5 +30,23 @@ class TodaySessionTest {
         session.onBackground(now = 1_000_000)
         session.onForeground(now = 1_000_000 + TodaySession.NEW_OPENING_MILLIS)
         assertEquals(TodayMode.Day, session.mode)
+    }
+
+    @Test
+    fun `без выбора по времени — при открытии всегда день`() {
+        var auto = false
+        val session = TodaySession(clock = { LocalTime.of(8, 0) }, autoMode = { auto })
+        assertEquals(TodayMode.Day, session.mode)
+
+        session.mode = TodayMode.Sleep
+        session.onBackground(now = 1)
+        session.onForeground(now = 1 + TodaySession.NEW_OPENING_MILLIS)
+        assertEquals(TodayMode.Day, session.mode)
+
+        // Включили обратно — утром снова сон
+        auto = true
+        session.onBackground(now = 1)
+        session.onForeground(now = 1 + TodaySession.NEW_OPENING_MILLIS)
+        assertEquals(TodayMode.Sleep, session.mode)
     }
 }

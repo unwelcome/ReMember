@@ -39,6 +39,7 @@ class AppSettingsStore(context: Context) {
             welcomeMillis = prefs.getInt("welcome_millis", d.welcomeMillis).coerceIn(WELCOME_MIN, WELCOME_MAX),
             islandTabs = list("island_tabs"),
             moreOrder = list("more_order"),
+            todayAutoMode = prefs.getBoolean("today_auto_mode", d.todayAutoMode),
             t9Undo = prefs.getBoolean("t9_undo", d.t9Undo),
             t9Line = enumOr(prefs.getString("t9_line", null), d.t9Line),
             t9LineWidth = prefs.getInt("t9_line_width", d.t9LineWidth).coerceIn(T9_WIDTH_MIN, T9_WIDTH_MAX),
@@ -62,6 +63,7 @@ class AppSettingsStore(context: Context) {
         putInt("welcome_millis", s.welcomeMillis)
         putString("island_tabs", s.islandTabs.joinToString(","))
         putString("more_order", s.moreOrder.joinToString(","))
+        putBoolean("today_auto_mode", s.todayAutoMode)
         putBoolean("t9_undo", s.t9Undo)
         putString("t9_line", s.t9Line.name)
         putInt("t9_line_width", s.t9LineWidth)

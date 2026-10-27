@@ -63,7 +63,7 @@ class AppContainer(context: Context) {
     var welcomeShown = false
 
     /** Режим страницы «Сегодня» — общий на весь запуск. */
-    val todaySession = TodaySession()
+    val todaySession by lazy { TodaySession(autoMode = { settings.settings.value.todayAutoMode }) }
 
     /** Профиль и персонализация. */
     val settings by lazy { AppSettingsStore(appContext) }

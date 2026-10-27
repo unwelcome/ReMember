@@ -10,10 +10,14 @@ import java.time.LocalTime
  * вкладка, от которой ушли далеко, пересоздаётся, и выбранный режим раньше терялся.
  *
  * При открытии приложения (запуск или возвращение после долгой паузы) режим выбирается
- * по времени: утром — сон, в остальное время — день.
+ * по времени: утром — сон, в остальное время — день. Если это выключено в «Страницах»
+ * ([autoMode] = false) — при открытии всегда день.
  */
-class TodaySession(private val clock: () -> LocalTime = LocalTime::now) {
-    var mode by mutableStateOf(defaultFor(clock()))
+class TodaySession(
+    private val clock: () -> LocalTime = LocalTime::now,
+    private val autoMode: () -> Boolean = { true },
+) {
+    var mode by mutableStateOf(openingMode())
 
     private var leftAt = 0L
 
@@ -24,9 +28,11 @@ class TodaySession(private val clock: () -> LocalTime = LocalTime::now) {
 
     /** Вернулись: после долгой паузы это новое «открытие» — режим снова по времени суток. */
     fun onForeground(now: Long = System.currentTimeMillis()) {
-        if (leftAt > 0 && now - leftAt >= NEW_OPENING_MILLIS) mode = defaultFor(clock())
+        if (leftAt > 0 && now - leftAt >= NEW_OPENING_MILLIS) mode = openingMode()
         leftAt = 0
     }
+
+    private fun openingMode(): TodayMode = if (autoMode()) defaultFor(clock()) else TodayMode.Day
 
     companion object {
         /** Пауза, после которой возвращение считается новым открытием приложения. */

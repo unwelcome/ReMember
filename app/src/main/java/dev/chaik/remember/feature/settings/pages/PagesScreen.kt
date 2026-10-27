@@ -160,6 +160,17 @@ fun PagesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 }
             }
 
+            // Настройки самой страницы «Сегодня» — отдельным разделом с её названием
+            SettingsGroupTitle(stringResource(R.string.tab_today))
+            SettingsCard {
+                SettingsSwitchRow(
+                    title = stringResource(R.string.pages_today_auto),
+                    hint = stringResource(R.string.pages_today_auto_hint),
+                    checked = settings.todayAutoMode,
+                    onChange = { on -> store.update { it.copy(todayAutoMode = on) } },
+                )
+            }
+
             TextButton(
                 onClick = { store.update { it.copy(islandTabs = emptyList(), moreOrder = emptyList()) } },
                 modifier = Modifier.align(Alignment.CenterHorizontally),
