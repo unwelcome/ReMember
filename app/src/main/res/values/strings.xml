@@ -620,7 +620,7 @@
     <string name="data_gallery_hint">Галерея фото из записей и заметок</string>
     <string name="gallery_empty">Фото пока нет — они появятся здесь, когда вы добавите их в запись или заметку</string>
     <string name="gallery_added">Добавлено %1$s</string>
-    <string name="gallery_unused">Пока не стоит ни в одной записи</string>
+    <string name="gallery_unused">Не стоит ни в одной записи — скоро удалится само</string>
     <string name="gallery_day">Запись дня · %1$s</string>
     <string name="gallery_note">Заметка · %1$s</string>
     <string name="gallery_untitled">Без названия</string>

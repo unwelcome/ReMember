@@ -21,7 +21,7 @@ import java.util.UUID
 import kotlin.math.max
 import kotlin.math.roundToInt
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.toJavaDuration
 
 /**
@@ -81,10 +81,11 @@ class PhotoStorage(
 
     /**
      * Удалить фото, на которые больше не ссылается ни одна запись.
-     * [olderThan] — запас, чтобы не тронуть только что добавленные, ещё не сохранённые фото.
+     * [olderThan] — запас, чтобы не тронуть только что добавленное, ещё не сохранённое фото:
+     * запись сохраняется меньше чем через секунду после правки, так что минут хватает с лихвой.
      * Возвращает количество удалённых.
      */
-    suspend fun cleanupUnreferenced(olderThan: Duration = 1.days): Int = withContext(Dispatchers.IO) {
+    suspend fun cleanupUnreferenced(olderThan: Duration = UNUSED_GRACE): Int = withContext(Dispatchers.IO) {
         val orphans = photoDao.unreferencedBefore(Instant.now() - olderThan.toJavaDuration())
         if (orphans.isEmpty()) return@withContext 0
         photoDao.delete(orphans.map { it.id })
@@ -154,12 +155,15 @@ class PhotoStorage(
         check(temp.renameTo(target)) { "Не удалось сохранить фото" }
     }
 
-    private companion object {
-        const val MAX_SIDE = 2560
-        const val THUMB_SIDE = 480
-        const val PHOTO_QUALITY = 85
-        const val THUMB_QUALITY = 75
-        const val EXPORT_QUALITY = 95
+    companion object {
+        /** Столько живёт фото, которое ни в одной записи не стоит, — потом удаляется само. */
+        val UNUSED_GRACE: Duration = 10.minutes
+
+        private const val MAX_SIDE = 2560
+        private const val THUMB_SIDE = 480
+        private const val PHOTO_QUALITY = 85
+        private const val THUMB_QUALITY = 75
+        private const val EXPORT_QUALITY = 95
     }
 }
 

@@ -30,6 +30,9 @@ class ReMemberApplication : Application() {
                 override fun onStop(owner: LifecycleOwner) {
                     container.appLock.onBackground()
                     container.todaySession.onBackground()
+                    // Ушли из приложения — заодно убрать фото, которые убрали из записей.
+                    // Чуть ждём: открытые записи сохраняются при уходе в фон
+                    cleanupPhotos(afterMs = BACKGROUND_CLEANUP_DELAY_MS)
                 }
 
                 // Вернулись после долгой паузы — «Сегодня» снова в режиме по времени суток
@@ -74,9 +77,14 @@ class ReMemberApplication : Application() {
                 .distinctUntilChanged()
                 .collect { container.stepsGoalWatcher.schedule() }
         }
+        // Не мешаем запуску: уборка — через пару секунд после старта
+        cleanupPhotos(afterMs = STARTUP_CLEANUP_DELAY_MS)
+    }
+
+    /** Удалить фото, которые ни в одной записи больше не стоят (см. PhotoStorage.UNUSED_GRACE). */
+    private fun cleanupPhotos(afterMs: Long) {
         container.appScope.launch {
-            // Не мешаем запуску: уборка — через пару секунд после старта
-            delay(3_000)
+            delay(afterMs)
             runCatching { container.photoStorage.cleanupUnreferenced() }
                 .onSuccess { if (it > 0) Log.i(TAG, "Удалено фото без ссылок: $it") }
                 .onFailure { Log.w(TAG, "Уборка фото не удалась", it) }
@@ -88,6 +96,8 @@ class ReMemberApplication : Application() {
         const val PREFS = "app_state"
         const val KEY_CATEGORY_DEFAULTS = "category_defaults_version"
         const val RESCHEDULE_DEBOUNCE_MS = 1_000L
+        const val STARTUP_CLEANUP_DELAY_MS = 3_000L
+        const val BACKGROUND_CLEANUP_DELAY_MS = 2_000L
     }
 }
 

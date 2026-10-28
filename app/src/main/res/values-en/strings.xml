@@ -588,7 +588,7 @@
     <string name="data_gallery_hint">Gallery of photos from entries and notes</string>
     <string name="gallery_empty">No photos yet — they appear here once you add them to an entry or note</string>
     <string name="gallery_added">Added %1$s</string>
-    <string name="gallery_unused">Not used in any entry yet</string>
+    <string name="gallery_unused">Not used in any entry — will be removed automatically soon</string>
     <string name="gallery_day">Day entry · %1$s</string>
     <string name="gallery_note">Note · %1$s</string>
     <string name="gallery_untitled">Untitled</string>
