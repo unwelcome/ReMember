@@ -559,7 +559,7 @@ private fun PhotoActions(
                     Icon(Icons.Outlined.Fullscreen, stringResource(R.string.editor_photo_open))
                 }
                 FilledTonalIconButton(onClick = { state.removePhotoAt(block.key, state.selectedPhotoIndex) }) {
-                    Icon(Icons.Outlined.Delete, stringResource(R.string.editor_photo_delete))
+                    Icon(Icons.Outlined.Delete, stringResource(R.string.editor_photo_delete), tint = MaterialTheme.colorScheme.error)
                 }
             }
         }

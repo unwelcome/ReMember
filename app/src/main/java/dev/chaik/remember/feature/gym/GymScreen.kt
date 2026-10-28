@@ -238,7 +238,7 @@ fun GymScreen(
                     containerColor = MaterialTheme.colorScheme.errorContainer,
                     contentColor = MaterialTheme.colorScheme.onErrorContainer,
                 ) {
-                    Icon(Icons.Outlined.Delete, stringResource(R.string.notes_delete))
+                    Icon(Icons.Outlined.Delete, stringResource(R.string.notes_delete), tint = MaterialTheme.colorScheme.error)
                 }
             }
 

@@ -318,7 +318,7 @@ private fun TransactionRow(
                 color = if (isIncome) IncomeColor else MaterialTheme.colorScheme.onSurface,
             )
             IconButton(onClick = onDelete) {
-                Icon(Icons.Outlined.Delete, stringResource(R.string.money_delete), tint = MaterialTheme.colorScheme.outline)
+                Icon(Icons.Outlined.Delete, stringResource(R.string.money_delete), tint = MaterialTheme.colorScheme.error)
             }
         }
     }

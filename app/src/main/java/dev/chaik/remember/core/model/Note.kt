@@ -31,5 +31,6 @@ data class NoteSummary(
     val folderId: Long?,
     val pinned: Boolean,
     val tags: List<Tag>,
+    val createdAt: Instant,
     val updatedAt: Instant,
 )

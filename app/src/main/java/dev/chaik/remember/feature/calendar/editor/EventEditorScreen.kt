@@ -107,7 +107,7 @@ fun EventEditorScreen(
         onBack = onBack,
         actions = {
             IconButton(onClick = { if (viewModel.isNew && viewModel.title.isBlank()) onBack() else confirmDelete = true }) {
-                Icon(Icons.Outlined.Delete, stringResource(R.string.notes_delete))
+                Icon(Icons.Outlined.Delete, stringResource(R.string.notes_delete), tint = MaterialTheme.colorScheme.error)
             }
         },
     ) { padding ->

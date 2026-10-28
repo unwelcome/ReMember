@@ -43,6 +43,7 @@ class NoteRepository(private val db: ReMemberDatabase) {
                     folderId = row.folderId,
                     pinned = row.pinned,
                     tags = tags[row.id].orEmpty(),
+                    createdAt = row.createdAt,
                     updatedAt = row.updatedAt,
                 )
             }

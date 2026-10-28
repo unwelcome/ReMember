@@ -96,7 +96,7 @@ fun NoteFolderChips(
                     )
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.notes_delete_folder)) },
-                        leadingIcon = { Icon(Icons.Outlined.Delete, null) },
+                        leadingIcon = { Icon(Icons.Outlined.Delete, null, tint = MaterialTheme.colorScheme.error) },
                         onClick = {
                             menuOpen = false
                             deleting = folder

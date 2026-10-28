@@ -100,20 +100,26 @@ enum class Destination(
     }
 }
 
+/** Выключен ли раздел в «Страницах» (тогда открыть его нельзя). */
+fun AppSettings.isDisabled(destination: Destination): Boolean = destination.movable && destination.name in disabledPages
+
 /** Вкладки островка по настройкам, «Ещё» — последней. Неверные настройки — по умолчанию. */
 fun AppSettings.islandTabs(): List<Destination> {
     val chosen = islandTabs.mapNotNull { name -> Destination.entries.firstOrNull { it.name == name } }
-        .filter { it.movable }
+        .filter { it.movable && !isDisabled(it) }
         .distinct()
     val tabs = if (chosen.size in Destination.MIN_TABS..Destination.MAX_TABS) chosen else Destination.DefaultTabs
     return tabs + Destination.More
 }
 
-/** Плитки «Ещё»: все разделы, которых нет в островке, в выбранном порядке; «Настройки» — последней. */
-fun AppSettings.moreTiles(): List<Destination> {
+/** Все разделы «Ещё» в выбранном порядке — вместе с выключенными (для «Страниц»), без «Настроек». */
+fun AppSettings.moreOrderAll(): List<Destination> {
     val island = islandTabs()
     val saved = moreOrder.mapNotNull { name -> Destination.entries.firstOrNull { it.name == name } }
     // Разделы, которых нет в сохранённом порядке (появились позже), — в конец, как по умолчанию
     val order = (saved + Destination.DefaultMoreOrder).distinct().filter { it.movable }
-    return order.filter { it !in island } + Destination.Settings
+    return order.filter { it !in island }
 }
+
+/** Плитки «Ещё»: включённые разделы, которых нет в островке, в выбранном порядке; «Настройки» — последней. */
+fun AppSettings.moreTiles(): List<Destination> = moreOrderAll().filterNot(::isDisabled) + Destination.Settings

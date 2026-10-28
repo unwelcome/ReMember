@@ -92,7 +92,7 @@ fun TaskEditorScreen(
         onBack = onBack,
         actions = {
             IconButton(onClick = { confirmDelete = true }) {
-                Icon(Icons.Outlined.Delete, stringResource(R.string.notes_delete))
+                Icon(Icons.Outlined.Delete, stringResource(R.string.notes_delete), tint = MaterialTheme.colorScheme.error)
             }
         },
     ) { padding ->

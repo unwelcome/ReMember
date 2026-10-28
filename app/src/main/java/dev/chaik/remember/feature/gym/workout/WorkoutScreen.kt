@@ -133,7 +133,7 @@ fun WorkoutScreen(route: WorkoutRoute, onBack: () -> Unit, modifier: Modifier = 
         modifier = modifier,
         onBack = onBack,
         actions = {
-            IconButton(onClick = { sheet = Sheet.Delete }) { Icon(Icons.Outlined.Delete, stringResource(R.string.notes_delete)) }
+            IconButton(onClick = { sheet = Sheet.Delete }) { Icon(Icons.Outlined.Delete, stringResource(R.string.notes_delete), tint = MaterialTheme.colorScheme.error) }
         },
     ) { padding ->
         if (current == null || !viewModel.isLoaded) return@ScreenScaffold

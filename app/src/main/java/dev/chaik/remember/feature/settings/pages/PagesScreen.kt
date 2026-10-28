@@ -18,12 +18,17 @@ import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material.icons.outlined.KeyboardArrowUp
 import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material.icons.outlined.VisibilityOff
+import androidx.compose.ui.text.style.TextDecoration
+import dev.chaik.remember.app.navigation.isDisabled
+import dev.chaik.remember.app.navigation.moreOrderAll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Slider
+import dev.chaik.remember.core.ui.components.AppSlider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -78,7 +83,9 @@ fun PagesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     val settings = LocalAppSettings.current
     val island = settings.islandTabs()
     val tabs = island - Destination.More
-    val tiles = settings.moreTiles() - Destination.Settings
+    // Все разделы «Ещё», и выключенные тоже; вкладкой можно поставить только включённый
+    val tiles = settings.moreOrderAll()
+    val addable = tiles.filterNot(settings::isDisabled)
     var adding by remember { mutableStateOf(false) }
 
     fun saveTabs(list: List<Destination>) = store.update { it.copy(islandTabs = list.map(Destination::name)) }
@@ -129,15 +136,23 @@ fun PagesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             SettingsGroupTitle(stringResource(R.string.pages_more_tiles))
             SettingsCard {
                 tiles.forEachIndexed { i, tile ->
+                    val disabled = settings.isDisabled(tile)
                     OrderRow(
                         destination = tile,
                         onUp = if (i > 0) ({ saveTiles(tiles.swap(i, i - 1)) }) else null,
                         onDown = if (i < tiles.lastIndex) ({ saveTiles(tiles.swap(i, i + 1)) }) else null,
                         onRemove = null,
+                        disabled = disabled,
+                        onToggle = {
+                            store.update { s ->
+                                s.copy(disabledPages = if (disabled) s.disabledPages - tile.name else s.disabledPages + tile.name)
+                            }
+                        },
                     )
                 }
                 FixedRow(Destination.Settings)
             }
+            Hint(stringResource(R.string.pages_disable_hint))
 
             SettingsGroupTitle(stringResource(R.string.pages_start))
             SettingsCard {
@@ -161,7 +176,7 @@ fun PagesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                             color = MaterialTheme.colorScheme.primary,
                         )
                     }
-                    Slider(
+                    AppSlider(
                         value = millis,
                         onValueChange = { millis = it },
                         onValueChangeFinished = { store.update { it.copy(welcomeMillis = millis.roundToInt()) } },
@@ -189,6 +204,16 @@ fun PagesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 )
             }
 
+            SettingsGroupTitle(stringResource(R.string.tab_notes))
+            SettingsCard {
+                SettingsSwitchRow(
+                    title = stringResource(R.string.pages_notes_by_edit),
+                    hint = stringResource(R.string.pages_notes_by_edit_hint),
+                    checked = settings.notesByEdit,
+                    onChange = { on -> store.update { it.copy(notesByEdit = on) } },
+                )
+            }
+
             SettingsGroupTitle(stringResource(R.string.section_health))
             SettingsCard { StepsGoalSettings() }
 
@@ -210,7 +235,7 @@ fun PagesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             title = { Text(stringResource(R.string.pages_add_title)) },
             text = {
                 Column {
-                    tiles.forEach { candidate ->
+                    addable.forEach { candidate ->
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
@@ -233,14 +258,27 @@ fun PagesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     }
 }
 
-/** Раздел со стрелками «выше / ниже» и, если можно, крестиком «убрать из островка». */
+/**
+ * Раздел со стрелками «выше / ниже» и, если можно, крестиком «убрать из островка».
+ * [onToggle] — глаз «включить / выключить раздел» ([disabled] — сейчас выключен, строка бледная).
+ */
 @Composable
-private fun OrderRow(destination: Destination, onUp: (() -> Unit)?, onDown: (() -> Unit)?, onRemove: (() -> Unit)?) {
+private fun OrderRow(
+    destination: Destination,
+    onUp: (() -> Unit)?,
+    onDown: (() -> Unit)?,
+    onRemove: (() -> Unit)?,
+    disabled: Boolean = false,
+    onToggle: (() -> Unit)? = null,
+) {
+    val colors = MaterialTheme.colorScheme
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 16.dp, end = 4.dp)) {
-        Icon(destination.icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Icon(destination.icon, null, tint = if (disabled) colors.outline else colors.onSurfaceVariant)
         Text(
             text = stringResource(destination.label),
             style = MaterialTheme.typography.bodyLarge,
+            color = if (disabled) colors.outline else colors.onSurface,
+            textDecoration = if (disabled) TextDecoration.LineThrough else null,
             modifier = Modifier
                 .weight(1f)
                 .padding(start = 16.dp),
@@ -253,6 +291,15 @@ private fun OrderRow(destination: Destination, onUp: (() -> Unit)?, onDown: (() 
         }
         if (onRemove != null) {
             IconButton(onClick = onRemove) { Icon(Icons.Outlined.Close, stringResource(R.string.pages_remove)) }
+        }
+        if (onToggle != null) {
+            IconButton(onClick = onToggle) {
+                Icon(
+                    imageVector = if (disabled) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                    contentDescription = stringResource(if (disabled) R.string.pages_enable else R.string.pages_disable),
+                    tint = if (disabled) colors.outline else colors.primary,
+                )
+            }
         }
     }
 }

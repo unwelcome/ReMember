@@ -26,7 +26,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
-import androidx.compose.material3.Slider
+import dev.chaik.remember.core.ui.components.AppSlider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -247,7 +247,7 @@ private fun T9LineSettings() {
 
         if (settings.t9Line != UnderlineStyle.NONE) {
             SliderHeader(stringResource(R.string.appearance_t9_width), stringResource(R.string.appearance_t9_width_value, width.roundToInt() / 10f))
-            Slider(
+            AppSlider(
                 value = width,
                 onValueChange = { width = it },
                 onValueChangeFinished = { store.update { it.copy(t9LineWidth = width.roundToInt()) } },
@@ -255,7 +255,7 @@ private fun T9LineSettings() {
                 steps = (T9_WIDTH_MAX - T9_WIDTH_MIN) / T9_WIDTH_STEP - 1,
             )
             SliderHeader(stringResource(R.string.appearance_t9_alpha), stringResource(R.string.appearance_t9_alpha_value, alpha.roundToInt()))
-            Slider(
+            AppSlider(
                 value = alpha,
                 onValueChange = { alpha = it },
                 onValueChangeFinished = { store.update { it.copy(t9LineAlpha = alpha.roundToInt()) } },
@@ -291,7 +291,7 @@ private fun ParagraphSettings() {
             stringResource(R.string.appearance_paragraph_indent),
             if (indentValue == 0) off else stringResource(R.string.appearance_paragraph_indent_value, indentValue / 10f),
         )
-        Slider(
+        AppSlider(
             value = indent,
             onValueChange = { indent = it },
             onValueChangeFinished = { store.update { it.copy(paragraphIndent = indent.roundToInt()) } },
@@ -303,7 +303,7 @@ private fun ParagraphSettings() {
             stringResource(R.string.appearance_paragraph_gap),
             if (gapValue == 0) off else stringResource(R.string.appearance_paragraph_gap_value, gapValue),
         )
-        Slider(
+        AppSlider(
             value = gap,
             onValueChange = { gap = it },
             onValueChangeFinished = { store.update { it.copy(paragraphGap = gap.roundToInt()) } },

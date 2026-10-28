@@ -34,6 +34,7 @@
         <package android:name="com.google.android.apps.healthdata" />
     </queries>
 
+    <!-- Приложение только вертикальное: поворот экрана телефона на него не действует -->
     <application
         android:name=".ReMemberApplication"
         android:allowBackup="false"
@@ -46,6 +47,7 @@
         android:theme="@style/Theme.ReMember">
         <activity
             android:name=".MainActivity"
+            android:screenOrientation="portrait"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.ReMember"
@@ -58,6 +60,7 @@
         </activity>
         <activity
             android:name=".feature.lock.LockActivity"
+            android:screenOrientation="portrait"
             android:exported="false"
             android:launchMode="singleTop"
             android:theme="@style/Theme.ReMember"
@@ -66,6 +69,7 @@
         <!-- Зачем нужны данные о здоровье: без этой страницы Health Connect не спросит разрешения -->
         <activity
             android:name=".feature.health.HealthRationaleActivity"
+            android:screenOrientation="portrait"
             android:exported="true"
             android:theme="@style/Theme.ReMember">
             <intent-filter>
@@ -86,6 +90,7 @@
         <!-- Звонок будильника: поверх экрана блокировки, отдельной задачей — приложение под ним не открывается -->
         <activity
             android:name=".feature.time.ring.AlarmActivity"
+            android:screenOrientation="portrait"
             android:excludeFromRecents="true"
             android:exported="false"
             android:launchMode="singleTask"

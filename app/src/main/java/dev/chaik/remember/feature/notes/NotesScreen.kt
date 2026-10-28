@@ -64,7 +64,7 @@ fun NotesScreen(
     modifier: Modifier = Modifier,
 ) {
     val container = LocalContext.current.appContainer
-    val viewModel = viewModel { NotesViewModel(container.noteRepository) }
+    val viewModel = viewModel { NotesViewModel(container.noteRepository, container.settings.settings) }
     val folders by viewModel.folders.collectAsStateWithLifecycle()
     val tags by viewModel.usedTags.collectAsStateWithLifecycle()
     val notes by viewModel.visibleNotes.collectAsStateWithLifecycle()

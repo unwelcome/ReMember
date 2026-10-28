@@ -27,7 +27,7 @@ interface NoteDao {
             CASE WHEN instr(text, '](photo:') > 0
                 THEN substr(text, instr(text, '](photo:') + 8, 36)
             END AS coverPhotoId,
-            folder_id AS folderId, pinned, updated_at AS updatedAt
+            folder_id AS folderId, pinned, created_at AS createdAt, updated_at AS updatedAt
         FROM note
         ORDER BY pinned DESC, updated_at DESC
         """,
@@ -86,5 +86,6 @@ data class NoteSummaryRow(
     val coverPhotoId: String?,
     val folderId: Long?,
     val pinned: Boolean,
+    val createdAt: Instant,
     val updatedAt: Instant,
 )

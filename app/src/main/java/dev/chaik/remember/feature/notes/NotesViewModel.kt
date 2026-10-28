@@ -10,7 +10,10 @@ import dev.chaik.remember.core.data.NoteRepository
 import dev.chaik.remember.core.model.NoteSummary
 import dev.chaik.remember.core.model.NoteFolder
 import dev.chaik.remember.core.model.Tag
+import dev.chaik.remember.core.settings.AppSettings
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
@@ -26,7 +29,7 @@ sealed interface FolderFilter {
 }
 
 /** Список заметок: фильтры по папке и тегу, действия над папками и заметками. */
-class NotesViewModel(private val notes: NoteRepository) : ViewModel() {
+class NotesViewModel(private val notes: NoteRepository, settings: Flow<AppSettings>) : ViewModel() {
 
     var folderFilter by mutableStateOf<FolderFilter>(FolderFilter.All)
         private set
@@ -49,10 +52,18 @@ class NotesViewModel(private val notes: NoteRepository) : ViewModel() {
         .map { list -> list.flatMap { it.tags }.distinctBy { it.id }.sortedBy { it.name.lowercase() } }
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
-    /** Заметки после фильтров; порядок из базы: закреплённые сверху, потом недавно изменённые. */
+    /**
+     * Заметки после фильтров. Закреплённые всегда сверху, дальше — недавно изменённые (порядок из базы)
+     * или, если так выбрано в «Страницах», по дате создания: новые сверху, правка порядок не меняет.
+     */
     val visibleNotes: StateFlow<List<NoteSummary>?> =
-        combine(allNotes, snapshotFlow { folderFilter to tagFilter }) { list, (folder, tags) ->
-            list.filter { note ->
+        combine(
+            allNotes,
+            settings.map { it.notesByEdit }.distinctUntilChanged(),
+            snapshotFlow { folderFilter to tagFilter },
+        ) { list, byEdit, (folder, tags) ->
+            val ordered = if (byEdit) list else list.sortedWith(compareByDescending<NoteSummary> { it.pinned }.thenByDescending { it.createdAt })
+            ordered.filter { note ->
                 val folderOk = when (folder) {
                     FolderFilter.All -> true
                     FolderFilter.NoFolder -> note.folderId == null

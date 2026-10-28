@@ -29,7 +29,7 @@ import androidx.compose.material.icons.automirrored.outlined.VolumeUp
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Stop
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.Slider
+import dev.chaik.remember.core.ui.components.AppSlider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableFloatStateOf
@@ -149,7 +149,7 @@ fun AlarmEditorScreen(route: AlarmEditorRoute, onBack: () -> Unit, modifier: Mod
         onBack = onBack,
         actions = {
             if (route.id != 0L) {
-                IconButton(onClick = { confirmDelete = true }) { Icon(Icons.Outlined.Delete, stringResource(R.string.time_delete_alarm)) }
+                IconButton(onClick = { confirmDelete = true }) { Icon(Icons.Outlined.Delete, stringResource(R.string.time_delete_alarm), tint = MaterialTheme.colorScheme.error) }
             }
             IconButton(onClick = onBack) { Icon(Icons.Outlined.Check, stringResource(R.string.time_save)) }
         },
@@ -337,7 +337,7 @@ private fun VolumeCheck(preview: AlarmSoundPreview, playing: Boolean, onToggle: 
     Column(Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.AutoMirrored.Outlined.VolumeUp, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-            Slider(
+            AppSlider(
                 value = volume,
                 onValueChange = {
                     volume = it

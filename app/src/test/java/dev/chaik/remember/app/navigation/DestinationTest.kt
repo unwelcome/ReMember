@@ -27,6 +27,16 @@ class DestinationTest {
     }
 
     @Test
+    fun `выключенный раздел пропадает из «Ещё» и вкладок, но остаётся в списке «Страниц»`() {
+        val s = AppSettings(disabledPages = listOf("Gym", "Settings"), islandTabs = listOf("Today", "Notes", "Gym"))
+        assertTrue(Destination.Gym !in s.moreTiles())
+        assertTrue(Destination.Gym !in s.islandTabs())
+        assertTrue(Destination.Gym in s.moreOrderAll())
+        // «Настройки» выключить нельзя
+        assertEquals(Destination.Settings, s.moreTiles().last())
+    }
+
+    @Test
     fun `неверные настройки — по умолчанию`() {
         // Одна вкладка — мало; «Настройки» и «Ещё» вкладками не ставятся; незнакомые имена пропускаются
         assertEquals(Destination.DefaultTabs + Destination.More, AppSettings(islandTabs = listOf("Today")).islandTabs())

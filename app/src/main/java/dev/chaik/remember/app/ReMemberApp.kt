@@ -45,6 +45,7 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.EnterTransition
 import androidx.compose.runtime.key
+import dev.chaik.remember.app.navigation.isDisabled
 import dev.chaik.remember.app.navigation.islandTabs
 import dev.chaik.remember.app.navigation.Destination
 import androidx.navigationevent.NavigationEvent
@@ -174,6 +175,11 @@ private fun MainScaffold() {
             is OpenTarget.Workout -> Destination.Gym
             OpenTarget.Health -> Destination.Health
             OpenTarget.Time -> Destination.Time
+        }
+        // Раздел выключен в «Страницах» — туда не попасть и по уведомлению
+        if (settings.isDisabled(section)) {
+            container.openRequests.value = null
+            return@LaunchedEffect
         }
         // Раздел во вкладке — открываем вкладку; иначе — «Ещё» и раздел поверх, чтобы «назад» вёл в «Ещё»
         val tab = section.takeIf { it in tabs } ?: Destination.More

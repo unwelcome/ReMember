@@ -142,7 +142,7 @@ fun NoteEditorScreen(
                 Icon(Icons.AutoMirrored.Outlined.DriveFileMove, stringResource(R.string.notes_move_to_folder))
             }
             IconButton(onClick = { confirmDelete = true }) {
-                Icon(Icons.Outlined.Delete, stringResource(R.string.notes_delete))
+                Icon(Icons.Outlined.Delete, stringResource(R.string.notes_delete), tint = MaterialTheme.colorScheme.error)
             }
         },
     ) { padding ->
