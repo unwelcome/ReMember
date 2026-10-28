@@ -98,6 +98,15 @@ class EditorState(markdown: String = "") {
     var selectedPhotoIndex by mutableIntStateOf(0)
         private set
 
+    /**
+     * Блок, где курсор на самом деле. Не то же, что [activeTextKey]: после вставки фото тот
+     * уже указывает на новый блок под фото, а курсор ещё в старом — и новое поле при появлении
+     * сообщает «без фокуса». Раньше это гасило [hasFocus]: пропадала панель над клавиатурой,
+     * курсор не переходил под фото, а «назад» не убирал курсор.
+     * Объявлен до init: [load] вызывается при создании и его сбрасывает.
+     */
+    private var focusedKey by mutableStateOf<Long?>(null)
+
     init {
         load(markdown)
     }
@@ -129,6 +138,7 @@ class EditorState(markdown: String = "") {
         }
         activeTextKey = null
         selectedPhotoKey = null
+        focusedKey = null
     }
 
     /** Подставить реальные пропорции фото, когда они загрузились из базы. */
@@ -154,16 +164,15 @@ class EditorState(markdown: String = "") {
     }
 
     /** Стоит ли сейчас курсор в каком-нибудь текстовом блоке. */
-    var hasFocus by mutableStateOf(false)
-        private set
+    val hasFocus: Boolean get() = focusedKey != null
 
     fun onTextFocusChanged(block: TextBlock, focused: Boolean) {
         if (focused) {
             activeTextKey = block.key
             selectedPhotoKey = null
-            hasFocus = true
-        } else if (activeTextKey == block.key) {
-            hasFocus = false
+            focusedKey = block.key
+        } else if (focusedKey == block.key) {
+            focusedKey = null
         }
     }
 
@@ -268,6 +277,8 @@ class EditorState(markdown: String = "") {
         blocks.removeRange(index, index + 2)
         if (selectedPhotoKey == key) selectedPhotoKey = null
         if (activeTextKey == after.key) activeTextKey = before.key
+        // Блок с курсором исчез — его поле уже не скажет, что потеряло фокус
+        if (focusedKey == after.key) focusedKey = null
     }
 
     /** Убрать фото [ids] из документа — их удалили из галереи. Опустевшие блоки пропадают. */
