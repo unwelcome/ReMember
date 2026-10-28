@@ -42,6 +42,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import dev.chaik.remember.R
+import dev.chaik.remember.core.settings.BackSwipe
+import dev.chaik.remember.core.settings.LocalAppSettings
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 
@@ -53,8 +55,9 @@ private const val AnimationMillis = 260
 /**
  * Полноэкранная страница поверх приложения: заголовок и крестик сверху.
  *
- * Въезжает справа; закрывается крестиком, кнопкой «назад» или свайпом справа налево —
- * тогда страница уезжает влево за пальцем, как вложенные страницы приложения.
+ * Въезжает справа; закрывается крестиком, кнопкой «назад» или свайпом — в ту сторону, что выбрана
+ * в «Персонализации → Свайп назад» (справа налево, слева направо или оба). Страница уезжает
+ * за пальцем, как вложенные страницы приложения.
  */
 @Composable
 fun FullScreenPage(
@@ -68,22 +71,30 @@ fun FullScreenPage(
     // До первого кадра страница за правым краем экрана — дальше въезжает
     val offset = remember { Animatable(screenWidth) }
     var closing by remember { mutableStateOf(false) }
+    // −1 — справа налево (палец идёт влево), +1 — слева направо
+    val mode by rememberUpdatedState(LocalAppSettings.current.backSwipe)
+    fun allowed(sign: Float) = when (mode) {
+        BackSwipe.RIGHT_TO_LEFT -> sign < 0
+        BackSwipe.LEFT_TO_RIGHT -> sign > 0
+        BackSwipe.BOTH -> true
+    }
 
     LaunchedEffect(Unit) {
         offset.animateTo(0f, tween(AnimationMillis, easing = FastOutSlowInEasing))
     }
 
-    fun close() {
+    /** Уезжает в сторону [sign]; крестик и «назад» — туда же, куда закрывает свайп. */
+    fun close(sign: Float = if (mode == BackSwipe.LEFT_TO_RIGHT) 1f else -1f) {
         if (closing) return
         closing = true
         scope.launch {
-            offset.animateTo(-screenWidth, tween(AnimationMillis, easing = FastOutSlowInEasing))
+            offset.animateTo(screenWidth * sign, tween(AnimationMillis, easing = FastOutSlowInEasing))
             dismiss()
         }
     }
 
     Dialog(
-        onDismissRequest = ::close,
+        onDismissRequest = { close() },
         properties = DialogProperties(
             usePlatformDefaultWidth = false,
             decorFitsSystemWindows = false,
@@ -102,7 +113,7 @@ fun FullScreenPage(
                         val down = awaitFirstDown(requireUnconsumed = false)
                         val tracker = VelocityTracker().apply { addPosition(down.uptimeMillis, down.position) }
 
-                        // Берём жест, только если он явно влево; вертикальный — прокрутке ленты
+                        // Берём жест, только если он явно вбок в разрешённую сторону; вертикальный — прокрутке ленты
                         val slop = viewConfiguration.touchSlop
                         var dx = 0f
                         var dy = 0f
@@ -115,23 +126,25 @@ fun FullScreenPage(
                             dx += delta.x
                             dy += delta.y
                             if (abs(dx) > slop || abs(dy) > slop) {
-                                if (dx >= -slop || abs(dx) <= abs(dy) * 1.5f) return@awaitEachGesture
+                                if (abs(dx) <= slop || !allowed(if (dx < 0) -1f else 1f) || abs(dx) <= abs(dy) * 1.5f) return@awaitEachGesture
                                 change.consume()
                                 start = change
                             }
                         }
 
-                        var travel = -dx
-                        scope.launch { offset.snapTo(-travel) }
+                        // Направление жеста — куда пошёл палец (при «оба» — любое)
+                        val sign = if (dx < 0) -1f else 1f
+                        var travel = dx * sign
+                        scope.launch { offset.snapTo(travel * sign) }
                         val lifted = drag(start.id) { change ->
-                            travel = (travel - change.positionChange().x).coerceAtLeast(0f)
+                            travel = (travel + change.positionChange().x * sign).coerceAtLeast(0f)
                             change.consume()
                             tracker.addPosition(change.uptimeMillis, change.position)
-                            scope.launch { offset.snapTo(-travel) }
+                            scope.launch { offset.snapTo(travel * sign) }
                         }
-                        val velocity = -tracker.calculateVelocity().x // скорость влево
+                        val velocity = tracker.calculateVelocity().x * sign // скорость в сторону закрытия
                         if (lifted && (travel > size.width * CloseThreshold || velocity > flingVelocity)) {
-                            close()
+                            close(sign)
                         } else {
                             scope.launch { offset.animateTo(0f, tween(AnimationMillis)) }
                         }
@@ -150,7 +163,7 @@ fun FullScreenPage(
                         style = MaterialTheme.typography.titleLarge,
                         modifier = Modifier.weight(1f),
                     )
-                    IconButton(onClick = ::close) {
+                    IconButton(onClick = { close() }) {
                         Icon(Icons.Outlined.Close, stringResource(R.string.editor_close))
                     }
                 }
