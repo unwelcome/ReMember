@@ -734,4 +734,11 @@
     <string name="appearance_t9_alpha_value">%1$d %%</string>
     <string name="appearance_t9_sample">Купил молоко и хлеб</string>
     <string name="appearance_t9_sample_word">молоко</string>
+    <string name="appearance_paragraphs">Абзацы</string>
+    <string name="appearance_paragraph_indent">Красная строка</string>
+    <string name="appearance_paragraph_indent_value">%1$.1f em</string>
+    <string name="appearance_paragraph_gap">Расстояние между абзацами</string>
+    <string name="appearance_paragraph_gap_value">%1$d sp</string>
+    <string name="appearance_paragraph_off">Нет</string>
+    <string name="appearance_paragraph_sample">Утром гулял в парке, было тепло и совсем безлюдно.\nВечером читал книгу и рано лёг спать.</string>
 </resources>

@@ -46,6 +46,8 @@ class AppSettingsStore(context: Context) {
             t9Line = enumOr(prefs.getString("t9_line", null), d.t9Line),
             t9LineWidth = prefs.getInt("t9_line_width", d.t9LineWidth).coerceIn(T9_WIDTH_MIN, T9_WIDTH_MAX),
             t9LineAlpha = prefs.getInt("t9_line_alpha", d.t9LineAlpha).coerceIn(T9_ALPHA_MIN, 100),
+            paragraphIndent = prefs.getInt("paragraph_indent", d.paragraphIndent).coerceIn(0, INDENT_MAX),
+            paragraphGap = prefs.getInt("paragraph_gap", d.paragraphGap).coerceIn(0, GAP_MAX),
         )
     }
 
@@ -72,6 +74,8 @@ class AppSettingsStore(context: Context) {
         putString("t9_line", s.t9Line.name)
         putInt("t9_line_width", s.t9LineWidth)
         putInt("t9_line_alpha", s.t9LineAlpha)
+        putInt("paragraph_indent", s.paragraphIndent)
+        putInt("paragraph_gap", s.paragraphGap)
     }
 
     private fun list(key: String): List<String> =

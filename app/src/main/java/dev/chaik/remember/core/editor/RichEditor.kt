@@ -119,8 +119,9 @@ fun RichEditor(
 ) {
     val colors = MaterialTheme.colorScheme
     val style = textStyle.copy(color = colors.onSurface)
-    val highlighter = remember(colors) {
-        MarkdownHighlighter(markerColor = colors.outline, accentColor = colors.primary)
+    val settings = LocalAppSettings.current
+    val highlighter = remember(colors, settings.paragraphIndent, settings.paragraphGap) {
+        MarkdownHighlighter(colors.outline, colors.primary, settings.paragraphIndent, settings.paragraphGap)
     }
 
     // После вставки фото курсор переходит под него — но только если клавиатура уже была в работе
@@ -192,13 +193,16 @@ private fun TextBlockField(
     // при каждом наборе, перемещении курсора и появлении клавиатуры.
     val bringIntoView = remember { BringIntoViewRequester() }
     var layout by remember { mutableStateOf<TextLayoutResult?>(null) }
+    // В конце абзацев на экране невидимые символы — позиции в тексте и в раскладке различаются
+    val mapping = remember(block.value.text, highlighter) { highlighter.offsetMapping(block.value.text) }
     var focused by remember { mutableStateOf(false) }
     val density = LocalDensity.current
     val imeBottom = WindowInsets.ime.getBottom(density)
     LaunchedEffect(focused, block.value.text, block.value.selection, layout, imeBottom) {
         val result = layout ?: return@LaunchedEffect
         if (!focused) return@LaunchedEffect
-        val cursor = result.getCursorRect(block.value.selection.end.coerceIn(0, result.layoutInput.text.length))
+        val shownCursor = mapping.originalToTransformed(block.value.selection.end)
+        val cursor = result.getCursorRect(shownCursor.coerceIn(0, result.layoutInput.text.length))
         val below = with(density) { CursorClearance.toPx() }
         bringIntoView.bringIntoView(cursor.copy(top = cursor.top - below / 4, bottom = cursor.bottom + below))
     }
@@ -236,9 +240,12 @@ private fun TextBlockField(
                 .drawBehind {
                     val result = layout ?: return@drawBehind
                     if (!undoEnabled || underline == null) return@drawBehind
-                    corrections.forEach { drawCorrectionUnderline(result, it.start, it.end, underline) }
+                    corrections.forEach {
+                        drawCorrectionUnderline(result, mapping.originalToTransformed(it.start), mapping.originalToTransformed(it.end), underline)
+                    }
                 }
-                .onCorrectionTap(layout = { layout }) { offset ->
+                .onCorrectionTap(layout = { layout }) { shownOffset ->
+                    val offset = mapping.transformedToOriginal(shownOffset)
                     if (undoEnabled) shownCorrection = corrections.firstOrNull { offset in it.start..it.end }
                 },
             decorationBox = { inner ->
@@ -252,6 +259,7 @@ private fun TextBlockField(
                     if (shown != null && result != null) {
                         CorrectionPopup(
                             correction = shown,
+                            shownStart = mapping.originalToTransformed(shown.start),
                             layout = result,
                             onRevert = {
                                 shownCorrection = null
@@ -287,17 +295,19 @@ private fun Modifier.onCorrectionTap(layout: () -> TextLayoutResult?, onTap: (of
 @Composable
 private fun CorrectionPopup(
     correction: AutoCorrection,
+    /** Начало слова на экране (с учётом невидимых символов в конце абзацев). */
+    shownStart: Int,
     layout: TextLayoutResult,
     onRevert: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     val colors = MaterialTheme.colorScheme
     val gap = with(LocalDensity.current) { 6.dp.roundToPx() }
-    val line = layout.getLineForOffset(correction.start)
+    val line = layout.getLineForOffset(shownStart)
     val word = IntRect(
-        left = layout.getBoundingBox(correction.start).left.roundToInt(),
+        left = layout.getBoundingBox(shownStart).left.roundToInt(),
         top = layout.getLineTop(line).roundToInt(),
-        right = layout.getBoundingBox(correction.start).right.roundToInt(),
+        right = layout.getBoundingBox(shownStart).right.roundToInt(),
         bottom = layout.getLineBottom(line).roundToInt(),
     )
     Popup(

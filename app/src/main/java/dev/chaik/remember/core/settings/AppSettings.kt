@@ -41,6 +41,10 @@ data class AppSettings(
     val t9LineWidth: Int = 15,
     /** Непрозрачность линии, % ([T9_ALPHA_MIN]…100). */
     val t9LineAlpha: Int = 55,
+    /** Красная строка в записях, десятые доли em (0…[INDENT_MAX]); 0 — без неё. */
+    val paragraphIndent: Int = 12,
+    /** Расстояние между абзацами, sp (0…[GAP_MAX]). */
+    val paragraphGap: Int = 18,
 )
 
 enum class Gender { UNSET, MALE, FEMALE }
@@ -99,6 +103,12 @@ const val T9_WIDTH_MAX = 40
 const val T9_WIDTH_STEP = 5
 const val T9_ALPHA_MIN = 20
 const val T9_ALPHA_STEP = 5
+
+/** Границы красной строки (десятые доли em) и расстояния между абзацами (sp), с шагом ползунков. */
+const val INDENT_MAX = 30
+const val INDENT_STEP = 2
+const val GAP_MAX = 32
+const val GAP_STEP = 2
 
 /** Шрифт приложения: системный или один из встроенных (res/font, лицензия OFL). */
 enum class AppFont { SYSTEM, INTER, NUNITO }

@@ -694,4 +694,11 @@
     <string name="appearance_t9_alpha_value">%1$d%%</string>
     <string name="appearance_t9_sample">Bought milk and bread</string>
     <string name="appearance_t9_sample_word">milk</string>
+    <string name="appearance_paragraphs">Paragraphs</string>
+    <string name="appearance_paragraph_indent">First-line indent</string>
+    <string name="appearance_paragraph_indent_value">%1$.1f em</string>
+    <string name="appearance_paragraph_gap">Space between paragraphs</string>
+    <string name="appearance_paragraph_gap_value">%1$d sp</string>
+    <string name="appearance_paragraph_off">None</string>
+    <string name="appearance_paragraph_sample">Took a morning walk in the park, warm and quiet.\nRead a book in the evening and went to bed early.</string>
 </resources>

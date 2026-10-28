@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Check
@@ -40,15 +41,21 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavKey
 import dev.chaik.remember.R
 import dev.chaik.remember.appContainer
 import dev.chaik.remember.core.editor.CorrectionUnderlinePreview
+import dev.chaik.remember.core.editor.MarkdownHighlighter
 import dev.chaik.remember.core.editor.correctionLine
 import dev.chaik.remember.core.settings.AccentColor
 import dev.chaik.remember.core.settings.AppFont
 import dev.chaik.remember.core.settings.BackSwipe
+import dev.chaik.remember.core.settings.GAP_MAX
+import dev.chaik.remember.core.settings.GAP_STEP
+import dev.chaik.remember.core.settings.INDENT_MAX
+import dev.chaik.remember.core.settings.INDENT_STEP
 import dev.chaik.remember.core.settings.LocalAppSettings
 import dev.chaik.remember.core.settings.T9_ALPHA_MIN
 import dev.chaik.remember.core.settings.T9_ALPHA_STEP
@@ -192,6 +199,9 @@ fun PersonalizationScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 )
                 if (settings.t9Undo) T9LineSettings()
             }
+
+            SettingsGroupTitle(stringResource(R.string.appearance_paragraphs))
+            SettingsCard { ParagraphSettings() }
         }
     }
 
@@ -261,6 +271,60 @@ private fun T9LineSettings() {
             line = correctionLine(settings.copy(t9LineWidth = width.roundToInt(), t9LineAlpha = alpha.roundToInt())),
             style = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
             modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
+        )
+    }
+}
+
+/** Красная строка и расстояние между абзацами, с образцом записи. Ползунки сохраняются по отпусканию. */
+@Composable
+private fun ParagraphSettings() {
+    val store = LocalContext.current.appContainer.settings
+    val settings = LocalAppSettings.current
+    val colors = MaterialTheme.colorScheme
+    var indent by remember(settings.paragraphIndent) { mutableFloatStateOf(settings.paragraphIndent.toFloat()) }
+    var gap by remember(settings.paragraphGap) { mutableFloatStateOf(settings.paragraphGap.toFloat()) }
+    val off = stringResource(R.string.appearance_paragraph_off)
+
+    Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        val indentValue = indent.roundToInt()
+        SliderHeader(
+            stringResource(R.string.appearance_paragraph_indent),
+            if (indentValue == 0) off else stringResource(R.string.appearance_paragraph_indent_value, indentValue / 10f),
+        )
+        Slider(
+            value = indent,
+            onValueChange = { indent = it },
+            onValueChangeFinished = { store.update { it.copy(paragraphIndent = indent.roundToInt()) } },
+            valueRange = 0f..INDENT_MAX.toFloat(),
+            steps = INDENT_MAX / INDENT_STEP - 1,
+        )
+        val gapValue = gap.roundToInt()
+        SliderHeader(
+            stringResource(R.string.appearance_paragraph_gap),
+            if (gapValue == 0) off else stringResource(R.string.appearance_paragraph_gap_value, gapValue),
+        )
+        Slider(
+            value = gap,
+            onValueChange = { gap = it },
+            onValueChangeFinished = { store.update { it.copy(paragraphGap = gap.roundToInt()) } },
+            valueRange = 0f..GAP_MAX.toFloat(),
+            steps = GAP_MAX / GAP_STEP - 1,
+        )
+
+        // Образец — так же, как в записи, и сразу с тем, что на ползунках
+        val sample = stringResource(R.string.appearance_paragraph_sample)
+        val shown = remember(sample, colors, indentValue, gapValue) {
+            MarkdownHighlighter(colors.outline, colors.primary, indentValue, gapValue).filter(AnnotatedString(sample)).text
+        }
+        Text(
+            text = shown,
+            style = MaterialTheme.typography.bodyLarge.copy(color = colors.onSurface),
+            modifier = Modifier
+                .padding(top = 8.dp, bottom = 4.dp)
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(colors.surfaceContainerHighest)
+                .padding(12.dp),
         )
     }
 }
