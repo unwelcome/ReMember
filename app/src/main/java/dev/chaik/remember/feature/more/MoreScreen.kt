@@ -28,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -74,9 +75,11 @@ fun MoreScreen(
                 // Настройки — последней плиткой на всю ширину
                 span = { GridItemSpan(if (it == Destination.Settings) maxLineSpan else 1) },
             ) { section ->
-                MoreTile(
-                    section = section,
-                    accent = MaterialTheme.colorScheme.accentFor(section.ordinal),
+                SectionTile(
+                    icon = section.icon,
+                    title = stringResource(section.label),
+                    hint = stringResource(section.hint),
+                    accentIndex = section.ordinal,
                     onClick = { onOpen(section.root) },
                 )
             }
@@ -84,13 +87,16 @@ fun MoreScreen(
     }
 }
 
+/** Плитка раздела (или игры): значок в цветном квадрате, название и подпись в две строки. */
 @Composable
-private fun MoreTile(
-    section: Destination,
-    accent: Pair<Color, Color>,
+fun SectionTile(
+    icon: ImageVector,
+    title: String,
+    hint: String,
+    accentIndex: Int,
     onClick: () -> Unit,
 ) {
-    val (container, content) = accent
+    val (container, content) = MaterialTheme.colorScheme.accentFor(accentIndex)
     Card(
         onClick = onClick,
         shape = RoundedCornerShape(24.dp),
@@ -103,17 +109,17 @@ private fun MoreTile(
                 modifier = Modifier.size(44.dp),
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Icon(section.icon, contentDescription = null, tint = content)
+                    Icon(icon, contentDescription = null, tint = content)
                 }
             }
             Spacer(Modifier.height(14.dp))
             Text(
-                text = stringResource(section.label),
+                text = title,
                 style = MaterialTheme.typography.titleMedium,
             )
             Spacer(Modifier.height(2.dp))
             Text(
-                text = stringResource(section.hint),
+                text = hint,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 2,

@@ -77,6 +77,11 @@ class ReMemberApplication : Application() {
                 .distinctUntilChanged()
                 .collect { container.stepsGoalWatcher.schedule() }
         }
+        // Будильники, таймер и повтор усиленного будильника — на всякий случай заново при каждом запуске
+        container.appScope.launch {
+            runCatching { container.alarmController.rescheduleAll() }
+                .onFailure { Log.w(TAG, "Не удалось поставить будильники", it) }
+        }
         // Не мешаем запуску: уборка — через пару секунд после старта
         cleanupPhotos(afterMs = STARTUP_CLEANUP_DELAY_MS)
     }

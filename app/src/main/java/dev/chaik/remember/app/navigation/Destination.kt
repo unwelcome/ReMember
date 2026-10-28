@@ -3,6 +3,7 @@ package dev.chaik.remember.app.navigation
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.Alarm
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.FitnessCenter
@@ -12,10 +13,12 @@ import androidx.compose.material.icons.filled.MonitorHeart
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material.icons.filled.TaskAlt
 import androidx.compose.material.icons.filled.ViewAgenda
 import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material.icons.outlined.AccountBalanceWallet
+import androidx.compose.material.icons.outlined.Alarm
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.FitnessCenter
@@ -25,6 +28,7 @@ import androidx.compose.material.icons.outlined.MonitorHeart
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Speed
+import androidx.compose.material.icons.outlined.SportsEsports
 import androidx.compose.material.icons.outlined.TaskAlt
 import androidx.compose.material.icons.outlined.ViewAgenda
 import androidx.compose.material.icons.outlined.WbSunny
@@ -35,6 +39,7 @@ import dev.chaik.remember.core.settings.AppSettings
 import dev.chaik.remember.feature.calendar.CalendarRoute
 import dev.chaik.remember.feature.feed.FeedRoute
 import dev.chaik.remember.feature.finance.FinanceRoute
+import dev.chaik.remember.feature.games.GamesRoute
 import dev.chaik.remember.feature.gym.GymRoute
 import dev.chaik.remember.feature.health.HealthRoute
 import dev.chaik.remember.feature.more.MoreRoute
@@ -44,6 +49,7 @@ import dev.chaik.remember.feature.search.SearchRoute
 import dev.chaik.remember.feature.settings.SettingsRoute
 import dev.chaik.remember.feature.stats.StatsRoute
 import dev.chaik.remember.feature.tasks.TasksRoute
+import dev.chaik.remember.feature.time.TimeRoute
 import dev.chaik.remember.feature.today.TodayRoute
 
 /**
@@ -69,6 +75,8 @@ enum class Destination(
     Health(R.string.section_health, R.string.section_health_hint, Icons.Outlined.MonitorHeart, Icons.Filled.MonitorHeart, HealthRoute),
     Gym(R.string.section_gym, R.string.section_gym_hint, Icons.Outlined.FitnessCenter, Icons.Filled.FitnessCenter, GymRoute),
     Network(R.string.section_network, R.string.section_network_hint, Icons.Outlined.Speed, Icons.Filled.Speed, NetworkRoute),
+    Time(R.string.section_time, R.string.section_time_hint, Icons.Outlined.Alarm, Icons.Filled.Alarm, TimeRoute),
+    Games(R.string.section_games, R.string.section_games_hint, Icons.Outlined.SportsEsports, Icons.Filled.SportsEsports, GamesRoute),
 
     /** Всегда последняя плитка «Ещё», во вкладки не ставится. */
     Settings(R.string.section_settings, R.string.section_settings_hint, Icons.Outlined.Settings, Icons.Filled.Settings, SettingsRoute),
@@ -88,7 +96,7 @@ enum class Destination(
         val DefaultTabs = listOf(Today, Notes, Tasks, Calendar)
 
         /** Порядок плиток «Ещё» по умолчанию; разделы из островка в «Ещё» не показываются. */
-        val DefaultMoreOrder = listOf(Feed, Search, Stats, Finance, Health, Gym, Network, Today, Notes, Tasks, Calendar)
+        val DefaultMoreOrder = listOf(Feed, Search, Stats, Finance, Health, Gym, Network, Time, Games, Today, Notes, Tasks, Calendar)
     }
 }
 

@@ -16,6 +16,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import dev.chaik.remember.MainActivity
 import dev.chaik.remember.R
+import dev.chaik.remember.core.alarm.TimeNotifications
 import java.time.Instant
 
 /** Виды уведомлений — у каждого свой канал, их можно отдельно выключить в настройках Android. */
@@ -55,7 +56,7 @@ class Notifier(private val context: Context) {
      */
     fun ensureChannels(sound: SoundMode) {
         manager.createNotificationChannelGroup(NotificationChannelGroup(GROUP, context.getString(R.string.app_name)))
-        val wanted = NotificationType.entries.map { channelId(it, sound) }.toSet() + QUIET_CHANNEL + LIVE_CHANNEL
+        val wanted = NotificationType.entries.map { channelId(it, sound) }.toSet() + QUIET_CHANNEL + LIVE_CHANNEL + TimeNotifications.Channels
         manager.notificationChannels
             .filter { it.id !in wanted }
             .forEach { manager.deleteNotificationChannel(it.id) }

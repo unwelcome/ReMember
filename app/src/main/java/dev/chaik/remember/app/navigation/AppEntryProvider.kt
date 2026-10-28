@@ -12,6 +12,10 @@ import dev.chaik.remember.feature.feed.FeedRoute
 import dev.chaik.remember.feature.feed.FeedScreen
 import dev.chaik.remember.feature.finance.FinanceRoute
 import dev.chaik.remember.feature.finance.FinanceScreen
+import dev.chaik.remember.feature.games.GamesRoute
+import dev.chaik.remember.feature.games.GamesScreen
+import dev.chaik.remember.feature.games.fiveletters.FiveLettersRoute
+import dev.chaik.remember.feature.games.fiveletters.FiveLettersScreen
 import dev.chaik.remember.feature.gym.GymRoute
 import dev.chaik.remember.feature.gym.GymScreen
 import dev.chaik.remember.feature.gym.workout.WorkoutRoute
@@ -52,6 +56,10 @@ import dev.chaik.remember.feature.tasks.TasksRoute
 import dev.chaik.remember.feature.tasks.TasksScreen
 import dev.chaik.remember.feature.tasks.editor.TaskEditorRoute
 import dev.chaik.remember.feature.tasks.editor.TaskEditorScreen
+import dev.chaik.remember.feature.time.AlarmEditorRoute
+import dev.chaik.remember.feature.time.AlarmEditorScreen
+import dev.chaik.remember.feature.time.TimeRoute
+import dev.chaik.remember.feature.time.TimeScreen
 import dev.chaik.remember.feature.today.TodayRoute
 import dev.chaik.remember.feature.today.TodayScreen
 
@@ -96,6 +104,10 @@ fun appEntryProvider(backStack: NavBackStack<NavKey>): (NavKey) -> NavEntry<NavK
         entry<GymRoute> { GymScreen(onBack = backFor(it), onOpen = { backStack.add(WorkoutRoute(it)) }) }
         entry<WorkoutRoute> { WorkoutScreen(route = it, onBack = back) }
         entry<NetworkRoute> { NetworkScreen(onBack = backFor(it)) }
+        entry<TimeRoute> { TimeScreen(onBack = backFor(it), onOpenAlarm = { id -> backStack.add(AlarmEditorRoute(id)) }) }
+        entry<AlarmEditorRoute> { AlarmEditorScreen(route = it, onBack = back) }
+        entry<GamesRoute> { GamesScreen(onBack = backFor(it), onOpen = { route -> backStack.add(route) }) }
+        entry<FiveLettersRoute> { FiveLettersScreen(onBack = back) }
         entry<SettingsRoute> { SettingsScreen(onBack = back, onOpen = { backStack.add(it) }) }
         entry<RemindersRoute> { RemindersScreen(onBack = back) }
         entry<ProfileRoute> { ProfileScreen(onBack = back) }

@@ -1,7 +1,13 @@
 package dev.chaik.remember.app
 
 import android.content.Context
+import dev.chaik.remember.core.alarm.AlarmController
+import dev.chaik.remember.core.alarm.AlarmScheduler
+import dev.chaik.remember.core.alarm.TimeNotifications
+import dev.chaik.remember.core.alarm.TimeStore
 import dev.chaik.remember.core.backup.BackupManager
+import dev.chaik.remember.core.wordgame.AssetWordDictionary
+import dev.chaik.remember.core.wordgame.GamesStore
 import dev.chaik.remember.core.data.DayRepository
 import dev.chaik.remember.core.data.EventRepository
 import dev.chaik.remember.core.data.MoneyRepository
@@ -108,6 +114,17 @@ class AppContainer(context: Context) {
 
     /** Поздравление с целью по шагам — проверка в фоне. */
     val stepsGoalWatcher by lazy { StepsGoalWatcher(appContext, settings, reminderSettings, healthGoals, health, notifier) }
+
+    /** Раздел «Время»: будильники, звонок, таймер, секундомер. */
+    val timeStore by lazy { TimeStore(appContext) }
+    val timeNotifications by lazy { TimeNotifications(appContext, timeStore) }
+    val wordDictionary by lazy { AssetWordDictionary(appContext) }
+
+    /** Раздел «Игры»: незаконченные игры. */
+    val gamesStore by lazy { GamesStore(appContext) }
+    val alarmController by lazy {
+        AlarmController(appContext, timeStore, AlarmScheduler(appContext), wordDictionary, timeNotifications)
+    }
 
     /** Куда перейти по тапу на уведомление; экран, который это выполнил, обнуляет запрос. */
     val openRequests = MutableStateFlow<OpenTarget?>(null)
